@@ -26,7 +26,7 @@
 - 数字：`check_static` **0 error / 2 warning** · `verify_author_runtime` std **15/0** · exp **19/0** ·
   `verify_author_rules` default **5/0** · author **6/0** · `auto_gate` 全绿（`reports/验收-作者运行时层-20260929.md`）。
 
-## v4.25：实验性 AJ/第三方 rig 工具链 rig 桥接（真实体当内核，rig 当外观）
+## v4.25：实验性 AJ/BDEngine rig 桥接（真实体当内核，rig 当外观）
 
 - **输入 `rules/rigs.json`（实验性）**：字段表/用法/坑见 `rules/README.md` §8；校验入口 `tools/lib/exp-rigs.mjs`
   （空/缺 ⇒ 整条链路不存在）。生成器 `tools/gen_ctm_exp_aj.mjs`（实验性变体专属）⇒ `exp/aj/**` 17 个文件；
@@ -39,13 +39,13 @@
   ① `ride` 的实体参数必须是**单实体**选择器（`@e[tag=x]` 会报 "Only one entity is allowed"）⇒ 加 `limit=1` 或 `@n`；
   ② 方向必须"**rig 骑内核**"（反过来内核成乘客、不再自己走）；**`minecraft:marker` 不能载客**（"couldn't start riding Marker"）；
   ③ display **没有 `RootVehicle`**（哪怕正在被骑）⇒ 判"是否挂载"用"活内核的乘客闭包"（`exp.aj.live`），别用 NBT 字段；
-  ④ 多个 display 乘客**落在同一挂载点**（实测 3 个 Pos 全同）⇒ 骨架布局不会被"乘客序号"打乱，但 **第三方 rig 工具链 的骨架不是一棵树**
+  ④ 多个 display 乘客**落在同一挂载点**（实测 3 个 Pos 全同）⇒ 骨架布局不会被"乘客序号"打乱，但 **BDEngine 的骨架不是一棵树**
   （根 + 16 个并列组实体，组实体自带乘客方块）⇒ 认领必须"**pre 差集整云**"、挂载只挂"自己不是别人乘客"的那批。
 - **`$sel` 是持久 storage**：rig 分支的守卫必须是**带类型**的复合匹配 `{rig:"<id>",type:"<载体>"}`，
   只写 `rig` 会被上一只的残留值骗到（空 rigs 构建里实测到）；多条 rig 守卫要写成**多行**（同一行多个 `if` 是"与"不是"或"）。
 - **运行时刻条目的局限**：`storage doom.nats:author/exp` 的 entries 走 `author/emit_rt`，拿不到 rig
   （要用就写构建期 `rules/entries.json`）。
-- 报告：`reports/验收-实验性AJ桥接-20260929.md`（三栏对照 + 全部数字 + 诚实清单）；图：`reports/图-实验性AJ样例 rig-20260929.png`。
+- 报告：`reports/验收-实验性AJ桥接-20260929.md`（三栏对照 + 全部数字 + 诚实清单）；图：`reports/图-实验性AJ巨人鱿鱼-20260929.png`。
 
 ## v4.23：作者规则层（默认 = 原版，可高度自定义）
 
@@ -479,3 +479,14 @@ ported/optimized/v3 verify 各 0 blocking · sim v1-v3 无告警 · sim_v4 27/0 
 - 靠 forceload 的用例：强加载后**回读** `data get block` 判 `loaded`，不满足 **exit 1**，不许静默降级；
 - 在任意坐标戳结构/群系谓词的测试：先强加载该坐标的区块，否则读数是"加载态混合值"；
 - `_work/verify_fortress_e2e.mjs` 已按此修（`forceload add` 用 ±64 方块 = 9×9 区块 + loaded 硬断言）。
+
+## 实验与产物的边界（硬规则，2026-09-29 用户点名）
+
+**有些内容只有我们实验的时候才做/才用 —— 不进仓库、不进产物、不进文档。**
+
+- **只属于实验（本地、不入库）**：第三方 rig/模型包与其截图、测试专用试验场（树叶台/草台/全黑密室）、
+  验证脚本用的临时实例（25571/25572/25573 这类）、`_work/` 下的夹具与中间产物、任何带第三方命名空间的东西。
+- **可以入库**：我们自己的生成器/库/规则文件、可复现的验收脚本与报告（写明口径与数字）、面向使用者的文档。
+- **提交前必跑**：`node tools/check_leak.mjs`（第三方标识 + 作者本机绝对路径的双重扫描，命中即 exit 1）。
+  脱敏只改内容、不改历史时，**必须用新的提交明确更正**，不许 amend 已推送的提交、也不许让提交说明与仓库实际状态不一致。
+- **口径**：报告里写"第三方 rig 样例（仅本机验收，未随包分发）"即可，**不要写它的名字/作者/来源**。
