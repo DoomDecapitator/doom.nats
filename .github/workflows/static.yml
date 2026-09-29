@@ -1,0 +1,30 @@
+# 离线静态门（CI）——不需要 Minecraft / Java / 服务器，本机实测 ~1.5s。
+#
+# 覆盖：① 9 个生成器 `--check`（产物与生成器是否漂移）② lint L1–L14 ③ 函数/storage/计分板引用闭包。
+# 不含：装机 + `/reload` 的加载期门、`verify_*.mjs` 真机断言、`regress.mjs --reuse` 回归
+#       —— 这些需要 Fabric 服务器与真客户端，留在本机（见 AGENTS.md「改任何东西后必跑」）。
+name: static
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 静态门（生成器漂移 + lint + 闭包）
+        run: node doom.nats/tools/check_static.mjs
+
+      - name: 失败时输出编辑器注解
+        if: failure()
+        run: node doom.nats/tools/check_static.mjs --vscode || true

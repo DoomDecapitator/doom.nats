@@ -9,8 +9,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const TOOL = path.dirname(new URL(import.meta.url).pathname.replace(/^\//, ''));
+// 必须走 fileURLToPath：`new URL(...).pathname` 在 Linux 下是 `/home/runner/work/…`，
+// 掐掉前导斜杠会变成相对路径 ⇒ CI（ubuntu）解析到错误的 TOOL/ROOT，静态门必挂。
+const TOOL = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(TOOL, '..');
 const WS = path.resolve(ROOT, '..');
 const argv = process.argv.slice(2);
