@@ -13,6 +13,7 @@ const ROOT = path.resolve(import.meta.dirname, '..', '..');
 const IDS = [/\bgigantic/i, /\bcalamar\b/i, /\bbdengine\b/i, /巨人鱿鱼/, /All-Rights-Reserved/i];
 const PATHS = [/[A-Za-z]:\\Users\\/, /\/c\/Users\//, /Downloads[\\/]datapack/];
 const SELF = ['tools/check_leak.mjs'];
+const isSelf = (rel) => SELF.some((s) => rel.endsWith(s));
 let files = [];
 try { files = execFileSync(process.env.DOOM_GIT || 'git', ['-c', 'core.quotepath=false', 'ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean); }
 catch { console.error('（不在 git 仓库里：改用全目录扫描）'); files = []; }
@@ -22,7 +23,7 @@ if (!files.length) {
 }
 const hits = [];
 for (const rel of files) {
-  if (SELF.includes(rel.split(path.sep).join('/'))) continue;
+  if (isSelf(rel.split(path.sep).join('/'))) continue;
   if (!/\.(md|json|mjs|js|mcfunction|txt|yml|yaml)$/.test(rel)) continue;
   let t = ''; try { t = fs.readFileSync(path.join(ROOT, rel), 'utf8'); } catch { continue; }
   for (const re of IDS) if (re.test(t)) hits.push([rel, '实验内容标识：' + String(re)]);
