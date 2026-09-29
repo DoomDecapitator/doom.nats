@@ -11,15 +11,23 @@
 // 每类别独立抽（与原版"每类别分别抽样"一致），权重和用**原始值**（不做归一化，避免舍入损失）。
 import fs from 'node:fs';
 import path from 'node:path';
+import * as PKG from './lib/packdir.mjs';
 
 // v4.13：逐实体规则表（替代原来的 5 条粗规则 SEL_RULE）——证据见 lib/entity-rules.mjs 顶部注释
 import { ruleOf, clusterOf, buildRuleTable, tagId, PLACE, LIGHT, isWide, isWide2, isTall, EXTRA_RULE_TYPES } from './lib/entity-rules.mjs';
 // v4.23 作者规则层（默认空白 ⇒ active=false；下面所有分支都不执行 ⇒ 产物逐字节不变）
 import { entriesFor, groupByYOf, entryTypes, entryPredicateIds } from './lib/author-rules.mjs';
+// v4.25 实验性 AJ 桥接（同样：DOOM_EXP 未设或 rules/rigs.json 为空 ⇒ active=false ⇒ 产物逐字节不变）
+import { EXP_RIGS, rigIdOf } from './lib/exp-rigs.mjs';
+
+// v4.25：物种 → rig id（没配就是 null）。写进 $sel 的 `rig` 字段，供 spawn/emit 改路到 exp/aj/emit/<id>。
+// 空 rigs.json ⇒ 恒为 null ⇒ 下列所有拼接都退化成原字符串（逐字节等价）。
+const rigField = (type) => { const id = rigIdOf(type); return id ? ',rig:' + JSON.stringify(id) : ''; };
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const GEN = path.join(ROOT, '_work', 'generated');
-const PACK = path.join(ROOT, '..', 'v4', 'doom.nats');
+// v4.24：产物根目录由 lib/packdir.mjs 统一解析（DOOM_EXP=1 ⇒ v4x/doom.nats 实验性变体）
+const PACK = PKG.PACK;
 const LF = String.fromCharCode(10);
 const NS = 'doom.nats';
 
@@ -60,12 +68,14 @@ const entryCond = (e) => {
   if (e.when.yMax != null) C.push('if score $py ' + NS + ' matches ..' + e.when.yMax);
   return C.join(' ');
 };
-const entrySel = (e, cat) => {
+// ⚠ nbt 必须**整体替换**（data merge 递归 ⇒ 上一条目的 NBT 会累加到下一只）⇒ 拆成"结构字段 merge + nbt set"。
+const entryNbt = (e, cat) => {
   const extra = e.nbt ? e.nbt.replace(/^\s*\{/, '').replace(/\}\s*$/, '').trim() : '';
   const tags = 'Tags:[' + [JSON.stringify(NS + '.spawned'), JSON.stringify(NS + '.cat.' + cat), JSON.stringify(NS + '.author.' + e.id)].join(',') + ']';
-  return '{type:' + JSON.stringify(e.mob) + ',slug:' + JSON.stringify(authorSlug(e.mob)) + ',cat:' + Q + cat + Q
-    + ',min:' + e.min + ',max:' + e.max + ',nbt:{' + [tags, extra].filter(Boolean).join(',') + '}}';
+  return '{' + [tags, extra].filter(Boolean).join(',') + '}';
 };
+const entrySel = (e, cat) => '{type:' + JSON.stringify(e.mob) + ',slug:' + JSON.stringify(authorSlug(e.mob)) + ',cat:' + Q + cat + Q
+  + ',min:' + e.min + ',max:' + e.max + rigField(e.mob) + '}';
 function authorWeightLines(biome, cat) {
   const list = entriesFor(biome, cat);
   if (!list.length) return [];
@@ -83,6 +93,7 @@ function authorWeightLines(biome, cat) {
     L.push(pre + 'run scoreboard players add #hi ' + NS + ' ' + e.weight);
     L.push(hit('') + 'scoreboard players set $sel.ok ' + NS + ' 1');
     L.push(hit('') + 'data merge storage ' + NS + ':sel ' + entrySel(e, cat));
+    L.push(hit('') + 'data modify storage ' + NS + ':sel nbt set value ' + entryNbt(e, cat));
     // 条目级覆盖（place/light/tag）只改这一条写进 $sel 的值；$sel.rule 仍是该物种的规则 id，
     //   所以 check/entity 里该物种的原版门（掷币/深水/窗口…）照旧生效 —— 要连那些一起去掉，就在 entity-rules.json 里改物种规则。
     const rl = { ...ruleOf(e.mob), ...(e.place ? { place: e.place } : {}), ...(e.light ? { light: e.light } : {}), ...(e.tag ? { tag: e.tag } : {}) };
@@ -112,9 +123,28 @@ function authorWeightLines(biome, cat) {
   ];
   for (const [id, m] of Object.entries(mobsDoc.mobs).sort()) {
     const tags = [NS + '.spawned', NS + '.cat.' + m.category];
-    rows.push('data modify storage ' + NS + ':mobs ' + id + ' set value {type:' + JSON.stringify(m.type) + ',rule:' + RULE_TABLE.idOf(m.type) + ',nbt:{Tags:[' + tags.map((t) => JSON.stringify(t)).join(',') + ']}}');
+    // v4.24：额外写一份 `rt`（原版规则数据）——运行时刻条目（storage entries）只能拿到实体 id，
+    //   靠 `author/lookup` 反查到 slug 后**一条 data modify** 就能把整套判定参数搬进 $sel
+    //   （rule/place/light/tag/grp1/cluster/wide/wide2/tall），不必在运行期重算规则表。
+    const rl = ruleOf(m.type);
+    const rt = '{rule:' + RULE_TABLE.idOf(m.type) + ',place:' + PLACE[rl.place] + ',light:' + LIGHT[rl.light]
+      + ',tag:' + (rl.tag ? tagId(rl.tag) : 0) + ',grp1:' + (rl.grp1 ? 1 : 0) + ',cluster:' + clusterOf(m.type)
+      + ',wide:' + (isWide(m.type) ? 1 : 0) + ',wide2:' + (isWide2(m.type) ? 1 : 0) + ',tall:' + (isTall(m.type) ? 1 : 0) + '}';
+    //   v4.25：配了 rig 的物种多写一个 `rig` 字段（诊断用：`data get storage doom.nats:mobs <id>.rig`）。
+    const rigId = rigIdOf(m.type);
+    rows.push('data modify storage ' + NS + ':mobs ' + id + ' set value {type:' + JSON.stringify(m.type) + ',rule:' + RULE_TABLE.idOf(m.type) + ',rt:' + rt + (rigId ? ',rig:' + JSON.stringify(rigId) : '') + ',nbt:{Tags:[' + tags.map((t) => JSON.stringify(t)).join(',') + ']}}');
   }
   F['data/' + NS + '/function/mob/load.mcfunction'] = rows.join(LF) + LF;
+  // v4.24：生成端三路派发。为什么要拆：运行时刻条目（storage entries）带自己的 NBT 与标签，
+  //   不能套用 post/<slug>（它的 $(nbt) 来自 sel.nbt 复合标签，而作者条目给的是 SNBT 字符串）；
+  //   香草路径包一层 post_chain，是为了把 on_spawn 钩子跑在"@s = 新实体"的上下文里。
+  F['data/' + NS + '/function/spawn/emit_vanilla.mcfunction'] = [
+    '# ' + NS + ':spawn/emit_vanilla [MACRO] —— 香草路径的 summon（包装层 author/post_chain 会补 on_spawn 钩子）',
+    '# 用法：function ' + NS + ':spawn/emit_vanilla with storage ' + NS + ':sel（在**玩家**上下文里调用）',
+    // 默认变体：直连 post/<slug>（与 v4.23 同一条链）；实验性变体：经 exp/post_chain 多一次 on_spawn 钩子判定
+    '$execute summon $(type) run function ' + NS + ':' + (PKG.EXP ? 'exp/post_chain' : 'post/$(slug)') + ' with storage ' + NS + ':sel',
+    '',
+  ].join(LF);
   F['data/' + NS + '/function/spawn/emit.mcfunction'] = [
     '# ' + NS + ':spawn/emit —— 生成宏（宏参数来自选物种结果 ' + NS + ':sel）',
     '#',
@@ -131,7 +161,29 @@ function authorWeightLines(biome, cat) {
     '# 朝向：vanilla 自然生成用 snapTo(..., random*360, 0)；宏参数必须在 post 实例化之前就位，所以在这里掷',
     '# 注意：这一行不能写宏前缀 —— 不含任何参数占位符的行若带宏前缀，会让整个函数加载失败（实测）',
     'execute store result storage ' + NS + ':sel rot int 1 run random value 0..359',
-    '$execute summon $(type) run function ' + NS + ':post/$(slug) with storage ' + NS + ':sel',
+    '# ① 运行时刻条目命中（storage ' + NS + ':author → entries）⇒ 走 author/emit_rt（自带 NBT/标签）',
+    'execute if score $auth.hit ' + NS + ' matches 1 run function ' + NS + ':author/emit_rt with storage ' + NS + ':sel',
+    ...(PKG.EXP ? ['# ①b 实验性条目命中（storage ' + NS + ':exp → entries，仅 enabled:1b）⇒ 走 exp/emit_rt',
+      'execute if score $exp.hit ' + NS + ' matches 1 run function ' + NS + ':exp/emit_rt with storage ' + NS + ':sel'] : []),
+    '# ② 香草路径（含构建期 rules/entries.json 的条目）：post/<slug> + on_spawn 钩子',
+    ...(EXP_RIGS.active ? [
+      '# ②a 实验性 AJ 桥接（v4.25）：该物种在 rules/rigs.json 里配了 rig ⇒ 内核照常 summon，另把 rig 挂上当外观。',
+      '#   守卫是**非宏**的、且带**类型**的复合匹配 `{rig:"<id>",type:"<载体>"}`：',
+      '#   ① 宏缺参会让整个函数中止 ⇒ 必须先守卫再进 emit_sel；',
+      '#   ② $sel 是**持久 storage**，只写 `rig` 而不校验 type 会被上一只的残留值骗到',
+      '#      （空 rigs.json 的 A/B 实测踩过：默认构建里残留的 rig 字段仍在）⇒ 两条一起匹配才认。',
+      '# 没配 rig 的物种走 ②b，与不带这一层时逐字节同一条命令（唯一的差别是多个 unless 守卫）。',
+      '# 每条 rig 一个 if 行（**分开的行才是"或"**；写在同一条 execute 里会被当成"与"，实测踩过：一个都不出），',
+      '# ②b 用它们的否定链（unless ... unless ...）＝"没有命中任何一条 rig"。',
+      ...EXP_RIGS.list.map((r) => 'execute if score $auth.hit ' + NS + ' matches 0' + (PKG.EXP ? ' if score $exp.hit ' + NS + ' matches 0' : '')
+        + ' if data storage ' + NS + ':sel {rig:' + JSON.stringify(r.id) + ',type:' + JSON.stringify(r.carrier) + '}'
+        + ' run function ' + NS + ':exp/aj/emit_sel with storage ' + NS + ':sel'),
+      'execute if score $auth.hit ' + NS + ' matches 0' + (PKG.EXP ? ' if score $exp.hit ' + NS + ' matches 0' : '')
+      + EXP_RIGS.list.map((r) => ' unless data storage ' + NS + ':sel {rig:' + JSON.stringify(r.id) + ',type:' + JSON.stringify(r.carrier) + '}').join('')
+      + ' run function ' + NS + ':spawn/emit_vanilla with storage ' + NS + ':sel',
+    ] : [
+      'execute if score $auth.hit ' + NS + ' matches 0' + (PKG.EXP ? ' if score $exp.hit ' + NS + ' matches 0' : '') + ' run function ' + NS + ':spawn/emit_vanilla with storage ' + NS + ':sel',
+    ]),
     '',
   ].join(LF);
 }
@@ -279,6 +331,17 @@ for (const [biome, data] of Object.entries(rosters)) {
       ...structPreambleLines(cat),
       'scoreboard players set #wsum ' + NS + ' ' + entry.weightSum,
       ...authorWeightLines(biome, cat),
+      // v4.24 运行时刻条目（storage doom.nats:author → entries[]）：接在构建期条目之后，
+      //   #off 在这里重新对齐到 #wsum（构建期条目已经把两者一起推进过，所以这是幂等的）。
+      'scoreboard players operation #off ' + NS + ' = #wsum ' + NS,
+      'execute if data storage ' + NS + ':author entries[0] run function ' + NS + ':author/entry_scan_' + cat,
+      ...(PKG.EXP ? [
+        '# 实验性条目（storage doom.nats:exp → entries[]）：总开关 enabled=1b 时才进池',
+        // 实验性总开关：当场读进 $exp.on（改 storage 即刻生效；execute if data storage <id>{…} 是非法语法）
+        'scoreboard players set $exp.on ' + NS + ' 0',
+        'execute if data storage ' + NS + ':exp enabled run execute store result score $exp.on ' + NS + ' run data get storage ' + NS + ':exp enabled',
+        'execute if score $exp.on ' + NS + ' matches 1 if data storage ' + NS + ':exp entries[0] run function ' + NS + ':exp/entry_scan_' + cat,
+      ] : []),
       'scoreboard players operation $rng ' + NS + ' %= #wsum ' + NS,
     ];
     for (const r of entry.rows) {
@@ -287,7 +350,10 @@ for (const [biome, data] of Object.entries(rosters)) {
       const rl = ruleOf(r.type);
       // v4.14：规则里 persist=true 的物种，召唤 NBT 直接带 PersistenceRequired:1b（原版语义：永不消失）
       const mobNbt = '{Tags:[' + JSON.stringify(NS + '.spawned') + ',' + JSON.stringify(NS + '.cat.' + cat) + ']' + (rl.persist ? ',PersistenceRequired:1b' : '') + '}';
-      rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data merge storage ' + NS + ':sel {type:' + JSON.stringify(r.type) + ',slug:' + JSON.stringify(String(r.type).replace(/^minecraft:/, '')) + ',cat:' + Q + cat + Q + ',min:' + r.min + ',max:' + r.max + ',nbt:' + mobNbt + '}');
+      // ⚠ data merge 是**递归**的：nbt 写进同一个 merge 时，上一条目残留的键会累积到下一只身上
+      //   （真机实测：上一条作者条目的 CustomName/HandItems 会粘到下一只香草生物）⇒ 结构字段 merge、nbt 整体 set。
+      rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data merge storage ' + NS + ':sel {type:' + JSON.stringify(r.type) + ',slug:' + JSON.stringify(String(r.type).replace(/^minecraft:/, '')) + ',cat:' + Q + cat + Q + ',min:' + r.min + ',max:' + r.max + rigField(r.type) + '}');
+      rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data modify storage ' + NS + ':sel nbt set value ' + mobNbt);
       // v4.23 作者层：按 Y 段覆盖「每次生几只」（rules/counts.json groupByY）—— 在香草 min/max 之后合并，故覆盖它
       for (const b of groupByYOf(r.type) ?? []) {
         rows.push('execute if score $rng ' + NS + ' ' + cond + ' if score $py ' + NS + ' ' + yBandCond(b) + ' run data merge storage ' + NS + ':sel {min:' + b.min + ',max:' + b.max + '}');
@@ -306,6 +372,11 @@ for (const [biome, data] of Object.entries(rosters)) {
       rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.wide2 ' + NS + ' ' + (isWide2(r.type) ? 1 : 0));
       rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.tall ' + NS + ' ' + (isTall(r.type) ? 1 : 0));
       rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.cluster ' + NS + ' ' + clusterOf(r.type));
+      // v4.24：命中该行后跑一次"运行时刻装载"（规则补丁 + groupByY）。空层时 author/row 只做几次 no-op。
+      rows.push('execute if score $rng ' + NS + ' ' + cond + ' run function ' + NS + ':author/row with storage ' + NS + ':sel');
+      if (PKG.EXP) {
+        rows.push('execute if score $rng ' + NS + ' ' + cond + ' if score $exp.on ' + NS + ' matches 1 run function ' + NS + ':exp/row with storage ' + NS + ':sel');
+      }
     }
     F['data/' + NS + '/function/mob/biome/' + short + '/' + cat + '.mcfunction'] = rows.join(LF) + LF;
     // v4.14：被动生物（creature）在原版只有 gameTime % 400 == 0 那一拍才进候选类别（MobCategory.isPersistent()
@@ -370,7 +441,8 @@ for (const [biome, data] of Object.entries(rosters)) {
     const rl = ruleOf(r.type);
     const mobNbt = '{Tags:[' + JSON.stringify(NS + '.spawned') + ',' + JSON.stringify(NS + '.cat.monster') + ']' + (rl.persist ? ',PersistenceRequired:1b' : '') + '}';
     rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.ok ' + NS + ' 1');
-    rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data merge storage ' + NS + ':sel {type:' + JSON.stringify(r.type) + ',slug:' + JSON.stringify(String(r.type).replace(/^minecraft:/, '')) + ',cat:' + Q + 'monster' + Q + ',min:' + r.min + ',max:' + r.max + ',nbt:' + mobNbt + '}');
+    rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data merge storage ' + NS + ':sel {type:' + JSON.stringify(r.type) + ',slug:' + JSON.stringify(String(r.type).replace(/^minecraft:/, '')) + ',cat:' + Q + 'monster' + Q + ',min:' + r.min + ',max:' + r.max + rigField(r.type) + '}');
+    rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data modify storage ' + NS + ':sel nbt set value ' + mobNbt);
     rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.rule ' + NS + ' ' + RULE_TABLE.idOf(r.type));
     rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.place ' + NS + ' ' + PLACE[rl.place]);
     rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.light ' + NS + ' ' + LIGHT[rl.light]);
@@ -416,7 +488,8 @@ for (const [biome, data] of Object.entries(rosters)) {
         const rl = ruleOf(r.type);
         const mobNbt = '{Tags:[' + JSON.stringify(NS + '.spawned') + ',' + JSON.stringify(NS + '.cat.' + cat) + ']' + (rl.persist ? ',PersistenceRequired:1b' : '') + '}';
         rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.ok ' + NS + ' 1');
-        rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data merge storage ' + NS + ':sel {type:' + JSON.stringify(r.type) + ',slug:' + JSON.stringify(String(r.type).replace(/^minecraft:/, '')) + ',cat:' + Q + cat + Q + ',min:' + r.min + ',max:' + r.max + ',nbt:' + mobNbt + '}');
+        rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data merge storage ' + NS + ':sel {type:' + JSON.stringify(r.type) + ',slug:' + JSON.stringify(String(r.type).replace(/^minecraft:/, '')) + ',cat:' + Q + cat + Q + ',min:' + r.min + ',max:' + r.max + rigField(r.type) + '}');
+        rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data modify storage ' + NS + ':sel nbt set value ' + mobNbt);
         rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.rule ' + NS + ' ' + RULE_TABLE.idOf(r.type));
         rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.place ' + NS + ' ' + PLACE[rl.place]);
         rows.push('execute if score $rng ' + NS + ' ' + cond + ' run scoreboard players set $sel.light ' + NS + ' ' + LIGHT[rl.light]);

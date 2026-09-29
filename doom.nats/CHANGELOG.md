@@ -10,6 +10,60 @@
 
 ---
 
+## v4.25 — 2026-09-29 · 实验性 AJ/BDEngine rig 桥接（真实体当内核，rig 当外观）
+
+- **新输入 `rules/rigs.json`（实验性）**：`{carrier, rig, carrier_nbt?, rig_args?, rig_root_tag?, on_spawn?, cat?, count_with_carrier?, mount?}`；
+  校验入口 `tools/lib/exp-rigs.mjs`。**空/缺文件 ⇒ 整条链路不生成任何东西**（并清理陈旧 `exp/aj/**`）。
+- **新生成器 `tools/gen_ctm_exp_aj.mjs`**（只写实验性变体）：`exp/aj/{emit_sel, emit/<id>, post/<id>, rigsummon/<id>, on_spawn/<id>, tick, sweep, count, status, say_status, help, placeholder/summon}` 共 17 个文件 +
+  `tags/entity_type/exp_aj_display.json`。链路：`spawn/emit` → `emit_sel` → `emit/<id>` → `execute summon <内核>` → `post/<id>`
+  （标准收尾 + 内核 NBT/标签 → 召唤第三方 rig → **pre 差集整云认领** → 只挂"顶层"）→ `on_spawn` 钩子。
+- **清扫层**：`core/tick`（仅实验性变体 + rigs 非空时多 1 行）→ `exp/aj/tick`（40t 分频）→ `exp/aj/sweep`
+  （从**活内核**做乘客闭包，孤儿 rig/骨骼 kill；display 无战利品表，kill ≡ discard）。
+- **真机数字**（隔离实例 **mcserver-aj 25572/25582**；`_work/verify_exp_aj.mjs`）：
+  rig 相 **13 PASS / 0 FAIL** · 空 rigs A/B **2 PASS / 0 FAIL** · `/reload` **0** 个 Failed to load。
+  关键量：deep_ocean 表 `$rng=0` 命中 squid+rig · rig **50** 个 display **50/50 全挂上** · 根↔内核 **0.80 格**（挂载点偏移）·
+  tp 后 rig 位移 **7.14 格 / 误差 0.0000** · 逐格位移 ×10 **最大误差 0.0000** · 自走 4s 两侧 **5.55/5.55·0.0000** ·
+  容量 `$cnt.monster` **Δ1**（50 个 display 计 0）· 内核消失后 **~6.6s 残留 0** · MSPT 0/1/5 rig = **1.57 / 1.43 / 2.37ms**。
+- **三条挂载实测**（换挂法前先读）：① 方向必须是"rig 骑内核"（反过来内核不再自己走）；
+  ② `minecraft:marker` **不能载客**；③ 多个 display 乘客**落在同一个挂载点**（实测 Pos 全同）
+  且 **display 上没有 `RootVehicle`** ⇒ 判挂载要用乘客闭包。
+- **静态门**：默认变体 **0 error / 2 warning**（逐字节不变）· rig 启用的实验性产物 lint **0 error / 2 warning**
+  （`calamar:*` 被列为"需随包提供"的外部依赖）。
+- **第三方资产**：验收用的 Gigantic Squid（Modrinth，**All-Rights-Reserved**）**只放测试实例，不进产物**；
+  其 `pack.mcmeta` 用新 schema（`min_format/max_format`）在 1.21.6 不可选 ⇒ 副本补 `pack_format:80` 才可用。
+- 报告：`reports/验收-实验性AJ桥接-20260929.md`（含图 `reports/图-实验性AJ巨人鱿鱼-20260929.png`，副路自绘；
+  主路 mineflayer+prismarine-viewer 被 1.21.6 移动包兼容问题挡住，见报告第八章）。
+
+## v4.24 — 2026-09-29 · 运行时刻作者层（改 storage 即刻生效）+ 实验性变体
+
+- **运行时刻通路（新）**：同样的三层内容（逐实体补丁 / 条件条目 / 数量随 Y）现在**也在 storage 里**：
+  `doom.nats:author`（与 `rules/*.json` **同构**）。判定**当场读**，改完即刻生效 —— 不用重生成、不用重装、不用重启。
+  上限：条目 ≤8 · Y 段 ≤8 · 落位面标签 ≤8 · 群系白/黑名单各 ≤4（运行期槽位固定）。
+- **通用派发**（构建期生成、运行时读 storage）：`mob/biome` 表头的条目扫描 + 命中行的 `author/row`（补丁 + Y 段）、
+  `check/block`（额外落位面逐条 `if block ~ ~-1 ~ <标签>`）、`check/entity`（Y/亮度/天气/群系名单）、
+  `check/cap`（容量随 Y）、`spawn/emit`（运行时刻条目 / 实验性条目 / 香草 三路派发）。
+  亮度窗口走 **0..15 谓词阶梯 + 宏拼 id**（命令侧读不到亮度值）；条件条目用 `$data merge entity @s $(nbt)` 落自定义 NBT。
+- **命令面**：`doom.nats:author/{help,show,load,reset,export,demo,add_entry,add_below_tag,set_group_by_y,set_cap_y}`
+  （`/function` 没有内联参数 ⇒ 统一走 `doom.nats:author_in` 入参 storage）。
+- **契约：空层 = 原版**：storage 空时所有通路被守卫挡住 ⇒ 逐条与原版一致（探针 §1 三条断言 + default A/B 5/0）。
+- **两个变体**（`tools/lib/packdir.mjs`，`DOOM_EXP=1` ⇒ `v4x/doom.nats`）：
+  · **默认变体** = 原版复刻 + 稳定扩展（`pack.mcmeta` 不带 `features`）；
+  · **实验性变体** = 默认 + `doom.nats:exp/*`（**非原版能力**：`when.near` 关系条件 / `on_spawn` 演出钩子 / `preset` 预设），
+    `pack.mcmeta` 带 `features{minecraft:minecart_improvements}` ⇒ 世界没开该实验性玩法时**引擎拒绝启用**
+    （真机：`Pack file/doom.nats cannot be enabled, since required flags are not enabled in this world: minecraft:minecart_improvements!`）。
+    ⚠ `/reload` 会绕过这道门；若包已在 enabled 列表里，服务端会 `Found feature pack …, forcing to enabled` 强行开旗标（都真机复现）。
+- **双轨开关**：引擎 `features` 管"能不能装"；运行时刻 `doom.nats:exp enabled:1b` 管"行为回不回滚"（`exp/enable|disable`）。
+- **顺手修掉的既有问题**：① `doom.nats:water_fluid` 以前是**手写进产物的孤儿文件**（无生成器产出）⇒ 新变体缺它、
+  `check/entity` 整函数加载失败；已收进 `gen_ctm_check.mjs`。② `data merge` 递归 ⇒ `sel.nbt` 残留（上一条目的
+  `CustomName`/`HandItems` 粘到下一只）⇒ 全面改成"结构字段 merge + nbt 整体 set"。③ 1.21.5+ 装备 NBT 是
+  `equipment:{mainhand:…,head:…}`，老的 `HandItems`/`ArmorItems` **静默忽略** ⇒ 示例与文档已改。
+- **数字**：静态门 **0 error / 2 warning**（两变体）· `/reload` **0** Failed to load ·
+  `verify_author_runtime --variant std` **15 PASS / 0 FAIL / 3 SKIP** · `--variant exp` **19 PASS / 0 FAIL** ·
+  `verify_author_rules` default **5/0** · author **6/0** · `_work/auto_gate.mjs` **全绿**。
+  详情：`reports/验收-作者运行时层-20260929.md`。
+
+---
+
 ## v4.23 — 2026-09-29 · 作者规则层（默认 = 原版，可高度自定义）
 
 - **新增 `rules/` 覆盖层**（构建期输入，三个文件都可为空）：

@@ -7,9 +7,11 @@
 // 便于 collect.mjs 采集），因此能直接定位是光照档、落位标签、容量还是抽点的问题。
 import fs from 'node:fs';
 import path from 'node:path';
+import * as PKG from './lib/packdir.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const PACK = path.join(ROOT, '..', 'v4', 'doom.nats');
+// v4.24：产物根目录由 lib/packdir.mjs 统一解析（DOOM_EXP=1 ⇒ v4x/doom.nats 实验性变体）
+const PACK = PKG.PACK;
 const LF = String.fromCharCode(10);
 const NS = 'doom.nats';
 const F = {};

@@ -29,6 +29,9 @@ function doom.nats:despawn/setup
 function doom.nats:circ/load
 function doom.nats:circ/snapshot
 
+# v4.24 运行时刻作者层：装载（默认空 = 静默；玩家改完 storage 也可以手动再跑一次）
+function doom.nats:author/load
+
 # 生存直用：装载即接管原版自然生成（不想让本包动 gamerule，就先执行一次 doom.nats:mode/manual）
 execute unless score $mode.manual doom.nats matches 1 run function doom.nats:mode/survival
 function doom.log:info {message:"doom.nats v4 就绪（CTM 自然生成复刻）"}

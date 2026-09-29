@@ -32,3 +32,6 @@ execute if score $sel.rule doom.nats matches 30 unless block ~ ~1 ~ minecraft:la
 execute if score $sel.rule doom.nats matches 31 if predicate doom.nats:spawn/biome_river run function doom.nats:check/coin_1of50
 execute if score $sel.rule doom.nats matches 31 unless entity @a[gamemode=!spectator,distance=..64] run function doom.nats:check/fail {reason:2}
 execute if score $sel.rule doom.nats matches 32 if score $py doom.nats >= $chk.sea_turtle doom.nats run function doom.nats:check/fail {reason:9}
+# ---- v4.24 运行时刻作者层（storage doom.nats:author → entityRules.<实体>）
+execute if score $auth.loaded doom.nats matches 1 run function doom.nats:author/rule_check with storage doom.nats:author_rt cur
+execute if score $auth.loaded doom.nats matches 1 run function doom.nats:author/biome_check

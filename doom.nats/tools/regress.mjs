@@ -45,7 +45,7 @@ const node = (script, args = []) => execFileSync(process.execPath, [path.join(TO
 console.log('=== 一键回归 ' + stamp() + ' ===');
 
 // ① 静态
-const GENS = ['gen_ctm', 'gen_ctm_pos', 'gen_ctm_check', 'gen_ctm_mobs', 'gen_ctm_spawn', 'gen_ctm_despawn', 'gen_ctm_effects', 'gen_ctm_debug', 'gen_ctm_group'];
+const GENS = ['gen_ctm', 'gen_ctm_pos', 'gen_ctm_check', 'gen_ctm_mobs', 'gen_ctm_spawn', 'gen_ctm_despawn', 'gen_ctm_effects', 'gen_ctm_debug', 'gen_ctm_group', 'gen_ctm_author'];
 
 // ⓪ Q7：可选「地图自带 worldgen 覆盖」模式（--worldgen <目录，含 data/> 可重复）
 //   一条命令验证：地图覆盖了群系（整体替换注册表条目）之后，整套静态/离线/真机/断言是否仍全绿。
@@ -66,7 +66,7 @@ if (WG.length) {
   }, { tail: 10, expect: (l) => l.some((x) => /已合并/.test(x)) && l.some((x) => /\[q7\] biomes\.json/.test(x)) });
 }
 
-step('静态·生成器无漂移（8 个）', () => GENS.map((g) => node(g + '.mjs', ['--check']).trim()).join(LF), { tail: 12, expect: (l) => l.filter((x) => x.includes('一致')).length === GENS.length });
+step('静态·生成器无漂移（' + GENS.length + ' 个）', () => GENS.map((g) => node(g + '.mjs', ['--check']).trim()).join(LF), { tail: 12, expect: (l) => l.filter((x) => x.includes('一致')).length === GENS.length });
 step('静态·lint', () => node('lint_ctm.mjs'), { expect: (l) => l.some((x) => /结论: 0 error/.test(x)) });
 step('静态·语义闭包', () => node('check_closure.mjs'), { expect: (l) => l.some((x) => /0 处待确认/.test(x)) });
 

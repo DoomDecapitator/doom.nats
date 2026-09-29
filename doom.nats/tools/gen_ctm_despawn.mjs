@@ -22,9 +22,11 @@
 //   已知不可复刻：noActionTime 读不到 ⇒ 即使打开本层，也无法复刻"距玩家 32 格外满 600 tick 才开始"的前置条件。
 import fs from 'node:fs';
 import path from 'node:path';
+import * as PKG from './lib/packdir.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const PACK = path.join(ROOT, '..', 'v4', 'doom.nats');
+// v4.24：产物根目录由 lib/packdir.mjs 统一解析（DOOM_EXP=1 ⇒ v4x/doom.nats 实验性变体）
+const PACK = PKG.PACK;
 const LF = String.fromCharCode(10);
 const NS = 'doom.nats';
 

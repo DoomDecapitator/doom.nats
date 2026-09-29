@@ -15,9 +15,11 @@
 //   - pack 的 y 不变，因此游走宏只用 ${x} 与 ${z}，y 用 `~` 保持
 import fs from 'node:fs';
 import path from 'node:path';
+import * as PKG from './lib/packdir.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const PACK = path.join(ROOT, '..', 'v4', 'doom.nats');
+// v4.24：产物根目录由 lib/packdir.mjs 统一解析（DOOM_EXP=1 ⇒ v4x/doom.nats 实验性变体）
+const PACK = PKG.PACK;
 const LF = String.fromCharCode(10);
 const NS = 'doom.nats';
 const F = {};
@@ -89,6 +91,10 @@ scoreboard players set $grp ${NS} 3
 function ${NS}:spawn/group
 `;
 
+// v4.24：实验性变体多清一套实验性层的标记（默认变体没有那些函数，插进去会变成悬空引用）
+const EXP_RESET = PKG.EXP
+  ? 'scoreboard players set $exp.hit ' + NS + ' 0' + LF + 'scoreboard players set $exp.hook ' + NS + ' 0' + LF + 'scoreboard players set $exp.loaded ' + NS + ' 0'
+  : '';
 F['data/' + NS + '/function/spawn/group.mcfunction'] = `# ${NS}:spawn/group —— 一组：count = ceil(rand*4)（此处用 1..4 近似，0 的概率可忽略）
 scoreboard players remove $grp ${NS} 1
 # 每组从原点重新起算（源码：x/z 是组内局部变量）+ 本组物种只抽一次
@@ -98,6 +104,12 @@ scoreboard players set $grp.sel ${NS} 0
 scoreboard players set $grp.sized ${NS} 0
 scoreboard players set $grp.stop ${NS} 0
 scoreboard players set $grp.inited ${NS} 0
+# v4.24 运行时刻作者层：每组开始清一次"本条目的命中/钩子/补丁"标记
+#   （条目命中是在**选物种**那一刻定的，整组沿用；所以只能在组边界清，不能每只清）
+scoreboard players set $auth.hit ${NS} 0
+scoreboard players set $auth.hook ${NS} 0
+scoreboard players set $auth.loaded ${NS} 0
+${EXP_RESET}
 # v4.3：源码里 x/z 是**组内局部变量**，每组都从 pack 原点重新起算；跨组累加会让点位漂到 128 格外
 execute store result score $cnt ${NS} run random value 1..4
 function ${NS}:spawn/walk

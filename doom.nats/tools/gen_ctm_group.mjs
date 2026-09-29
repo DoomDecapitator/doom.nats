@@ -25,11 +25,13 @@
 //   Horse/Llama GroupData             → super(true)=0.05，组内共享 Variant（马还要保留各自的 Markings）
 import fs from 'node:fs';
 import path from 'node:path';
+import * as PKG from './lib/packdir.mjs';
 // v4.23 作者规则层：条目里的实体也要有 post/<slug>（宏派发的 id 在运行期拼出，缺文件只会在真机上报错）
 import { entryTypes } from './lib/author-rules.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const PACK = path.join(ROOT, '..', 'v4', 'doom.nats');
+// v4.24：产物根目录由 lib/packdir.mjs 统一解析（DOOM_EXP=1 ⇒ v4x/doom.nats 实验性变体）
+const PACK = PKG.PACK;
 const GEN = path.join(ROOT, '_work', 'generated');
 const LF = String.fromCharCode(10);
 const NS = 'doom.nats';

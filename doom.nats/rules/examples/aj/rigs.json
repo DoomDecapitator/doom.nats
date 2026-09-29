@@ -1,0 +1,26 @@
+{
+  "_note": "实验性 AJ/BDEngine rig 桥接的验收用例（v4.25）。用法：DOOM_EXP=1 DOOM_RULES=$PWD/rules/examples/aj node tools/gen_ctm_exp_aj.mjs（再跑其余生成器）⇒ 产物里出现 doom.nats:exp/aj/**。真实上手见 rules/README.md 第 7 节。",
+  "_note2": "本目录里只有 rigs.json：作者规则层（entity-rules/entries/counts）缺失 ⇒ 那三层为空（默认=原版）。",
+
+  "gigantic_squid": {
+    "comment": "第三方巨型鱿鱼（Modrinth 项目 gigantic-squid，BDEngine 导出，资源包无关：骨架全部是原版 block_display）。内核用 squid（water_creature）而不是 glow_squid（原版类别是 underground_water_creature，不在深海表里）。",
+    "carrier": "minecraft:squid",
+    "rig": "calamar:summon",
+    "rig_root_tag": "calamar1727993704352",
+    "carrier_nbt": "{Silent:1b,active_effects:[{id:\"minecraft:invisibility\",amplifier:0,duration:-1,show_particles:0b}],PersistenceRequired:0b}",
+    "on_spawn": "calamar:start_animation",
+    "cat": "water_creature",
+    "count_with_carrier": true,
+    "mount": true,
+    "claim_radius": 3
+  },
+
+  "placeholder_probe": {
+    "comment": "零依赖占位 rig（本包自己手搓的 display 骨架）—— 用来区分「桥接坏了」还是「某个第三方 rig 坏了」",
+    "carrier": "minecraft:zombie",
+    "rig": "doom.nats:exp/aj/placeholder/summon",
+    "cat": "monster",
+    "count_with_carrier": true,
+    "mount": true
+  }
+}

@@ -14,9 +14,11 @@
 // 每步独立成函数、失败即写 $chk.reason（供 [nats.reject] 归因），不通过就短路。
 import fs from 'node:fs';
 import path from 'node:path';
+import * as PKG from './lib/packdir.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const PACK = path.join(ROOT, '..', 'v4', 'doom.nats');
+// v4.24：产物根目录由 lib/packdir.mjs 统一解析（DOOM_EXP=1 ⇒ v4x/doom.nats 实验性变体）
+const PACK = PKG.PACK;
 const LF = String.fromCharCode(10);
 const NS = 'doom.nats';
 // v4.17：仅用于 _work/verify_aabb_cheap.mjs 的**前后对比基线** —— 置 1 时输出 v4.16 的 AABB 规则
@@ -64,6 +66,9 @@ scoreboard players set #4 ${NS} 4
 scoreboard players set #cap.monster ${NS} 70
 scoreboard players set #cap.creature ${NS} 10
 scoreboard players set #cap.ambient ${NS} 15
+# v4.24 运行时刻作者层：条件条目的权重区间（#wsum 之后的 #off..#hi）
+scoreboard players set #off ${NS} 0
+scoreboard players set #hi ${NS} 0
 # 海平面相关的窗口不在 setup 里写死：由 check/sealevel 每拍按 $cfg.sealevel 折算（v4.14）
 #   （原版 getSeaLevel() 来自噪声设置：主世界 63 / 下界 32 / 末地 0；cfg 层可按维度给值）
 function ${NS}:check/sealevel
@@ -205,6 +210,15 @@ execute if score $s24.x ${NS} matches ..2303 run function ${NS}:check/fail {reas
     '',
   ];
   const F4 = (cond) => 'execute ' + cond + ' run function ' + NS + ':check/fail {reason:4}';
+  rows.push('# ---- v4.24 运行时刻作者层：额外落位面（storage ' + NS + ':author → entityRules.<实体>.belowAny，上限 8）');
+  rows.push('#   命中任一"作者点名的标签"即置 $chk.belowok=1，于是下面的"下方必须可站立"多一条放行条件。');
+  rows.push('#   空层时这两行是纯 no-op（belowok 恒 0）。');
+  rows.push('scoreboard players set $chk.belowok ' + NS + ' 0');
+  rows.push('execute if score $auth.loaded ' + NS + ' matches 1 if data storage ' + NS + ':author_rt w0 run function ' + NS + ':author/below_check');
+  if (PKG.EXP) {
+    rows.push('execute if score $exp.loaded ' + NS + ' matches 1 if data storage ' + NS + ':exp_rt w0 run function ' + NS + ':exp/below_check');
+  }
+  rows.push('');
   rows.push('# ---- 位置与上方必须是"可生成空位"（place 0/1/4）');
   rows.push('#   ⚠ v4.17 实测：`#minecraft:replaceable` **传递包含** water/lava/snow ⇒ 光靠白名单会误收流体与雪层。');
   rows.push('#   原版 isValidEmptySpawnBlock 明列「流体非空 ⇒ false」；雪层有碰撞盒（0..2/16），最后的 noCollision(AABB) 会拒。');
@@ -252,10 +266,12 @@ execute if score $s24.x ${NS} matches ..2303 run function ${NS}:check/fail {reas
   } else {
     for (const p of [0, 4]) {
       rows.push(LEGACY_AABB
-        ? F4('if score $sel.place ' + NS + ' matches ' + p + ' unless block ~ ~-1 ~ #' + NS + ':standable')
+        ? F4('if score $sel.place ' + NS + ' matches ' + p + ' unless block ~ ~-1 ~ #' + NS + ':standable'
+          + ' unless score $chk.belowok ' + NS + ' matches 1')
         : F4('if score $sel.place ' + NS + ' matches ' + p
           + ' unless block ~ ~-1 ~ #' + NS + ':standable'
-          + ' unless block ~ ~-1 ~ #' + NS + ':full_collision'));
+          + ' unless block ~ ~-1 ~ #' + NS + ':full_collision'
+          + ' unless score $chk.belowok ' + NS + ' matches 1'));
     }
   }
   rows.push('');
@@ -434,6 +450,17 @@ scoreboard players operation $cost.sum ${NS} += $cost.n ${NS}
     if (r.biomeIn) rows.push(rule(id, 'unless predicate ' + NS + ':author/rule_biome_' + authorSlug(id)) + NS + ':check/fail {reason:9}');
     if (r.biomeNot) rows.push(rule(id, 'if predicate ' + NS + ':author/rule_notbiome_' + authorSlug(id)) + NS + ':check/fail {reason:9}');
   }
+  // v4.24 运行时刻规则补丁（storage ' + NS + ':author → entityRules.<实体>）：
+  //   Y 窗口 / 亮度窗口 / 天气门走 rule_check（宏函数，值来自运行时刻）；群系白黑名单走 biome_check。
+  //   只在"该物种有补丁"（$auth.loaded=1，由 author/row 置位）时调用 ⇒ 空层零行为差异。
+  if (PKG.EXP) {
+    rows.push('# ---- v4.24 实验性层（storage ' + NS + ':exp → entityRules.<实体>，仅在 enabled:1b 时生效）');
+    rows.push('execute if score $exp.loaded ' + NS + ' matches 1 run function ' + NS + ':exp/rule_check with storage ' + NS + ':exp_rt cur');
+    rows.push('execute if score $exp.loaded ' + NS + ' matches 1 run function ' + NS + ':exp/biome_check');
+  }
+  rows.push('# ---- v4.24 运行时刻作者层（storage ' + NS + ':author → entityRules.<实体>）');
+  rows.push('execute if score $auth.loaded ' + NS + ' matches 1 run function ' + NS + ':author/rule_check with storage ' + NS + ':author_rt cur');
+  rows.push('execute if score $auth.loaded ' + NS + ' matches 1 run function ' + NS + ':author/biome_check');
   F['data/' + NS + '/function/check/entity.mcfunction'] = rows.join(LF) + LF;
 }
 
@@ -443,10 +470,17 @@ const CAP_CATS = [...new Set(Object.values(_rosters).flatMap((r) => Object.keys(
 const CAP_Y_ACTIVE = CAP_CATS.some((c) => capByYOf(c));
 // ⚠ 宏行（$ 开头）里**必须**有 $(name) 占位符，否则整函数加载失败（lint L12 / No variables in macro）
 //   ⇒ 临时分数名也带上 $(cat)：$cap.now_<cat> / $cap.lmax_<cat>（check/cap_y/<cat> 是非宏函数，直接写全名）
-const capNow = CAP_Y_ACTIVE ? '$scoreboard players operation $cap.now_$(cat) ' + NS + ' = $cap.$(cat) ' + NS + LF + '$function ' + NS + ':check/cap_y/$(cat)' + LF : '';
-const capCmp = CAP_Y_ACTIVE ? '$cap.now_$(cat) ' + NS : '$cap.$(cat) ' + NS;
-const localMax = CAP_Y_ACTIVE ? '$cap.lmax_$(cat) ' + NS : '$eff.max_$(cat) ' + NS;
-const lmax = CAP_Y_ACTIVE ? '$scoreboard players operation $cap.lmax_$(cat) ' + NS + ' = $eff.max_$(cat) ' + NS + LF : '';
+// v4.24：比较用的两个量统一成 $cap.now_$(cat) / $cap.lmax_$(cat)（先取引擎每拍算出的快照值）——
+//   构建期 capByY 与运行时刻 capByY 都只**覆盖**这两个量，不再各走一条分支（空层逐条等价：只是多两次赋值）。
+const capNow = '$scoreboard players operation $cap.now_$(cat) ' + NS + ' = $cap.$(cat) ' + NS + LF
+  + '$scoreboard players operation $cap.lmax_$(cat) ' + NS + ' = $eff.max_$(cat) ' + NS + LF
+  + (CAP_Y_ACTIVE ? '$function ' + NS + ':check/cap_y/$(cat)' + LF : '')
+  // 运行时刻容量随 Y（storage ' + NS + ':author counts.capByY.<类别>）：只在作者真的给了该类别时才调用
+  + '$execute if data storage ' + NS + ':author counts.capByY."$(cat)" run function ' + NS + ':author/cap_scan with storage ' + NS + ':sel' + LF
+  + (PKG.EXP ? '$execute if score $exp.on ' + NS + ' matches 1 if data storage ' + NS + ':exp counts.capByY."$(cat)" run function ' + NS + ':exp/cap_scan with storage ' + NS + ':sel' + LF : '');
+const capCmp = '$cap.now_$(cat) ' + NS;
+const localMax = '$cap.lmax_$(cat) ' + NS;
+const lmax = '';
 if (CAP_Y_ACTIVE) {
   for (const cat of CAP_CATS) {
     const bands = capByYOf(cat) ?? [];
@@ -680,6 +714,15 @@ const STANDABLE_VALUES = [
     'minecraft:quartz_block', 'minecraft:smooth_quartz', 'minecraft:sandstone', 'minecraft:red_sandstone',
 ];
 F['data/' + NS + '/tags/block/standable.json'] = JSON.stringify({ values: STANDABLE_VALUES }, null, 2) + LF;
+
+// v4.20（E5）水生落位的**流体语义**标签：原版 SpawnPlacements.IN_WATER 读的是 fluid state，
+//   海草/海带/气泡柱的流体都是水 ⇒ 只看方块会把这些格子误拒。
+//   ⚠ v4.24 修正：这个文件以前是**手写进产物**的（没有任何生成器产出它）⇒ 变体构建（v4x）里缺它、
+//     check/entity 直接整函数加载失败（真机：Unknown block tag 'doom.nats:water_fluid'）。
+//     现在收进生成器，两个变体都有。
+F['data/' + NS + '/tags/block/water_fluid.json'] = JSON.stringify({
+  values: ['minecraft:water', 'minecraft:seagrass', 'minecraft:tall_seagrass', 'minecraft:kelp', 'minecraft:kelp_plant', 'minecraft:bubble_column'],
+}, null, 2) + LF;
 
 // 可生成空位（对齐 isValidEmptySpawnBlock：非完整碰撞盒 ∧ 非流体；此处用"可替换/空气类"近似）
 // v4.17（P1-7）修两处**误收**：

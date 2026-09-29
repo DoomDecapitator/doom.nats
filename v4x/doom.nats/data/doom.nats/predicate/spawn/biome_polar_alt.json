@@ -1,0 +1,6 @@
+{
+  "condition": "minecraft:location_check",
+  "predicate": {
+    "biomes": "#minecraft:polar_bears_spawn_on_alternate_blocks"
+  }
+}

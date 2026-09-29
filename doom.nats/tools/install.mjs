@@ -3,6 +3,15 @@
  * doom.nats/tools/install.mjs —— 把移植版装进某个 Minecraft 存档的 datapacks/ 做实测
  *
  *   node tools/install.mjs --variant ported|optimized --save "<存档目录>"   # 源：../ported|../optimized
+ *   node tools/install.mjs --experimental --save "<存档目录>"                 # 源：../v4x/doom.nats（**实验性变体**）
+ *
+ * v4.24 的两个 v4 变体（物理分开的两份产物，见 tools/lib/packdir.mjs）：
+ *   · 默认变体  ../v4/doom.nats   —— 原版复刻 + 本包稳定扩展；pack.mcmeta **不带** features
+ *   · 实验性变体 ../v4x/doom.nats —— 多一层 doom.nats:exp/*（near / on_spawn / preset）；
+ *      pack.mcmeta 带 features{minecraft:minecart_improvements} ⇒ **世界必须开对应实验性玩法**，
+ *      否则客户端的包列表里它是不可选/不兼容的（真机日志：Pack 'file/doom.nats' cannot be enabled,
+ *      since required flags are not enabled in this world: minecraft:minecart_improvements!）。
+ *      构建：DOOM_EXP=1 node tools/gen_ctm*.mjs（或直接跑 node tools/check_static.mjs，它会生成并校验两个变体）。
  *   node tools/install.mjs --status  --save "<存档目录>"
  *
  * 默认存档：1.21.6-Fabric 0.16.14 的 natspawns 9_27（2026-09-27 建的实测存档）
@@ -33,7 +42,8 @@ const getArg = (n, d) => {
   return i !== -1 && argv[i + 1] ? argv[i + 1] : d;
 };
 const save = path.resolve(getArg('--save', DEFAULT_SAVE));
-const variant = getArg('--variant', '');
+const experimental = argv.includes('--experimental');   // v4.24：实验性变体（v4x）
+const variant = experimental ? 'v4x' : getArg('--variant', '');
 const datapacks = path.join(save, 'datapacks');
 
 const FIXTURE_MCMETA = {
@@ -107,10 +117,11 @@ const VARIANTS = {
   optimized: { dir: 'optimized', pack: 'suso.nats', ns: 'suso.nats', note: 'v2 无假实体版' },
   v3: { dir: 'v3', pack: 'doom.nats', ns: 'doom.nats', note: 'v3 生物注册表 + 宏驱动' },
   v4: { dir: 'v4', pack: 'doom.nats', ns: 'doom.nats', note: 'v4 CTM 自然生成复刻' },
+  v4x: { dir: 'v4x', pack: 'doom.nats', ns: 'doom.nats', note: 'v4x 实验性变体（含非原版能力；需世界开 minecraft:minecart_improvements）' },
 };
 const V = VARIANTS[variant];
 if (!V) {
-  console.error('--variant 只能是 ' + Object.keys(VARIANTS).join(' / ') + '（收到 ' + variant + '）');
+  console.error('--variant 只能是 ' + Object.keys(VARIANTS).join(' / ') + '，或者用 --experimental（收到 ' + variant + '）');
   console.error(`--variant 只能是 ported 或 optimized（收到 "${variant}"）`);
   process.exit(2);
 }

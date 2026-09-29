@@ -7,6 +7,12 @@ scoreboard players set $grp.sel doom.nats 0
 scoreboard players set $grp.sized doom.nats 0
 scoreboard players set $grp.stop doom.nats 0
 scoreboard players set $grp.inited doom.nats 0
+# v4.24 运行时刻作者层：每组开始清一次"本条目的命中/钩子/补丁"标记
+#   （条目命中是在**选物种**那一刻定的，整组沿用；所以只能在组边界清，不能每只清）
+scoreboard players set $auth.hit doom.nats 0
+scoreboard players set $auth.hook doom.nats 0
+scoreboard players set $auth.loaded doom.nats 0
+
 # v4.3：源码里 x/z 是**组内局部变量**，每组都从 pack 原点重新起算；跨组累加会让点位漂到 128 格外
 execute store result score $cnt doom.nats run random value 1..4
 function doom.nats:spawn/walk

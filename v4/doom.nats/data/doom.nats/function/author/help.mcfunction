@@ -1,0 +1,11 @@
+# doom.nats:author/help —— 运行时刻作者层用法
+tellraw @s [{"text":"=== doom.nats 运行时刻作者层（改 storage 即刻生效，不用重生成包）===","color":"aqua"}]
+tellraw @s [{"text":"[1] 直接改 storage：","color":"yellow"},{"text":"data modify storage doom.nats:author entityRules.\"minecraft:zombie\".belowAny set value [\"#minecraft:leaves\"]","color":"gray"}]
+tellraw @s [{"text":"[2] 条目：","color":"yellow"},{"text":"data modify storage doom.nats:author_in entry set value {id:\"x\",mob:\"minecraft:zombie\",biome:\"#minecraft:is_overworld\",category:\"monster\",weight:40,when:{thundering:1b}} + function doom.nats:author/add_entry","color":"gray"}]
+tellraw @s [{"text":"[3] 额外落位面：","color":"yellow"},{"text":"{type:\"minecraft:zombie\",tag:\"#minecraft:leaves\"} + doom.nats:author/add_below_tag","color":"gray"}]
+tellraw @s [{"text":"[4] 组大小随 Y：","color":"yellow"},{"text":"{type:\"minecraft:zombie\",yMax:0,min:4,max:6} + doom.nats:author/set_group_by_y","color":"gray"}]
+tellraw @s [{"text":"[5] 容量随 Y：","color":"yellow"},{"text":"{category:\"monster\",yMax:0,max:200,localMax:140} + doom.nats:author/set_cap_y","color":"gray"}]
+tellraw @s [{"text":"[6] 看/导出/重置：","color":"yellow"},{"text":"function doom.nats:author/show · export · reset","color":"gray"}]
+tellraw @s [{"text":"字段（entityRules）：belowAny(≤8) yMin yMax lightMin lightMax weather(thunder|rain|clear) biomeIn(≤4) biomeNot(≤4) place light persist","color":"white"}]
+tellraw @s [{"text":"字段（entries）：id mob biome category weight min max nbt when{thundering raining yMin yMax lightMin lightMax}","color":"white"}]
+tellraw @s [{"text":"上限：条目 ≤8 · Y 段 ≤8 · 落位面标签 ≤8 · 群系白/黑名单各 ≤4。未列出的构建期字段（coins/cluster/deep…）请在 rules/ 里改。","color":"dark_gray"}]

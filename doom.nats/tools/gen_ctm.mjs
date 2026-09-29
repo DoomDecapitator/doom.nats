@@ -6,25 +6,54 @@
 // 也是掌握单/多/服务器差异的关键量（已加载区块数用 `execute if loaded` 实测，而不是估算）。
 import fs from 'node:fs';
 import path from 'node:path';
+import * as PKG from './lib/packdir.mjs';
 
 import { CIRC, whenToCmd } from './lib/circ-defs.mjs';
+// v4.25 实验性 AJ 桥接：只有「实验性变体 + rules/rigs.json 非空」时才多一行 tick 转发。
+//   为什么必须由 core/tick 转发：整包只有一个 minecraft:tick 文件（本生成器写），第二个生成器写它会漂移；
+//   而清扫要 40t 节拍 ⇒ 由 exp/aj/tick 自己分频，core/tick 只负责每 tick 喊一声。
+import { EXP_RIGS } from './lib/exp-rigs.mjs';
 const ROOT = path.resolve(import.meta.dirname, '..');
-const PACK = path.join(ROOT, '..', 'v4', 'doom.nats');
+// v4.24：产物根目录由 lib/packdir.mjs 统一解析（DOOM_EXP=1 ⇒ v4x/doom.nats 实验性变体）
+const PACK = PKG.PACK;
 const LF = String.fromCharCode(10);
 const NS = 'doom.nats';
 const DOLLAR = String.fromCharCode(36);   // '$'，避免与生成器自身的模板字符串冲突
 const DEP = '${';   // 宏占位符起始，避免与生成器模板字符串冲突
 const F = {};
 
+// v4.25 实验性 AJ 桥接：core/tick 末尾的那一段（空 rigs.json ⇒ 空串 ⇒ core/tick 逐字节不变）
+const RIG_TICK = EXP_RIGS.active ? `
+# 实验性 AJ 桥接（v4.25）：rig 层节拍。每 tick 只多一次函数调用（分频/清扫都在 exp/aj/tick 里做）；
+#   rules/rigs.json 为空时这一行**根本不生成** ⇒ core/tick 与不带这一层时逐字节相同。
+function ${NS}:exp/aj/tick` : '';
+
 const j = (o) => JSON.stringify(o, null, 2) + LF;
 
 // ---------------------------------------------------------------- 元数据
-F['pack.mcmeta'] = j({
-  pack: {
-    pack_format: 80,
-    description: "§bDoom's Artificial Natspawns §7[v4 · 1.21.6 · CTM 自然生成复刻（数据包驱动）]",
-  },
-});
+// v4.24：两个变体。实验性变体（DOOM_EXP=1 ⇒ v4x/doom.nats）在 pack.mcmeta 里声明 `features`（**顶层字段**），
+//   于是**世界没开对应实验性玩法时引擎直接拒绝加载这个包**（拒绝比警告可靠）。
+//   形状取自 vanilla 自带实验性数据包（server-1.21.6.jar 的 data/minecraft/datapacks/*/pack.mcmeta）：
+//     { "features": { "enabled": ["minecraft:minecart_improvements"] }, "pack": { … } }
+//   1.21.6 可用的旗标只有三个（同一份 jar 的证据）：minecraft:minecart_improvements / redstone_experiments /
+//     trade_rebalance —— 没有"自定义数据包"旗标，只能**借用一个原生实验性旗标**当引擎门。
+//   选 minecart_improvements 的理由：它只改矿车运动，对"自然生成/战斗/交易"影响最小。
+//   ⚠ 代价必须写进文档：开它的世界同时也会拿到 vanilla 的矿车改动。
+const EXP = PKG.EXP;
+F['pack.mcmeta'] = EXP
+  ? j({
+    features: { enabled: ['minecraft:minecart_improvements'] },
+    pack: {
+      pack_format: 80,
+      description: "§6Doom's Artificial Natspawns §7[v4x · 1.21.6 · 实验性变体（含非原版能力 near / on_spawn / preset）]",
+    },
+  })
+  : j({
+    pack: {
+      pack_format: 80,
+      description: "§bDoom's Artificial Natspawns §7[v4 · 1.21.6 · CTM 自然生成复刻（数据包驱动）]",
+    },
+  });
 
 F['data/minecraft/tags/function/load.json'] = j({ values: [NS + ':core/setup'] });
 F['data/minecraft/tags/function/tick.json'] = j({ values: [NS + ':core/tick'] });
@@ -60,6 +89,11 @@ scoreboard players set $chunks_mode ${NS} 0
 function ${NS}:despawn/setup
 function ${NS}:circ/load
 function ${NS}:circ/snapshot
+
+# v4.24 运行时刻作者层：装载（默认空 = 静默；玩家改完 storage 也可以手动再跑一次）
+function ${NS}:author/load${PKG.EXP ? `
+# v4.24 实验性层（只有实验性变体才有这些函数）：装载 + 总览
+function ${NS}:exp/load` : ''}
 
 # 生存直用：装载即接管原版自然生成（不想让本包动 gamerule，就先执行一次 doom.nats:mode/manual）
 execute unless score $mode.manual ${NS} matches 1 run function ${NS}:mode/survival
@@ -267,7 +301,7 @@ execute if score $spawn_t ${NS} matches 0 run function ${NS}:spawn/batch
 scoreboard players add $despawn_t ${NS} 1
 scoreboard players operation $despawn_t ${NS} %= $despawn_period ${NS}
 execute if score $despawn_t ${NS} matches 0 run function ${NS}:despawn/tick
-`;
+${RIG_TICK}`;
 
 // ---------------------------------------------------------------- 情形引擎：快照
 F['data/' + NS + '/function/circ/snapshot.mcfunction'] = `# ${NS}:circ/snapshot —— 采集环境快照（情形判定与 debug 的共同基础）

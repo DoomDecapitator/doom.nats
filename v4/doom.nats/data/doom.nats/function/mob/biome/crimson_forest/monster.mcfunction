@@ -9,9 +9,12 @@ execute if predicate doom.nats:spawn/in_ancient_city run return 0
 execute if predicate doom.nats:spawn/in_trial_chambers run return 0
 
 scoreboard players set #wsum doom.nats 15
+scoreboard players operation #off doom.nats = #wsum doom.nats
+execute if data storage doom.nats:author entries[0] run function doom.nats:author/entry_scan_monster
 scoreboard players operation $rng doom.nats %= #wsum doom.nats
 execute if score $rng doom.nats matches 0 run scoreboard players set $sel.ok doom.nats 1
-execute if score $rng doom.nats matches 0 run data merge storage doom.nats:sel {type:"minecraft:zombified_piglin",slug:"zombified_piglin",cat:"monster",min:2,max:4,nbt:{Tags:["doom.nats.spawned","doom.nats.cat.monster"]}}
+execute if score $rng doom.nats matches 0 run data merge storage doom.nats:sel {type:"minecraft:zombified_piglin",slug:"zombified_piglin",cat:"monster",min:2,max:4}
+execute if score $rng doom.nats matches 0 run data modify storage doom.nats:sel nbt set value {Tags:["doom.nats.spawned","doom.nats.cat.monster"]}
 execute if score $rng doom.nats matches 0 run scoreboard players set $sel.rule doom.nats 25
 execute if score $rng doom.nats matches 0 run scoreboard players set $sel.place doom.nats 0
 execute if score $rng doom.nats matches 0 run scoreboard players set $sel.light doom.nats 0
@@ -21,8 +24,10 @@ execute if score $rng doom.nats matches 0 run scoreboard players set $sel.wide d
 execute if score $rng doom.nats matches 0 run scoreboard players set $sel.wide2 doom.nats 0
 execute if score $rng doom.nats matches 0 run scoreboard players set $sel.tall doom.nats 0
 execute if score $rng doom.nats matches 0 run scoreboard players set $sel.cluster doom.nats 4
+execute if score $rng doom.nats matches 0 run function doom.nats:author/row with storage doom.nats:sel
 execute if score $rng doom.nats matches 1..9 run scoreboard players set $sel.ok doom.nats 1
-execute if score $rng doom.nats matches 1..9 run data merge storage doom.nats:sel {type:"minecraft:hoglin",slug:"hoglin",cat:"monster",min:3,max:4,nbt:{Tags:["doom.nats.spawned","doom.nats.cat.monster"]}}
+execute if score $rng doom.nats matches 1..9 run data merge storage doom.nats:sel {type:"minecraft:hoglin",slug:"hoglin",cat:"monster",min:3,max:4}
+execute if score $rng doom.nats matches 1..9 run data modify storage doom.nats:sel nbt set value {Tags:["doom.nats.spawned","doom.nats.cat.monster"]}
 execute if score $rng doom.nats matches 1..9 run scoreboard players set $sel.rule doom.nats 19
 execute if score $rng doom.nats matches 1..9 run scoreboard players set $sel.place doom.nats 0
 execute if score $rng doom.nats matches 1..9 run scoreboard players set $sel.light doom.nats 0
@@ -32,8 +37,10 @@ execute if score $rng doom.nats matches 1..9 run scoreboard players set $sel.wid
 execute if score $rng doom.nats matches 1..9 run scoreboard players set $sel.wide2 doom.nats 0
 execute if score $rng doom.nats matches 1..9 run scoreboard players set $sel.tall doom.nats 0
 execute if score $rng doom.nats matches 1..9 run scoreboard players set $sel.cluster doom.nats 4
+execute if score $rng doom.nats matches 1..9 run function doom.nats:author/row with storage doom.nats:sel
 execute if score $rng doom.nats matches 10..14 run scoreboard players set $sel.ok doom.nats 1
-execute if score $rng doom.nats matches 10..14 run data merge storage doom.nats:sel {type:"minecraft:piglin",slug:"piglin",cat:"monster",min:3,max:4,nbt:{Tags:["doom.nats.spawned","doom.nats.cat.monster"]}}
+execute if score $rng doom.nats matches 10..14 run data merge storage doom.nats:sel {type:"minecraft:piglin",slug:"piglin",cat:"monster",min:3,max:4}
+execute if score $rng doom.nats matches 10..14 run data modify storage doom.nats:sel nbt set value {Tags:["doom.nats.spawned","doom.nats.cat.monster"]}
 execute if score $rng doom.nats matches 10..14 run scoreboard players set $sel.rule doom.nats 25
 execute if score $rng doom.nats matches 10..14 run scoreboard players set $sel.place doom.nats 0
 execute if score $rng doom.nats matches 10..14 run scoreboard players set $sel.light doom.nats 0
@@ -43,3 +50,4 @@ execute if score $rng doom.nats matches 10..14 run scoreboard players set $sel.w
 execute if score $rng doom.nats matches 10..14 run scoreboard players set $sel.wide2 doom.nats 0
 execute if score $rng doom.nats matches 10..14 run scoreboard players set $sel.tall doom.nats 0
 execute if score $rng doom.nats matches 10..14 run scoreboard players set $sel.cluster doom.nats 4
+execute if score $rng doom.nats matches 10..14 run function doom.nats:author/row with storage doom.nats:sel

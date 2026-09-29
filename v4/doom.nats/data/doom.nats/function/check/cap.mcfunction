@@ -9,7 +9,10 @@
 $scoreboard players operation $cnt.dim doom.nats = $cnt.$(cat) doom.nats
 $execute if score $att.dim doom.nats matches 1 run scoreboard players operation $cnt.dim doom.nats = $cnt.$(cat).nether doom.nats
 $execute if score $att.dim doom.nats matches 2 run scoreboard players operation $cnt.dim doom.nats = $cnt.$(cat).end doom.nats
-$execute if score $cnt.dim doom.nats >= $cap.$(cat) doom.nats run function doom.nats:check/fail {reason:5}
+$scoreboard players operation $cap.now_$(cat) doom.nats = $cap.$(cat) doom.nats
+$scoreboard players operation $cap.lmax_$(cat) doom.nats = $eff.max_$(cat) doom.nats
+$execute if data storage doom.nats:author counts.capByY."$(cat)" run function doom.nats:author/cap_scan with storage doom.nats:sel
+$execute if score $cnt.dim doom.nats >= $cap.now_$(cat) doom.nats run function doom.nats:check/fail {reason:5}
 
 scoreboard players set $local_ok doom.nats 0
 execute if score $chk.ok doom.nats matches 1 as @a[gamemode=!spectator] at @s run function doom.nats:check/local_one with storage doom.nats:sel

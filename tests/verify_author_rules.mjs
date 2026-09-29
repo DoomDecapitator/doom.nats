@@ -37,11 +37,36 @@ const selStr = async (k) => { const m = new RegExp(k + ':\\s*"([^"]*)"').exec(aw
 const LEAF = { x: -250, y: 120, z: -600 };   // 16×16 树叶台 + 四壁 + 顶 ⇒ 全黑密室
 const GRASS = { x: -230, y: 120, z: -600 };  // 同上，地板是草方块（同一高度，光照条件一致）
 const S = 15;                                 // 台子边长 - 1（16×16）
-async function buildRigs() {
+// 强加载 + **回读确认**（v4.22d：forceload 的区块不一定立刻 loaded；未加载时 if block 恒假）
+async function blockIs(x, y, z, what) {
+  const m = (() => { try { return fs.statSync(LOG).size; } catch { return 0; } })();
+  await cmd(`execute if block ${x} ${y} ${z} ${what} run say VAR_BLK`);
+  await sleep(300);
+  const t = (() => { try { return fs.readFileSync(LOG).subarray(m).toString('utf8'); } catch { return ''; } })();
+  return /VAR_BLK/.test(t);
+}
+async function ensureLoaded(px, py, pz) {
   await cmd('forceload add -256 -640 0 -512');
-  await sleep(800);
+  for (let i = 0; i < 20; i++) {
+    const m = (() => { try { return fs.statSync(LOG).size; } catch { return 0; } })();
+    await cmd(`execute if loaded ${px} ${py} ${pz} run say VAR_LOADED_${i}`);
+    await sleep(400);
+    const t = (() => { try { return fs.readFileSync(LOG).subarray(m).toString('utf8'); } catch { return ''; } })();
+    if (new RegExp('VAR_LOADED_' + i).test(t)) return true;
+  }
+  return false;
+}
+
+async function buildRigs() {
+  const loaded = await ensureLoaded(LEAF.x + 8, LEAF.y + 1, LEAF.z + 8);
+  if (!loaded) { console.error('❌ 试验场区块未加载 ⇒ 中止（不许静默降级）'); process.exit(3); }
   await cmd(`fill ${LEAF.x} ${LEAF.y} ${LEAF.z} ${LEAF.x + S} ${LEAF.y} ${LEAF.z + S} minecraft:oak_leaves`);
   await cmd(`fill ${GRASS.x} ${GRASS.y} ${GRASS.z} ${GRASS.x + S} ${GRASS.y} ${GRASS.z + S} minecraft:grass_block`);
+  await sleep(600);
+  if (!(await blockIs(LEAF.x + 8, LEAF.y, LEAF.z + 8, 'minecraft:oak_leaves')) || !(await blockIs(GRASS.x + 8, GRASS.y, GRASS.z + 8, 'minecraft:grass_block'))) {
+    console.error('❌ 台子没建起来（回读失败）⇒ 中止（不许静默降级）');
+    process.exit(3);
+  }
   for (const B of [LEAF, GRASS]) {
     await cmd(`fill ${B.x} ${B.y + 1} ${B.z} ${B.x + S} ${B.y + 4} ${B.z + S} minecraft:air`);
     await cmd(`fill ${B.x} ${B.y + 5} ${B.z} ${B.x + S} ${B.y + 5} ${B.z + S} minecraft:stone`);

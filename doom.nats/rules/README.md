@@ -176,3 +176,153 @@ DOOM_RULES=$PWD/rules/examples/full node tools/gen_ctm_group.mjs
 ```
 
 真机验收脚本：`_work/verify_author_rules.mjs`（A/B：同一世界只换 rules 目录，比"原版 / 本包 / 差在哪 / 数字"）。
+
+---
+
+## 7. 运行时刻改（v4.24）：改 storage 即刻生效，不用重生成包
+
+> 上面 1–6 节是**构建期**：改 `rules/*.json` → 重新生成 → 重装。
+> 从 v4.24 起，同一套能力还有一条**运行时刻**通路：**在游戏里改 storage 即刻生效**（判定当场读 storage），
+> 不用重生成、不用重装、不用重启。构建期那一层原样保留（两者可以叠加）。
+
+### 7.1 storage 形状（与 `rules/*.json` 同构，可直接把 JSON 灌进去）
+
+```mcfunction
+# 逐实体补丁（= entity-rules.json 的形状，键还是实体 id）
+data modify storage doom.nats:author entityRules."minecraft:zombie".belowAny set value ["#minecraft:leaves"]
+# 条件条目（= entries.json 的一条）
+data modify storage doom.nats:author_in entry set value {id:"royal",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:40,when:{thundering:1b},nbt:"{CustomName:'{\"text\":\"皇家僵尸\",\"color\":\"gold\"}'}"}
+function doom.nats:author/add_entry with storage doom.nats:author_in
+# 数量随 Y（= counts.json 的一段）
+data merge storage doom.nats:author_in {type:"minecraft:zombie",yMax:0,min:4,max:6}
+function doom.nats:author/set_group_by_y with storage doom.nats:author_in
+```
+
+| storage 键 | 等价于 | 运行时刻支持的字段 |
+|---|---|---|
+| `doom.nats:author.entityRules.<实体 id>` | `rules/entity-rules.json` | `belowAny`(≤8) `yMin` `yMax` `lightMin` `lightMax` `weather`(thunder/rain/clear) `biomeIn`(≤4) `biomeNot`(≤4) `place` `light` `persist` |
+| `doom.nats:author.entries[]`（≤8 条） | `rules/entries.json` | `id` `mob` `biome`（单个 biome 或 `#标签`；要多个就写多条）`category` `weight` `min` `max` `nbt` `when{thundering,raining,yMin,yMax,lightMin,lightMax}` |
+| `doom.nats:author.counts.groupByY.<实体 id>[]`（≤8 段） | `rules/counts.json` 的 `groupByY` | 每段 `{yMin?,yMax?,min,max}`；**段按顺序求值，后面的覆盖前面的** |
+| `doom.nats:author.counts.capByY.<类别>[]`（≤8 段） | `counts.json` 的 `capByY` | 每段 `{yMin?,yMax?,max?,localMax?}`；两个都能单独给 |
+
+命令面（`/function` 没有内联参数 ⇒ 统一走 `doom.nats:author_in` 这个"入参 storage"）：
+
+| 命令 | 作用 |
+|---|---|
+| `function doom.nats:author/help` | 用法与字段清单 |
+| `function doom.nats:author/show` | 打印当前覆盖（聊天栏摘要 + `data get storage` 全量 + 一行日志） |
+| `function doom.nats:author/export` | 把当前覆盖打成一条可复制的 `data modify storage … set value {…}` |
+| `function doom.nats:author/reset` | **回原版**（删掉三层键 + 清缓存） |
+| `…/add_below_tag` · `…/set_group_by_y` · `…/set_cap_y` · `…/add_entry` | 追加一条（入参见上表） |
+| `…/load` · `…/demo` | 重新装载/刷新摘要 · 命令面演示（需先 `scoreboard players set $auth.demo doom.nats 1`） |
+
+### 7.2 三栏对照（别只看"能改"，要看"改完和原版差在哪"）
+
+| 能力 | 原版会怎样 | 本包（默认）会怎样 | 实验性变体（v4x）会怎样 |
+|---|---|---|---|
+| 额外落位面 `belowAny` | 树叶不算 `isFaceSturdy(UP)` ⇒ 僵尸不会站在树叶上 | 构建期 `rules/` 与运行时刻 storage 都能加标签；默认空 = 逐条与原版一致 | 同默认 |
+| Y 窗口 / 亮度窗口 / 天气门 / 群系名单 | 由源码写死（`check*SpawnRules`） | storage 里写一条即刻生效，reason 码与构建期一致（亮度⇒3，其余⇒9） | 同默认 |
+| 组大小 / 容量随 Y | 组大小 = `minCount..maxCount`（与 y 无关）；容量 = `maxInstancesPerChunk × chunks / 289` | 按**候选点 y** 覆盖（容量覆盖是**本包扩展**，见 §4 的口径提醒） | 同默认 |
+| 条件条目（含自定义 NBT） | 没有"条件条目"这个概念 | 条件成立才进池（与"先过滤再按权重掷"逐点等价）；NBT 用 `$data merge entity @s $(nbt)` 并入 | 同默认 |
+| `when.near` 关系条件 | **没有**这种耦合 | 不支持（写进 `when` 会被忽略） | 支持：`near:{type:"#doom.nats:creature",radius:24,min:1,max:0}` 以**候选点**为圆心数一次实体。**非原版能力** |
+| `on_spawn` 演出钩子 | **没有** | 不支持（`on_spawn` 字段被忽略） | 支持：条目写 `on_spawn:1b`，命中生成后调用 `doom.nats:exp/on_spawn/<条目 id>`（`@s` = 新实体）。文件不存在时只有钩子那一步跳过，实体照常生成 |
+| `preset` 预设 | **没有** | 不支持 | 支持：`blood_moon` / `storm_season` / `deep_dark`（+ `rules/presets/*.json`）。merge 语义、可叠加、`reset` 一键还原 |
+
+### 7.3 两条轨：引擎门 + 运行时刻开关（都在**实验性变体**里）
+
+- **引擎门**（整包级，决定"能不能装"）：实验性变体 `v4x/doom.nats` 的 `pack.mcmeta` 带
+  `"features": {"enabled": ["minecraft:minecart_improvements"]}`（字段形状取自 vanilla 自带实验性数据包；
+  1.21.6 可用的三个旗标是 `minecart_improvements` / `redstone_experiments` / `trade_rebalance`，没有"自定义"旗标
+  ⇒ 只能借一个原生旗标当门，代价是开它的世界同时拿到 vanilla 的矿车改动）。
+  世界没开该实验性玩法时，引擎会明确拒绝启用：
+  `Pack 'file/doom.nats' cannot be enabled, since required flags are not enabled in this world: minecraft:minecart_improvements!`
+- **运行时刻开关**（`storage doom.nats:exp enabled:1b`，决定"行为回不回滚"）：`function doom.nats:exp/disable`
+  一条命令即可让整层不参与判定（条目与规则都留着），`enable` 再打开；`reset` 清空。
+
+### 7.4 数字（真机，隔离实例 fid 25571/RCON 25581）
+
+| 项 | 数字 |
+|---|---|
+| 运行时刻层验收（默认变体） | `_work/verify_author_runtime.mjs --variant std` ⇒ **15 PASS / 0 FAIL**（3 条实验性断言按设计 SKIP） |
+| 运行时刻层验收（实验性变体） | `--variant exp` ⇒ **19 PASS / 0 FAIL**（含 on_spawn / near / preset 三条） |
+| 构建期 A/B 不回归 | `verify_author_rules.mjs --expect default` **5 PASS / 0 FAIL** · `--expect author` **6 PASS / 0 FAIL** |
+| 加载期 | 两个变体 `/reload` 均 **0 个 Failed to load function** |
+| 静态门 | `node tools/check_static.mjs` ⇒ **0 error / 2 warning**（两个变体各跑一遍生成器 `--check` + lint） |
+
+### 7.5 坑（运行时刻这一层特有的，都真机踩过）
+
+1. **宏行里所有占位符都必须存在**：缺一个 ⇒ **整个函数中止**（`Failed to instantiate … Missing argument`）。
+   所以运行时刻的值一律"先铺默认值再合并"（见 `author/row` 里的 `cur`、`entry_prep_*` 里的 `e`）。
+2. **`data merge` 是递归合并**：`nbt` 写进同一个 merge 里会让上一条目的键累积到下一只身上
+   ⇒ 本包已改成"结构字段 merge + `nbt` 整体 `set`"（`sel.nbt`）。
+3. **`data remove storage <id>` 必须带 path**；`execute if data storage <id>{…}` **非法**（都真机报过错）。
+4. **宏替换进 SNBT 的字符串要自己加引号**：`type:$(mob)` 会变成 `type:minecraft:zombie`（非法 SNBT）⇒ 写 `type:"$(mob)"`。
+5. **1.21.5+ 的装备 NBT 是 `equipment:{mainhand:{…},head:{…}}`**：老的 `HandItems`/`ArmorItems` 会被**静默忽略**
+   （本轮实测：写 `HandItems` 既不报错也不生效）。
+6. 运行时刻条目的 `biome` 判定在**候选点**求值（与构建期"表按群系展开"同义）⇒ 条目只能加到该群系**已有的**类别里。
+
+---
+
+## 8. 实验性 AJ / BDEngine rig 桥接（v4.25，`rules/rigs.json`）
+
+> **默认不存在**：`rules/rigs.json` 是 `{}` / 缺文件 ⇒ 生成器**不产出任何 `exp/aj/**`**，`spawn/emit` 与 `core/tick`
+> 也一个字都不多（默认变体 `check_static` 仍 0 error / 2 warning）。这一层**只进实验性变体**（`DOOM_EXP=1 ⇒ v4x/doom.nats`）。
+
+**要解决的问题**：Animated Java / BDEngine 导出的"自定义生物"是 **display 实体骨架 + 动画函数**；display 不是 `Mob`
+（没有 `MobCategory`/`SpawnPlacements`/`checkDespawn`/`finalizeSpawn`）⇒ 当不了群系表里的物种。
+本层的做法是 **A 方案「真实体当内核，rig 当外观」**：内核（普通生物）照原样走刷怪链，rig 在同一位置被召唤并**挂到内核上**。
+
+### 8.1 字段表（`rules/rigs.json`）
+
+```json
+{
+  "gigantic_squid": {
+    "carrier": "minecraft:squid",
+    "rig": "calamar:summon",
+    "carrier_nbt": "{Silent:1b,active_effects:[{id:\"minecraft:invisibility\",amplifier:0,duration:-1,show_particles:0b}]}",
+    "rig_args": "{args:{}}",
+    "rig_root_tag": "calamar1727993704352",
+    "on_spawn": "calamar:start_animation",
+    "cat": "water_creature",
+    "count_with_carrier": true,
+    "mount": true,
+    "comment": "第三方巨型鱿鱼（只用于验收，不进产物）"
+  }
+}
+```
+
+| 字段 | 必填 | 默认 | 说明 |
+|---|---|---|---|
+| `carrier` | ✅ | —— | 真实体内核（**必须**是生物注册表里的物种；一个内核只能配一个 rig） |
+| `rig` | ✅ | —— | 第三方 rig 的**召唤入口函数** id（AJ：`<ns>:<blueprint>/summon`；BDEngine：`<ns>:summon`） |
+| `carrier_nbt` | | 无 | 并入内核的 SNBT（隐形/静音/无 AI…） |
+| `rig_args` | | `{args:{}}` | 传给 rig 召唤函数的宏参数（AJ/BDEngine 约定读 `$(args)`） |
+| `rig_root_tag` | | `aj.global.root` | rig **根** display 上带的标签（AJ 的约定；BDEngine 导出是作者自定义的那一串） |
+| `on_spawn` | | 无 | 挂载完成后调用的函数（@s = 内核），典型用途：启动第三方动画 |
+| `cat` | | 取注册表 | 类别（只影响标签与诊断；**必须**与注册表一致，否则构建报错） |
+| `count_with_carrier` | | `true` | 内核是否计入 mobcap；`false` ⇒ 给内核打 `PersistenceRequired:1b`（原版语义：持久生物不计入 `SpawnState`，代价是也免疫消失层/`debug/clear`） |
+| `mount` | | `true` | 是否由本桥接托管（认领 + 挂载 + 清扫）；`false` ⇒ 只召唤，剩下交给第三方包自己管 |
+| `comment` | | 无 | 给人看的注释（`_` 开头的键一律忽略） |
+
+### 8.2 怎么用
+
+```bash
+cd <仓库>/doom.nats
+# ① 写 rules/rigs.json（或把 rules/examples/aj/rigs.json 拷进去）
+# ② 用实验性变体重生成
+DOOM_EXP=1 node tools/gen_ctm.mjs && DOOM_EXP=1 node tools/gen_ctm_mobs.mjs && DOOM_EXP=1 node tools/gen_ctm_exp_aj.mjs
+#    其余生成器照常；gen_ctm_exp_aj 只写 data/doom.nats/function/exp/aj/**（17 个文件）
+# ③ 装实验性变体（v4x/doom.nats）+ 把第三方包放进世界 datapacks
+#    第三方包若用新 schema 的 pack.mcmeta（min_format/max_format），1.21.6 认不出 ⇒ 需补 "pack_format": 80
+```
+
+**游戏内自检**：`function doom.nats:exp/aj/help`（用法 + 当前 rig 清单）· `function doom.nats:exp/aj/status`（在场上多少 display/挂上多少/残留多少）。
+`function doom.nats:exp/aj/placeholder/summon` 是**零依赖占位 rig**（手搓 display 骨架），用来区分"桥接坏了"还是"某个第三方 rig 坏了"。
+
+### 8.3 三条实测结论（换挂载方式前先读）
+
+1. **方向必须是"rig 骑内核"**（`ride <rig> mount <内核>`）。反过来内核变成乘客，会被钉在不会移动的 display 上。
+2. **`minecraft:marker` 不能载客**（`Item Display couldn't start riding Marker`）⇒ 不要做"marker 当挂载枢纽"那一层。
+3. **一个生物可以同时挂多个 display，且它们落在同一个挂载点**（3 个乘客实测 `Pos` 完全相同）⇒
+   骨架的相对布局由各自 `transformation` 决定，不会被"乘客序号"打乱。
+   另一条相关实测：display 实体上**没有 `RootVehicle`**（哪怕正在被骑）⇒ 判"是否挂载"要用乘客闭包（本层用 `exp.aj.live` 标记）。

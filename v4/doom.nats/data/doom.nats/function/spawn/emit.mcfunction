@@ -13,4 +13,7 @@
 # 朝向：vanilla 自然生成用 snapTo(..., random*360, 0)；宏参数必须在 post 实例化之前就位，所以在这里掷
 # 注意：这一行不能写宏前缀 —— 不含任何参数占位符的行若带宏前缀，会让整个函数加载失败（实测）
 execute store result storage doom.nats:sel rot int 1 run random value 0..359
-$execute summon $(type) run function doom.nats:post/$(slug) with storage doom.nats:sel
+# ① 运行时刻条目命中（storage doom.nats:author → entries）⇒ 走 author/emit_rt（自带 NBT/标签）
+execute if score $auth.hit doom.nats matches 1 run function doom.nats:author/emit_rt with storage doom.nats:sel
+# ② 香草路径（含构建期 rules/entries.json 的条目）：post/<slug> + on_spawn 钩子
+execute if score $auth.hit doom.nats matches 0 run function doom.nats:spawn/emit_vanilla with storage doom.nats:sel

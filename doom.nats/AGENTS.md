@@ -8,6 +8,45 @@
 - **光照判定（1.19+ 数据驱动）**：`Monster.isDarkEnoughToSpawn` = 天空光 ≤ `nextInt(32)` ∧（`block_light_limit<15` 时方块光 ≤ 该值）∧ 综合亮度 ≤ `dimension_type.monster_spawn_light_level`（主世界/末地 `uniform(0..7)`，下界常量 7）；雷暴时 skyDarken=10 会更亮阈值判定更易通过。动物是 `ANIMALS_SPAWNABLE_ON` **且** `getRawBrightness(pos,0) > 8`（≥9）。
 # AGENTS.md — 子焦点：RC4 `suso.nats` → 1.21.6
 
+## v4.24：运行时刻作者层 + 实验性变体（2026-09-29）
+
+- **两条通路**：构建期 `rules/*.json`（v4.23）**和**运行时刻 `storage doom.nats:author`（v4.24，形状同构）。
+  运行时刻的判定**当场读 storage** ⇒ 改完即刻生效（`author/load` 只刷新摘要缓存）。上限：条目 8 · Y 段 8 · 落位面标签 8 · 群系名单各 4。
+- **两个变体**：默认 `v4/doom.nats`；实验性 `v4x/doom.nats`（`DOOM_EXP=1`，`pack.mcmeta` 带 `features`）。
+  产物根目录一律走 `tools/lib/packdir.mjs`，不要再各自写死 `v4`。生成器清单：`gen_ctm_author`（稳定层 + 判据谓词）、`gen_ctm_exp`（实验性层）。
+  `check_static` 两变体都跑 `--check` 与 lint；`install.mjs --experimental` 装 v4x。
+- **三层身份**：① 原版复刻（默认）② 本包扩展（稳定）③ 实验性（`near` / `on_spawn` / `preset`，只 v4x 有，产物在 `doom.nats:exp/*`）。
+  引擎门 `features` 管"能不能装"，运行时刻 `doom.nats:exp enabled:1b` 管"行为回不回滚"。
+- **宏的纪律（本轮又踩了 4 次）**：① 宏缺参 ⇒ **被调函数整体中止**（`Failed to instantiate … Missing argument`），
+  但**嵌套失败不连坐调用者**；② 宏替换进 SNBT 的**字符串要自己加引号**（`type:$(mob)` ⇒ 非法 SNBT）；
+  ③ `data remove storage <id>` **必须带 path**；④ `execute if data storage <id>{…}` **非法**（storage 的 data 谓词必须带 path）。
+- **别的坑**：`data merge` 是**递归**的（`nbt` 要整体 `set`，否则上一条目的键粘到下一只）；
+  1.21.5+ 装备 NBT 是 `equipment:{mainhand:…,head:…}`（`HandItems`/`ArmorItems` 静默忽略）；
+  产物里"没有生成器负责的文件"是变体构建的隐形地雷（`water_fluid` 就那样坑了一次）。
+- 数字：`check_static` **0 error / 2 warning** · `verify_author_runtime` std **15/0** · exp **19/0** ·
+  `verify_author_rules` default **5/0** · author **6/0** · `auto_gate` 全绿（`reports/验收-作者运行时层-20260929.md`）。
+
+## v4.25：实验性 AJ/BDEngine rig 桥接（真实体当内核，rig 当外观）
+
+- **输入 `rules/rigs.json`（实验性）**：字段表/用法/坑见 `rules/README.md` §8；校验入口 `tools/lib/exp-rigs.mjs`
+  （空/缺 ⇒ 整条链路不存在）。生成器 `tools/gen_ctm_exp_aj.mjs`（实验性变体专属）⇒ `exp/aj/**` 17 个文件；
+  `spawn/emit` 只多一条**带类型**的非宏守卫；`core/tick` 只在"实验性 + rigs 非空"时多 1 行转发
+  （默认变体**逐字节不变**，`check_static` 0 error / 2 warning）。
+- **数字**（mcserver-aj 25572/25582，`_work/verify_exp_aj.mjs`）：rig 相 **13 PASS / 0 FAIL** · 空 rigs **2 PASS / 0 FAIL** ·
+  rig 50 个 display **50/50 挂上** · 逐格位移 ×10 **误差 0.0000** · 容量 **Δ1** · 孤儿清扫 **~6.6s 归 0** ·
+  MSPT 1.57/1.43/2.37ms（0/1/5 rig）。
+- **四条实测纪律（都是本轮真机换来的）**：
+  ① `ride` 的实体参数必须是**单实体**选择器（`@e[tag=x]` 会报 "Only one entity is allowed"）⇒ 加 `limit=1` 或 `@n`；
+  ② 方向必须"**rig 骑内核**"（反过来内核成乘客、不再自己走）；**`minecraft:marker` 不能载客**（"couldn't start riding Marker"）；
+  ③ display **没有 `RootVehicle`**（哪怕正在被骑）⇒ 判"是否挂载"用"活内核的乘客闭包"（`exp.aj.live`），别用 NBT 字段；
+  ④ 多个 display 乘客**落在同一挂载点**（实测 3 个 Pos 全同）⇒ 骨架布局不会被"乘客序号"打乱，但 **BDEngine 的骨架不是一棵树**
+  （根 + 16 个并列组实体，组实体自带乘客方块）⇒ 认领必须"**pre 差集整云**"、挂载只挂"自己不是别人乘客"的那批。
+- **`$sel` 是持久 storage**：rig 分支的守卫必须是**带类型**的复合匹配 `{rig:"<id>",type:"<载体>"}`，
+  只写 `rig` 会被上一只的残留值骗到（空 rigs 构建里实测到）；多条 rig 守卫要写成**多行**（同一行多个 `if` 是"与"不是"或"）。
+- **运行时刻条目的局限**：`storage doom.nats:author/exp` 的 entries 走 `author/emit_rt`，拿不到 rig
+  （要用就写构建期 `rules/entries.json`）。
+- 报告：`reports/验收-实验性AJ桥接-20260929.md`（三栏对照 + 全部数字 + 诚实清单）；图：`reports/图-实验性AJ巨人鱿鱼-20260929.png`。
+
 ## v4.23：作者规则层（默认 = 原版，可高度自定义）
 
 - **`rules/` 三个文件**（可为空）：逐实体规则补丁 / 条件条目（可带 NBT）/ 数量随 Y。
