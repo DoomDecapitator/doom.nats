@@ -114,6 +114,11 @@ export function buildLayer(cfg) {
     'function ' + NS + ':' + dir + '/summary',
     'tellraw @s [{"text":"=== ' + NS + ' ' + title + ' ===","color":"aqua"},{"text":"  条目 ","color":"gray"},{"score":{"name":"' + S + '.n","objective":"' + NS + '"}},{"text":" 条 · entityRules ","color":"gray"},{"score":{"name":"' + S + '.f1","objective":"' + NS + '"}},{"text":" · groupByY ","color":"gray"},{"score":{"name":"' + S + '.f2","objective":"' + NS + '"}},{"text":" · capByY ","color":"gray"},{"score":{"name":"' + S + '.f3","objective":"' + NS + '"}}' + (exp ? ',{"text":" · 实验性开关 ","color":"gold"},{"score":{"name":"' + S + '.on","objective":"' + NS + '"}}' : '') + ']',
     'data get storage ' + storage,
+    ...(exp ? [
+      '# SPEC 追加 #4 第 3 条：show 里要能看到"实验性开关 + 最近一次命中的条目"（开关已在上面的 tellraw 里）',
+      'execute if data storage ' + RT + ' hit.id run tellraw @s [{"text":"  最近一次命中的条目：","color":"gold"},{"nbt":"hit.id","storage":"' + RT + '","interpret":false}]',
+      'execute unless data storage ' + RT + ' hit.id run tellraw @s [{"text":"  最近一次命中的条目：（还没有命中过）","color":"dark_gray"}]',
+    ] : []),
     'function ' + NS + ':' + dir + '/say_summary with storage ' + RT + ' sum',
     '',
   );

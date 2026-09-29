@@ -75,6 +75,31 @@ function ${NS}:check/sealevel
 function ${NS}:check/cost_setup
 `;
 
+// ---- v4.26（P0）：容量计数必须「7 类别 × 3 维度」全量写入 ----
+// 原版语义：SpawnState 是 **per-level** 的 —— 每个维度各有一份计数，且**7 个 MobCategory 各自**都有全局容量
+//   （cap = maxInstancesPerChunk × spawnableChunkCount / 289）。check/cap 的三条分支因此分别读：
+//     $att.dim 非 1/2（主世界）⇒ $cnt.<cat>   ·  =1（下界）⇒ $cnt.<cat>.nether   ·  =2（末地）⇒ $cnt.<cat>.end
+// v4.25 及以前：只给 monster / creature / ambient 写了**主世界**计数（无后缀键），另外 4 类
+//   （water_creature / water_ambient / underground_water_creature / axolotls）只有 .nether / .end
+//   ⇒ 主世界分支读的 $cnt.<cat> **没有写入点** ⇒ 恒读 0（或读到陈旧值）⇒ 这 4 类的全局容量门形同不存在。
+//   注意它是**静默**的：加载期不报错、reason 也不记 —— 只能靠真机 A/B 或静态防线（lint L15）发现。
+// 现在由 MOB_CATS × CAP_DIM_SUFFIX 统一展开；键名沿用既有风格：主世界无后缀、下界 .nether、末地 .end。
+const MOB_CATS = ['monster', 'creature', 'ambient', 'water_creature', 'water_ambient', 'underground_water_creature', 'axolotls'];
+const CAP_DIM_SUFFIX = [['minecraft:overworld', ''], ['minecraft:the_nether', '.nether'], ['minecraft:the_end', '.end']];
+// 构建期护栏：roster 里一旦出现没被容量表覆盖的类别，当场报错（别等真机上「门不存在」）
+{
+  const rosterCats = [...new Set(Object.values(_rosters).flatMap((r) => Object.keys(r.categories)))].sort();
+  const unknown = rosterCats.filter((c) => !MOB_CATS.includes(c));
+  if (unknown.length) throw new Error('biome-rosters 里出现未纳入容量计数的类别：' + unknown.join(', ') + '（要同步 gen_ctm_check.mjs 的 MOB_CATS）');
+}
+// 计数查询必须带**覆盖全图的盒子**（x/dx/y/dy/z/dz）：不带位置约束的 @e 会跨维度选实体，
+//   execute in <维度> 也拦不住（v4.14g 真机实测，验证脚本 _work/dimtest7.mjs）。
+const CNT_BOX = 'x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500';
+const cntBlock = MOB_CATS.flatMap((cat) => CAP_DIM_SUFFIX.flatMap(([dim, sfx]) => [
+  'scoreboard players set $cnt.' + cat + sfx + ' ' + NS + ' 0',
+  'execute in ' + dim + ' as @e[type=#' + NS + ':' + cat + ',nbt=!{PersistenceRequired:true},' + CNT_BOX + '] run scoreboard players add $cnt.' + cat + sfx + ' ' + NS + ' 1',
+])).join(LF);
+
 // ---- 容量：按原版公式刷新（catenate 到快照节拍）----
 F['data/' + NS + '/function/check/caps.mcfunction'] = `# ${NS}:check/caps —— 复刻 SpawnState.canSpawnForCategoryGlobal
 #
@@ -103,48 +128,18 @@ scoreboard players operation $cap.axolotls ${NS} *= $eff.max_axolotls ${NS}
 scoreboard players operation $cap.axolotls ${NS} /= #289 ${NS}
 
 # 各类别当前计数（按注册表 tag 记数；每快照节拍刷一次）
-# v4.14d：按"类别实体类型标签"计数，并跳过原版持久生物 —— 与 SpawnState.createState 一致：
+# v4.14d：按「类别实体类型标签」计数，并跳过原版持久生物 —— 与 SpawnState.createState 一致：
 #   原版遍历 level.getAllEntities()，把 MobCategory 匹配且**非** isPersistenceRequired()/requiresCustomPersistence() 的都计入。
 #   早先只数本包自己生成的生物（tag=doom.nats.cat.*）⇒ 刷怪笼/结构/指令生成的同类生物不占额度（偏松）。
-scoreboard players set $cnt.monster ${NS} 0
-execute in minecraft:overworld as @e[type=#${NS}:monster,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.monster ${NS} 1
-scoreboard players set $cnt.creature ${NS} 0
-execute in minecraft:overworld as @e[type=#${NS}:creature,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.creature ${NS} 1
-scoreboard players set $cnt.ambient ${NS} 0
-execute in minecraft:overworld as @e[type=#${NS}:ambient,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.ambient ${NS} 1
-
+# v4.26（P0）：**7 类别 × 3 维度**全量写入（由 MOB_CATS × CAP_DIM_SUFFIX 展开，见本文件上方）。
+#   主世界 = 无后缀键 $cnt.<cat>（check/cap 的第一分支就是读它）· 下界 = $cnt.<cat>.nether · 末地 = $cnt.<cat>.end。
+#   此前 4 个水生类别缺主世界写入点 ⇒ 主世界分支恒读 0 ⇒ 容量门形同不存在（静默偏松、不报错）。
+#   静态防线：lint_ctm 的 L15（凡被读到的类别，三个维度都必须有 set + add 写入点；反向测试已验）。
 # v4.14g：**每个维度各一份**计数（原版 SpawnState 是 per-level 的）。
-#   ⚠ 真机实测的关键坑：**不带位置/体积约束的 @e 会跨维度选实体**（execute in <维度> 也不管用），
-#     必须加一个覆盖全图的盒子（x/dx/y/dy/z/dz）才按"执行维度"限定；否则三个维度数出来是同一个全局值。
+#   真机实测的关键坑：**不带位置/体积约束的 @e 会跨维度选实体**（execute in <维度> 也不管用），
+#     必须加一个覆盖全图的盒子（x/dx/y/dy/z/dz）才按「执行维度」限定；否则三个维度数出来是同一个全局值。
 #   验证：_work/dimtest7.mjs（主世界/下界各放一个带标签的盔甲架，盒子查询各得 1，无约束查询得 2）。
-scoreboard players set $cnt.monster.nether ${NS} 0
-execute in minecraft:the_nether as @e[type=#${NS}:monster,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.monster.nether ${NS} 1
-scoreboard players set $cnt.monster.end ${NS} 0
-execute in minecraft:the_end as @e[type=#${NS}:monster,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.monster.end ${NS} 1
-scoreboard players set $cnt.creature.nether ${NS} 0
-execute in minecraft:the_nether as @e[type=#${NS}:creature,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.creature.nether ${NS} 1
-scoreboard players set $cnt.creature.end ${NS} 0
-execute in minecraft:the_end as @e[type=#${NS}:creature,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.creature.end ${NS} 1
-scoreboard players set $cnt.ambient.nether ${NS} 0
-execute in minecraft:the_nether as @e[type=#${NS}:ambient,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.ambient.nether ${NS} 1
-scoreboard players set $cnt.ambient.end ${NS} 0
-execute in minecraft:the_end as @e[type=#${NS}:ambient,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.ambient.end ${NS} 1
-scoreboard players set $cnt.water_creature.nether ${NS} 0
-execute in minecraft:the_nether as @e[type=#${NS}:water_creature,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.water_creature.nether ${NS} 1
-scoreboard players set $cnt.water_creature.end ${NS} 0
-execute in minecraft:the_end as @e[type=#${NS}:water_creature,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.water_creature.end ${NS} 1
-scoreboard players set $cnt.water_ambient.nether ${NS} 0
-execute in minecraft:the_nether as @e[type=#${NS}:water_ambient,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.water_ambient.nether ${NS} 1
-scoreboard players set $cnt.water_ambient.end ${NS} 0
-execute in minecraft:the_end as @e[type=#${NS}:water_ambient,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.water_ambient.end ${NS} 1
-scoreboard players set $cnt.underground_water_creature.nether ${NS} 0
-execute in minecraft:the_nether as @e[type=#${NS}:underground_water_creature,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.underground_water_creature.nether ${NS} 1
-scoreboard players set $cnt.underground_water_creature.end ${NS} 0
-execute in minecraft:the_end as @e[type=#${NS}:underground_water_creature,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.underground_water_creature.end ${NS} 1
-scoreboard players set $cnt.axolotls.nether ${NS} 0
-execute in minecraft:the_nether as @e[type=#${NS}:axolotls,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.axolotls.nether ${NS} 1
-scoreboard players set $cnt.axolotls.end ${NS} 0
-execute in minecraft:the_end as @e[type=#${NS}:axolotls,nbt=!{PersistenceRequired:true},x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500] run scoreboard players add $cnt.axolotls.end ${NS} 1
+${cntBlock}
 
 `;
 
@@ -507,6 +502,9 @@ F['data/' + NS + '/function/check/cap.mcfunction'] = `# ${NS}:check/cap [MACRO] 
 #   即 per-player 的容量就是 maxInstancesPerChunk 本身，不再乘 chunks/289。
 #   "附近" = 区块附近的玩家（chunkMap.getPlayersCloseForSpawning），等价于区块中心距玩家 < 128。
 # v4.14g：先按当前尝试的维度把该维度的计数取到 $cnt.dim，再与全局容量比较
+# v4.26：下面三条分支分别读 $cnt.$(cat) / $cnt.$(cat).nether / $cnt.$(cat).end —— 三者都必须在 check/caps 里有**写入点**，
+#   否则该维度读到的是 0 或陈旧值 ⇒ 容量门形同不存在（v4.25 前 4 个水生类别的主世界分支就是这样静默失效的）。
+#   （静态防线：lint_ctm L15 要求「被读到的类别 × 三个维度」都有 set + add 写入点。）
 $scoreboard players operation $cnt.dim ${NS} = $cnt.$(cat) ${NS}
 $execute if score $att.dim ${NS} matches 1 run scoreboard players operation $cnt.dim ${NS} = $cnt.$(cat).nether ${NS}
 $execute if score $att.dim ${NS} matches 2 run scoreboard players operation $cnt.dim ${NS} = $cnt.$(cat).end ${NS}

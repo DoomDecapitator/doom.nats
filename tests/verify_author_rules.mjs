@@ -57,10 +57,11 @@ async function ensureLoaded(px, py, pz) {
   return false;
 }
 
+  await cmd('gamerule randomTickSpeed 0');   // 树叶台会腐烂（随机刻、周围无原木）⇒ 关掉随机刻，避免台子中途消失
 async function buildRigs() {
   const loaded = await ensureLoaded(LEAF.x + 8, LEAF.y + 1, LEAF.z + 8);
   if (!loaded) { console.error('❌ 试验场区块未加载 ⇒ 中止（不许静默降级）'); process.exit(3); }
-  await cmd(`fill ${LEAF.x} ${LEAF.y} ${LEAF.z} ${LEAF.x + S} ${LEAF.y} ${LEAF.z + S} minecraft:oak_leaves`);
+  await cmd(`fill ${LEAF.x} ${LEAF.y} ${LEAF.z} ${LEAF.x + S} ${LEAF.y} ${LEAF.z + S} minecraft:oak_leaves[persistent=true]`);
   await cmd(`fill ${GRASS.x} ${GRASS.y} ${GRASS.z} ${GRASS.x + S} ${GRASS.y} ${GRASS.z + S} minecraft:grass_block`);
   await sleep(600);
   if (!(await blockIs(LEAF.x + 8, LEAF.y, LEAF.z + 8, 'minecraft:oak_leaves')) || !(await blockIs(GRASS.x + 8, GRASS.y, GRASS.z + 8, 'minecraft:grass_block'))) {

@@ -13,6 +13,9 @@
 //   L11 命令中不得出现连续两个空格（Brigadier 直接报 Incorrect argument ⇒ 整个函数加载失败；真机实测）
 //   L12 宏行（`$` 开头）必须含至少一个 `$(name)`（否则整函数加载失败：No variables in macro）
 //   L13 产物里不得出现裸 `undefined`/`NaN`（模板把 JS 值漏进命令 ⇒ Expected integer ⇒ 整函数加载失败；真机实测）
+//   L14 群系类别分发必须显式设置 $catid（单类别群系会沿用上一个群系的值）
+//   L15 容量计数写入点闭合：凡被 $cnt.$(cat) 读到的类别，主世界/下界/末地三个维度都必须有 set + add 写入点
+//       （缺一个 ⇒ 该维度恒读 0 ⇒ 容量门形同不存在；v4.26 前的 4 个水生类别就是这么静默失效的）
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -146,6 +149,60 @@ for (const p of all) {
   if (!/run function [a-z0-9_.-]+:mob\/biome\//.test(txt)) continue;   // 空表（无任何分发）不要求
   if (!/(?:scoreboard players set \$catid|execute store result score \$catid)/.test(txt)) {
     add('ERROR', r, 'L14 类别分发没有显式设置 $catid（单类别群系会沿用上一个群系的值 ⇒ 随机整片不刷怪）');
+  }
+}
+
+// L15 容量计数「写入点」闭合（v4.26 的 P0 防线）
+//   形状：check/cap（宏）按尝试维度读 $cnt.$(cat)（主世界）/ $cnt.$(cat).nether / $cnt.$(cat).end；
+//     只要有一处「类别 × 维度」**没有写入点**（check/caps 里的 set + add 计数行），那个维度读到的就是
+//     0 或陈旧值 ⇒ 全局容量门**形同不存在**（静默偏松：加载期不报错、reason 也不记，只有真机 A/B 能看出来）。
+//     v4.25 及以前 water_creature / water_ambient / underground_water_creature / axolotls 缺的正是主世界那一个。
+//   判据（三条，任一不满足 = ERROR）：
+//     ① 锚点：产物里必须存在宏读 $cnt.$(...)，否则说明读侧被删/改名（防线失去意义，宁可报红）
+//     ② 类别集合 = 能写进 <ns>:sel.cat 的字面量类别（读侧真正的取值域）∪ 已被计数的 $cnt.<cat>[.dim]
+//     ③ 对「每个类别 × {主世界('')、下界('.nether')、末地('.end')}」都必须同时有 set 行与 add 计数行
+{
+  const SKIP = new Set(['dim', 'local']);        // 引擎内部标量（$cnt.dim / $cnt.local），不是类别
+  const SFX = ['', '.nether', '.end'];
+  const readFrom = new Set();                    // 写进 <ns>:sel.cat 的字面量类别
+  const setHas = new Map();                      // 类别 -> Set(维度后缀)：set 写入点
+  const addHas = new Map();                      // 类别 -> Set(维度后缀)：计数写入点
+  let readAnchor = 0;                            // $cnt.$(...) 宏读出现次数
+  const put = (map, cat, sfx) => { if (!map.has(cat)) map.set(cat, new Set()); map.get(cat).add(sfx); };
+  for (const p of all) {
+    if (!p.endsWith('.mcfunction')) continue;
+    for (const raw of fs.readFileSync(p, 'utf8').split(LF)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const body = line.startsWith('$') ? line.slice(1).trim() : line;
+      if (!body || body.startsWith('#')) continue;
+      // ① 读侧锚点：宏读 $cnt.$(cat) / $cnt.$(cat).nether / $cnt.$(cat).end
+      for (const _ of body.matchAll(/\$cnt\.\$\([A-Za-z0-9_]+\)/g)) readAnchor++;
+      // ② <ns>:sel.cat 的字面量取值（= check/cap 实际会收到的类别）
+      if (/\bstorage\s+[a-z0-9_.-]+:sel\b/.test(body)) {
+        for (const mm of body.matchAll(/\bcat:"([a-z0-9_]+)"/g)) readFrom.add(mm[1]);
+      }
+      // ③ 写入点：scoreboard players set/add $cnt.<cat>[.nether|.end] <obj> <n>
+      const ms = /scoreboard players set \$cnt\.([a-z0-9_]+?)(\.nether|\.end)?\s+[a-z0-9_.:-]+\s/.exec(body);
+      if (ms) put(setHas, ms[1], ms[2] || '');
+      const ma = /scoreboard players add \$cnt\.([a-z0-9_]+?)(\.nether|\.end)?\s+[a-z0-9_.:-]+\s/.exec(body);
+      if (ma) put(addHas, ma[1], ma[2] || '');
+    }
+  }
+  if (!readAnchor) {
+    add('ERROR', 'data', 'L15 容量计数的读侧锚点 $cnt.$(...) 不存在：check/cap 的维度分支可能被删/改名（防线失效）');
+  }
+  const cats = new Set([...readFrom, ...setHas.keys(), ...addHas.keys()]);
+  for (const c of [...cats].sort()) {
+    if (SKIP.has(c)) continue;
+    for (const s of SFX) {
+      if (!(setHas.get(c) || new Set()).has(s)) {
+        add('ERROR', 'data', 'L15 容量计数缺写入点：$cnt.' + c + s + ' 没有 `scoreboard players set`（读它的那个维度会读 0/陈旧值 ⇒ 容量门形同不存在）');
+      }
+      if (!(addHas.get(c) || new Set()).has(s)) {
+        add('ERROR', 'data', 'L15 容量计数缺计数点：$cnt.' + c + s + ' 没有 `scoreboard players add`（该维度容量永远数不出生物 ⇒ 恒通过）');
+      }
+    }
   }
 }
 

@@ -136,6 +136,7 @@ ok('§0 加载期门：/reload 0 个 Failed to load function', badLoad === 0, '�
 await set('$snap_period', 20000); await set('$eff.period', 20000);
 
 // 台子：先确保区块已加载，再建，再回读（v4.22d 纪律：不许静默降级）
+  await cmd('gamerule randomTickSpeed 0');   // 树叶台会腐烂（随机刻、周围无原木）⇒ 关掉随机刻，避免台子中途消失
 const loaded = await ensureLoaded();
 if (!loaded) { console.log('❌ 试验场区块未加载 ⇒ 中止（不许静默降级）'); r.close(); process.exit(1); }
 await rig(LEAF, 'minecraft:oak_leaves');

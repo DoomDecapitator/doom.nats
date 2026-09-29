@@ -6,6 +6,9 @@
 #   即 per-player 的容量就是 maxInstancesPerChunk 本身，不再乘 chunks/289。
 #   "附近" = 区块附近的玩家（chunkMap.getPlayersCloseForSpawning），等价于区块中心距玩家 < 128。
 # v4.14g：先按当前尝试的维度把该维度的计数取到 $cnt.dim，再与全局容量比较
+# v4.26：下面三条分支分别读 $cnt.$(cat) / $cnt.$(cat).nether / $cnt.$(cat).end —— 三者都必须在 check/caps 里有**写入点**，
+#   否则该维度读到的是 0 或陈旧值 ⇒ 容量门形同不存在（v4.25 前 4 个水生类别的主世界分支就是这样静默失效的）。
+#   （静态防线：lint_ctm L15 要求「被读到的类别 × 三个维度」都有 set + add 写入点。）
 $scoreboard players operation $cnt.dim doom.nats = $cnt.$(cat) doom.nats
 $execute if score $att.dim doom.nats matches 1 run scoreboard players operation $cnt.dim doom.nats = $cnt.$(cat).nether doom.nats
 $execute if score $att.dim doom.nats matches 2 run scoreboard players operation $cnt.dim doom.nats = $cnt.$(cat).end doom.nats
