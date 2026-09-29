@@ -14,6 +14,8 @@ import path from 'node:path';
 
 // v4.13：逐实体规则表（替代原来的 5 条粗规则 SEL_RULE）——证据见 lib/entity-rules.mjs 顶部注释
 import { ruleOf, clusterOf, buildRuleTable, tagId, PLACE, LIGHT, isWide, isWide2, isTall, EXTRA_RULE_TYPES } from './lib/entity-rules.mjs';
+// v4.23 作者规则层（默认空白 ⇒ active=false；下面所有分支都不执行 ⇒ 产物逐字节不变）
+import { entriesFor, groupByYOf, entryTypes, entryPredicateIds } from './lib/author-rules.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const GEN = path.join(ROOT, '_work', 'generated');
@@ -36,11 +38,69 @@ const mobsDoc = JSON.parse(fs.readFileSync(path.join(GEN, 'mobs.json'), 'utf8'))
   const types = new Set();
   for (const data of Object.values(rosters)) for (const cat of Object.values(data.categories)) for (const r of cat.rows) types.add(r.type);
   for (const t of EXTRA_RULE_TYPES) types.add(t);   // 要塞表里的实体也要有规则
+  for (const t of entryTypes()) types.add(t);       // v4.23 作者条目的实体（漏了会把 $sel.rule 写成 undefined ⇒ 整表加载失败）
   globalThis.__RULE_TABLE = buildRuleTable(types);
 }
 const RULE_TABLE = globalThis.__RULE_TABLE;
 const F = {};
 const stats = { biomeFiles: 0, rows: 0, categories: new Set() };
+
+// ---------------------------------------------------------------- v4.23 作者层：条件条目与 Y 曲线
+const authorSlug = (type) => String(type).replace(/^minecraft:/, '').replace(/[^a-z0-9_/.-]/g, '_');
+const yBandCond = (b) => (b.yMin != null && b.yMax != null ? 'matches ' + b.yMin + '..' + b.yMax
+  : b.yMax != null ? 'matches ..' + b.yMax
+    : 'matches ' + (b.yMin ?? 0) + '..');
+const entryCond = (e) => {
+  const C = [];
+  if (e.when.thundering) C.push('if predicate ' + NS + ':weather/thunder');   // 已有谓词（predicate/weather/thunder.json）
+  if (e.when.raining) C.push('if predicate ' + NS + ':weather/rain');
+  if (e.when.lightMax != null) C.push('if predicate ' + NS + ':author/entry_light_le_' + e.when.lightMax);
+  if (e.when.lightMin != null) C.push('if predicate ' + NS + ':author/entry_light_ge_' + e.when.lightMin);
+  if (e.when.yMin != null) C.push('if score $py ' + NS + ' matches ' + e.when.yMin + '..');
+  if (e.when.yMax != null) C.push('if score $py ' + NS + ' matches ..' + e.when.yMax);
+  return C.join(' ');
+};
+const entrySel = (e, cat) => {
+  const extra = e.nbt ? e.nbt.replace(/^\s*\{/, '').replace(/\}\s*$/, '').trim() : '';
+  const tags = 'Tags:[' + [JSON.stringify(NS + '.spawned'), JSON.stringify(NS + '.cat.' + cat), JSON.stringify(NS + '.author.' + e.id)].join(',') + ']';
+  return '{type:' + JSON.stringify(e.mob) + ',slug:' + JSON.stringify(authorSlug(e.mob)) + ',cat:' + Q + cat + Q
+    + ',min:' + e.min + ',max:' + e.max + ',nbt:{' + [tags, extra].filter(Boolean).join(',') + '}}';
+};
+function authorWeightLines(biome, cat) {
+  const list = entriesFor(biome, cat);
+  if (!list.length) return [];
+  const L = ['', '# ---- 作者层条件条目（rules/entries.json）：条件成立才把权重并入 #wsum',
+    '#   语义 =「先按条件过滤候选表，再按权重掷」：#wsum 只在条件成立时变大，条目命中区间紧接香草区间之后，',
+    '#   #off 只在条件成立时才前进 ⇒ 多条目之间不会出现空档（空档会让 $rng 白丢一次尝试）。',
+    'scoreboard players operation #off ' + NS + ' = #wsum ' + NS];
+  for (const e of list) {
+    const C = entryCond(e);
+    const pre = 'execute ' + (C ? C + ' ' : '');
+    const hit = (extra) => pre + 'if score $rng ' + NS + ' >= #off ' + NS + ' if score $rng ' + NS + ' < #hi ' + NS + (extra ? ' ' + extra : '') + ' run ';
+    L.push('# ' + e.id + '（' + e.mob + ' · 权重 ' + e.weight + (C ? '' : ' · 无条件') + (e.nbt ? ' · 自定义 NBT' : '') + '）' + (e.comment ? ' —— ' + e.comment : ''));
+    L.push(pre + 'run scoreboard players add #wsum ' + NS + ' ' + e.weight);
+    L.push(pre + 'run scoreboard players operation #hi ' + NS + ' = #off ' + NS);
+    L.push(pre + 'run scoreboard players add #hi ' + NS + ' ' + e.weight);
+    L.push(hit('') + 'scoreboard players set $sel.ok ' + NS + ' 1');
+    L.push(hit('') + 'data merge storage ' + NS + ':sel ' + entrySel(e, cat));
+    // 条目级覆盖（place/light/tag）只改这一条写进 $sel 的值；$sel.rule 仍是该物种的规则 id，
+    //   所以 check/entity 里该物种的原版门（掷币/深水/窗口…）照旧生效 —— 要连那些一起去掉，就在 entity-rules.json 里改物种规则。
+    const rl = { ...ruleOf(e.mob), ...(e.place ? { place: e.place } : {}), ...(e.light ? { light: e.light } : {}), ...(e.tag ? { tag: e.tag } : {}) };
+    L.push(hit('') + 'scoreboard players set $sel.rule ' + NS + ' ' + RULE_TABLE.idOf(e.mob));
+    L.push(hit('') + 'scoreboard players set $sel.place ' + NS + ' ' + PLACE[rl.place]);
+    L.push(hit('') + 'scoreboard players set $sel.light ' + NS + ' ' + LIGHT[rl.light]);
+    L.push(hit('') + 'scoreboard players set $sel.tag ' + NS + ' ' + (rl.tag ? tagId(rl.tag) : 0));
+    L.push(hit('') + 'scoreboard players set $sel.grp1 ' + NS + ' ' + (rl.grp1 ? 1 : 0));
+    L.push(hit('') + 'scoreboard players set $sel.cluster ' + NS + ' ' + (e.cluster ?? clusterOf(e.mob)));
+    L.push(hit('') + 'scoreboard players set $sel.wide ' + NS + ' ' + (isWide(e.mob) ? 1 : 0));
+    L.push(hit('') + 'scoreboard players set $sel.wide2 ' + NS + ' ' + (isWide2(e.mob) ? 1 : 0));
+    L.push(hit('') + 'scoreboard players set $sel.tall ' + NS + ' ' + (isTall(e.mob) ? 1 : 0));
+    for (const b of e.groupByY ?? []) L.push(hit('if score $py ' + NS + ' ' + yBandCond(b)) + 'data merge storage ' + NS + ':sel {min:' + b.min + ',max:' + b.max + '}');
+    L.push(pre + 'run scoreboard players add #off ' + NS + ' ' + e.weight);
+  }
+  L.push('');
+  return L;
+}
 
 // ---------------------------------------------------------------- 1) 生物注册表（storage）
 {
@@ -218,6 +278,7 @@ for (const [biome, data] of Object.entries(rosters)) {
       '',
       ...structPreambleLines(cat),
       'scoreboard players set #wsum ' + NS + ' ' + entry.weightSum,
+      ...authorWeightLines(biome, cat),
       'scoreboard players operation $rng ' + NS + ' %= #wsum ' + NS,
     ];
     for (const r of entry.rows) {
@@ -227,6 +288,10 @@ for (const [biome, data] of Object.entries(rosters)) {
       // v4.14：规则里 persist=true 的物种，召唤 NBT 直接带 PersistenceRequired:1b（原版语义：永不消失）
       const mobNbt = '{Tags:[' + JSON.stringify(NS + '.spawned') + ',' + JSON.stringify(NS + '.cat.' + cat) + ']' + (rl.persist ? ',PersistenceRequired:1b' : '') + '}';
       rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data merge storage ' + NS + ':sel {type:' + JSON.stringify(r.type) + ',slug:' + JSON.stringify(String(r.type).replace(/^minecraft:/, '')) + ',cat:' + Q + cat + Q + ',min:' + r.min + ',max:' + r.max + ',nbt:' + mobNbt + '}');
+      // v4.23 作者层：按 Y 段覆盖「每次生几只」（rules/counts.json groupByY）—— 在香草 min/max 之后合并，故覆盖它
+      for (const b of groupByYOf(r.type) ?? []) {
+        rows.push('execute if score $rng ' + NS + ' ' + cond + ' if score $py ' + NS + ' ' + yBandCond(b) + ' run data merge storage ' + NS + ':sel {min:' + b.min + ',max:' + b.max + '}');
+      }
       const placeId = PLACE[rl.place];
       const lightId = LIGHT[rl.light];
       const tag = rl.tag ? tagId(rl.tag) : 0;
@@ -429,6 +494,14 @@ for (const [biome, data] of Object.entries(rosters)) {
 
 // ---------------------------------------------------------------- 写出
 const checkOnly = process.argv.slice(2).includes('--check');
+// ---------------------------------------------------------------- v4.23 作者层谓词（只在真用到时生成）
+for (const name of entryPredicateIds()) {
+  const num = Number(name.slice(9));
+  const obj = name.startsWith('light_le_') ? { condition: 'minecraft:location_check', predicate: { light: { light: { max: num } } } }
+    : { condition: 'minecraft:location_check', predicate: { light: { light: { min: num } } } };
+  F['data/' + NS + '/predicate/author/entry_' + name + '.json'] = JSON.stringify(obj, null, 2) + LF;
+}
+
 const drift = [];
 for (const [rel, content] of Object.entries(F)) {
   const p = path.join(PACK, ...rel.split('/'));

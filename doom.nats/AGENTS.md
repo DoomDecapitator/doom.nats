@@ -8,6 +8,15 @@
 - **光照判定（1.19+ 数据驱动）**：`Monster.isDarkEnoughToSpawn` = 天空光 ≤ `nextInt(32)` ∧（`block_light_limit<15` 时方块光 ≤ 该值）∧ 综合亮度 ≤ `dimension_type.monster_spawn_light_level`（主世界/末地 `uniform(0..7)`，下界常量 7）；雷暴时 skyDarken=10 会更亮阈值判定更易通过。动物是 `ANIMALS_SPAWNABLE_ON` **且** `getRawBrightness(pos,0) > 8`（≥9）。
 # AGENTS.md — 子焦点：RC4 `suso.nats` → 1.21.6
 
+## v4.23：作者规则层（默认 = 原版，可高度自定义）
+
+- **`rules/` 三个文件**（可为空）：逐实体规则补丁 / 条件条目（可带 NBT）/ 数量随 Y。
+  字段手册与四个用例见 `rules/README.md` + `rules/examples/full/`；验收 `_work/verify_author_rules.mjs`（`--expect default|author`）。
+- **契约：空层 ⇒ 产物逐字节不变**（`check_static` 前后同为 0 error / 2 warning）。**变体产物也必须过 `lint_ctm` + 加载期门**。
+- **三条坑（本轮踩的）**：① **宏行必须有 $(name) 占位符**（容量行没占位符 ⇒ `check/cap`/`check/local_one` 整函数挂掉）；
+  ② `data get storage` 的 SNBT 是 `key: value`（**冒号后有空格**）⇒ 探针正则要容错；③ `weather thunder` 是**渐变**的（±0.01/拍）⇒ 雷暴谓词要等 ≈6.5s。
+- 数字：真机 A/B author 6 PASS / 0 FAIL · default 5 PASS / 0 FAIL（`reports/验收-作者规则层-20260929.md`）。
+
 ## v4.22（2026-09-29）消失层「最近玩家」量词 bug（P0）＋ 门锚点/测试前置成片假红
 
 0. **门与工具自身的三处修复**（都在同一天收口时踩出来的）：
@@ -137,6 +146,7 @@ Ragecraft IV 地图自然生成包 `suso.nats` 的分析 / 移植 / 优化 / 验
 | `ported/suso.nats/` | 忠实 1.21.6 移植（127，含 1 个兜底标签） | ✅ `tools/port.mjs` 生成 |
 | `optimized/suso.nats/` | v2 无假实体版（70，含 1 个兜底标签） | ✅ `tools/optimize.mjs` 生成 |
 | `tools/` | 转换器 + 校验器 + **无头模拟器** + 装机/采集脚本 | ✅ 改包只改这里 |
+| `rules/` | **作者规则层**（v4.23）：逐实体补丁 / 条件条目 / 数量随 Y；默认空 = 原版 | ✅ 作者面，改完重生成 |
 | `tools/doomify.mjs` | v2 → v3 转换器（改名 + 注册表分片 + 宏化） | ✅ |
 | `tools/gen_ctm*.mjs` | v4 的 7 个生成器：core / pos / check / mobs / spawn / despawn / effects（改动一律改生成器） | ✅ |
 | `tools/lint_ctm.mjs` | v4 静态自检：函数引用 / objective / 常量 / 宏前缀 / 环境差异 | ✅ |

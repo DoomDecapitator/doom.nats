@@ -25,6 +25,8 @@
 //   Horse/Llama GroupData             → super(true)=0.05，组内共享 Variant（马还要保留各自的 Markings）
 import fs from 'node:fs';
 import path from 'node:path';
+// v4.23 作者规则层：条目里的实体也要有 post/<slug>（宏派发的 id 在运行期拼出，缺文件只会在真机上报错）
+import { entryTypes } from './lib/author-rules.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PACK = path.join(ROOT, '..', 'v4', 'doom.nats');
@@ -280,7 +282,7 @@ F['data/' + NS + '/function/grp/fx_apply.mcfunction'] = [
 // ---------------------------------------------------------------- 5) 生成 post/<slug> + grp/init/<slug> + grp/mem/<slug>
 const mobsDoc = JSON.parse(fs.readFileSync(path.join(GEN, 'mobs.json'), 'utf8'));
 const FORTRESS_TYPES = ['minecraft:blaze', 'minecraft:zombified_piglin', 'minecraft:wither_skeleton', 'minecraft:skeleton', 'minecraft:magma_cube'];
-const types = [...new Set([...Object.keys(mobsDoc.mobs), ...FORTRESS_TYPES])].sort();
+const types = [...new Set([...Object.keys(mobsDoc.mobs), ...FORTRESS_TYPES, ...entryTypes()])].sort();
 
 const initRows = [
   '# ' + NS + ':grp/init [MACRO] —— 组数据初始化派发（按物种）',

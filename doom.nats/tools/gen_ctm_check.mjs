@@ -24,11 +24,26 @@ const NS = 'doom.nats';
 //   正常生成**不要**设这个变量；它只是让"红→绿"能在同一台实例、同一份脚本上量出来。
 const LEGACY_AABB = !!process.env.CTM_LEGACY_AABB;
 const F = {};
+// v4.23 作者层小工具
+const authorSlug = (type) => String(type).replace(/^minecraft:/, '').replace(/[^a-z0-9_/.-]/g, '_');
+const weatherPred = (w) => (w === 'thunder' ? { condition: 'minecraft:weather_check', thundering: true }
+  : w === 'rain' ? { condition: 'minecraft:weather_check', raining: true }
+    : { condition: 'minecraft:weather_check', raining: false, thundering: false });
+// 原版 location_check.biomes 只接受「单个标签」或「id 列表」两种形态，混写会加载失败 ⇒ 在这里就拦住
+const biomeSet = (list) => {
+  if (list.length === 1 && list[0].startsWith('#')) return list[0];
+  const bad = list.find((x) => String(x).startsWith('#'));
+  if (bad) throw new Error('biomeIn/biomeNot 里的标签必须单独使用（原版 biomes 谓词只接受单标签或 id 列表）：' + bad);
+  return list;
+};
 
 // v4.13：逐实体规则表（与 gen_ctm_mobs.mjs 共用 _work/generated/entity-rules.json）
 // 生成来源：tools/lib/entity-rules.mjs（证据 = 反编译源码的 check*SpawnRules + SpawnPlacements 注册表）
 import { BELOW_TAGS, buildRuleTable, ruleOf, clusterOf, EXTRA_RULE_TYPES } from './lib/entity-rules.mjs';
 // 直接由 roster 推导规则表（不依赖生成顺序：gen_ctm_mobs 只是把同一份表落盘做证据）
+// v4.23 作者规则层（默认空白 ⇒ 下面所有扩充分支都不执行，产物逐字节不变）
+import { AUTHOR, ruleLightWindows, capByYOf, describe as describeAuthor } from './lib/author-rules.mjs';
+
 const _rosters = JSON.parse(fs.readFileSync(path.join(ROOT, '_work', 'generated', 'biome-rosters.json'), 'utf8')).rosters;
 const _types = new Set();
 for (const d of Object.values(_rosters)) for (const c of Object.values(d.categories)) for (const r of c.rows) _types.add(r.type);
@@ -209,12 +224,39 @@ execute if score $s24.x ${NS} matches ..2303 run function ${NS}:check/fail {reas
   rows.push('# 原版是 state.isFaceSturdy(level,pos,UP) ≡ 支持形状的 UP 面满格 ⇒ **满碰撞立方**都算可站立。');
   rows.push('#   #standable 是历史白名单；v4.17 起与 #full_collision 取**并集**：白名单外的完整方块（石砖族以外的一大批）');
   rows.push('#   不再被误否决。半砖/楼梯（bottom 态）/栅栏/玻璃板/雪层**都不**满 UP 面 ⇒ 依旧不可站立（与原版一致）。');
-  for (const p of [0, 4]) {
-    rows.push(LEGACY_AABB
-      ? F4('if score $sel.place ' + NS + ' matches ' + p + ' unless block ~ ~-1 ~ #' + NS + ':standable')
-      : F4('if score $sel.place ' + NS + ' matches ' + p
+  // v4.23 作者层 belowAny：规则可以声明"额外算落位面"的方块标签（例：僵尸刷在树叶上 ⇒ #minecraft:leaves）。
+  //   语义 = 并到 #standable ∪ #full_collision 之上（命中任一即放行）；默认没有这样的规则 ⇒ 走原路径（逐字节不变）。
+  const BELOW_ANY = RULES.rules.filter((r) => (r.belowAny ?? []).length);
+  if (BELOW_ANY.length) {
+    rows.push('');
+    rows.push('# ---- 作者层 belowAny：命中的"额外落位面"标签（rules/entity-rules.json）');
+    rows.push('scoreboard players set $chk.belowok ' + NS + ' 0');
+    for (const r of BELOW_ANY) {
+      for (const raw of r.belowAny) {
+        const t = raw.startsWith('#') ? raw : '#' + raw;
+        rows.push('execute if score $sel.rule ' + NS + ' matches ' + r.id + ' if block ~ ~-1 ~ ' + t + ' run scoreboard players set $chk.belowok ' + NS + ' 1');
+      }
+      rows.push(F4('if score $sel.rule ' + NS + ' matches ' + r.id
         + ' unless block ~ ~-1 ~ #' + NS + ':standable'
-        + ' unless block ~ ~-1 ~ #' + NS + ':full_collision'));
+        + ' unless block ~ ~-1 ~ #' + NS + ':full_collision'
+        + ' unless score $chk.belowok ' + NS + ' matches 1'));
+    }
+    rows.push('');
+    rows.push('# ---- 下方必须可站立（ON_GROUND 的 1 判断；place 0/4）—— 声明了 belowAny 的规则已在上一段单独判定');
+    for (const p of [0, 4]) {
+      rows.push(F4('if score $sel.place ' + NS + ' matches ' + p
+        + ' unless block ~ ~-1 ~ #' + NS + ':standable'
+        + ' unless block ~ ~-1 ~ #' + NS + ':full_collision'
+        + ' unless score $chk.belowok ' + NS + ' matches 1'));
+    }
+  } else {
+    for (const p of [0, 4]) {
+      rows.push(LEGACY_AABB
+        ? F4('if score $sel.place ' + NS + ' matches ' + p + ' unless block ~ ~-1 ~ #' + NS + ':standable')
+        : F4('if score $sel.place ' + NS + ' matches ' + p
+          + ' unless block ~ ~-1 ~ #' + NS + ':standable'
+          + ' unless block ~ ~-1 ~ #' + NS + ':full_collision'));
+    }
   }
   rows.push('');
   rows.push('# ---- 水中（IN_WATER）；上方不是红石导体 ⇒ 用 #standable 近似');
@@ -382,10 +424,46 @@ scoreboard players operation $cost.sum ${NS} += $cost.n ${NS}
       rows.push(rule(id, 'if predicate ' + NS + ':spawn/biome_polar_alt unless block ~ ~-1 ~ #minecraft:polar_bears_spawnable_on_alternate') + NS + ':check/fail {reason:9}');
       rows.push(rule(id, 'unless predicate ' + NS + ':spawn/biome_polar_alt unless block ~ ~-1 ~ #minecraft:animals_spawnable_on') + NS + ':check/fail {reason:9}');
     }
+    // ---- v4.23 作者层扩展（rules/entity-rules.json）：Y 窗口 / 亮度窗口 / 天气 / 群系白黑名单
+    //   y 窗口用 $py（候选点 y，与 seaLevel 窗口同一口径）；亮度与天气直接走 location_check / weather_check 谓词。
+    if (r.yMin != null) rows.push(rule(id, 'if score $py ' + NS + ' matches ..' + (r.yMin - 1)) + NS + ':check/fail {reason:9}');
+    if (r.yMax != null) rows.push(rule(id, 'if score $py ' + NS + ' matches ' + (r.yMax + 1) + '..') + NS + ':check/fail {reason:9}');
+    if (r.lightMax != null) rows.push(rule(id, 'unless predicate ' + NS + ':author/light_le_' + r.lightMax) + NS + ':check/fail {reason:3}');
+    if (r.lightMin != null) rows.push(rule(id, 'unless predicate ' + NS + ':author/light_ge_' + r.lightMin) + NS + ':check/fail {reason:3}');
+    if (r.weather) rows.push(rule(id, 'unless predicate ' + NS + ':author/weather_' + r.weather) + NS + ':check/fail {reason:9}');
+    if (r.biomeIn) rows.push(rule(id, 'unless predicate ' + NS + ':author/rule_biome_' + authorSlug(id)) + NS + ':check/fail {reason:9}');
+    if (r.biomeNot) rows.push(rule(id, 'if predicate ' + NS + ':author/rule_notbiome_' + authorSlug(id)) + NS + ':check/fail {reason:9}');
   }
   F['data/' + NS + '/function/check/entity.mcfunction'] = rows.join(LF) + LF;
 }
 
+
+// v4.23 作者层 capByY：按 Y 段覆盖容量。默认无策略 ⇒ 下面 `${capNow}${capCmp}${lmax}${localMax}` 全为空/原值，模板逐字节与旧版一致。
+const CAP_CATS = [...new Set(Object.values(_rosters).flatMap((r) => Object.keys(r.categories)))].sort();
+const CAP_Y_ACTIVE = CAP_CATS.some((c) => capByYOf(c));
+// ⚠ 宏行（$ 开头）里**必须**有 $(name) 占位符，否则整函数加载失败（lint L12 / No variables in macro）
+//   ⇒ 临时分数名也带上 $(cat)：$cap.now_<cat> / $cap.lmax_<cat>（check/cap_y/<cat> 是非宏函数，直接写全名）
+const capNow = CAP_Y_ACTIVE ? '$scoreboard players operation $cap.now_$(cat) ' + NS + ' = $cap.$(cat) ' + NS + LF + '$function ' + NS + ':check/cap_y/$(cat)' + LF : '';
+const capCmp = CAP_Y_ACTIVE ? '$cap.now_$(cat) ' + NS : '$cap.$(cat) ' + NS;
+const localMax = CAP_Y_ACTIVE ? '$cap.lmax_$(cat) ' + NS : '$eff.max_$(cat) ' + NS;
+const lmax = CAP_Y_ACTIVE ? '$scoreboard players operation $cap.lmax_$(cat) ' + NS + ' = $eff.max_$(cat) ' + NS + LF : '';
+if (CAP_Y_ACTIVE) {
+  for (const cat of CAP_CATS) {
+    const bands = capByYOf(cat) ?? [];
+    const L = ['# ' + NS + ':check/cap_y/' + cat + ' —— 作者层：按 Y 段覆盖该类容量（rules/counts.json capByY.' + cat + '）',
+      '# 由 check/cap 在比较前调用（$cap.now 已初始化为引擎快照算出的 $cap.' + cat + '；后面命中的段**依次覆盖**）。', ''];
+    for (const b of bands) {
+      const cond = b.yMin != null && b.yMax != null ? 'matches ' + b.yMin + '..' + b.yMax
+        : b.yMax != null ? 'matches ..' + b.yMax
+          : 'matches ' + (b.yMin ?? 0) + '..';
+      if (b.max != null) L.push('execute if score $py ' + NS + ' ' + cond + ' run scoreboard players set $cap.now_' + cat + ' ' + NS + ' ' + b.max);
+      if (b.localMax != null) L.push('execute if score $py ' + NS + ' ' + cond + ' run scoreboard players set $cap.lmax_' + cat + ' ' + NS + ' ' + b.localMax);
+    }
+    L.push('');
+    F['data/' + NS + '/function/check/cap_y/' + cat + '.mcfunction'] = L.join(LF);
+  }
+  console.log('  作者层 capByY：' + CAP_CATS.filter((c) => capByYOf(c)).length + ' 个类别有 Y 段容量策略');
+}
 
 F['data/' + NS + '/function/check/cap.mcfunction'] = `# ${NS}:check/cap [MACRO] —— 容量判定（reason=5 全局 / 6 本地全满）
 #
@@ -398,7 +476,7 @@ F['data/' + NS + '/function/check/cap.mcfunction'] = `# ${NS}:check/cap [MACRO] 
 $scoreboard players operation $cnt.dim ${NS} = $cnt.$(cat) ${NS}
 $execute if score $att.dim ${NS} matches 1 run scoreboard players operation $cnt.dim ${NS} = $cnt.$(cat).nether ${NS}
 $execute if score $att.dim ${NS} matches 2 run scoreboard players operation $cnt.dim ${NS} = $cnt.$(cat).end ${NS}
-$execute if score $cnt.dim ${NS} >= $cap.$(cat) ${NS} run function ${NS}:check/fail {reason:5}
+${capNow}${lmax}$execute if score $cnt.dim ${NS} >= ${capCmp} run function ${NS}:check/fail {reason:5}
 
 scoreboard players set $local_ok ${NS} 0
 execute if score $chk.ok ${NS} matches 1 as @a[gamemode=!spectator] at @s run function ${NS}:check/local_one with storage ${NS}:sel
@@ -408,7 +486,7 @@ execute if score $chk.ok ${NS} matches 1 if score $local_ok ${NS} matches 0 run 
 F['data/' + NS + '/function/check/local_one.mcfunction'] = `# ${NS}:check/local_one [MACRO] —— 单个玩家的本地容量（以该玩家为执行位置）
 # 宏参数 cat 来自 ${NS}:sel；$eff.max_$(cat) 会被替换成 $eff.max_monster 之类的计分板 holder。
 $execute store result score $cnt.local ${NS} if entity @e[type=#${NS}:$(cat),nbt=!{PersistenceRequired:true},distance=..128]
-$execute if score $cnt.local ${NS} < $eff.max_$(cat) ${NS} run scoreboard players set $local_ok ${NS} 1
+$execute if score $cnt.local ${NS} < ${localMax} run scoreboard players set $local_ok ${NS} 1
 `;
 
 F['data/' + NS + '/function/check/fail.mcfunction'] = `# ${NS}:check/fail [MACRO] —— 标记失败原因并短路
@@ -467,6 +545,21 @@ F['data/' + NS + '/predicate/spawn/biome_slime.json'] = biomePred('slime', '#min
 F['data/' + NS + '/predicate/spawn/biome_river.json'] = biomePred('river', '#minecraft:reduce_water_ambient_spawns');
 F['data/' + NS + '/predicate/spawn/biome_more_drowned.json'] = biomePred('drowned', '#minecraft:more_frequent_drowned_spawns');
 F['data/' + NS + '/predicate/spawn/biome_polar_alt.json'] = biomePred('polar', '#minecraft:polar_bears_spawn_on_alternate_blocks');
+
+// ---- v4.23 作者层谓词：只在 rules/entity-rules.json 真用到时才生成（默认一个都不生成）
+{
+  const used = ruleLightWindows();
+  const seen = new Set();
+  for (const [type, w] of used) {
+    const s = authorSlug(type);
+    const put = (rel, obj) => { const k = rel + JSON.stringify(obj); if (!seen.has(k)) { seen.add(k); F['data/' + NS + '/predicate/' + rel] = JSON.stringify(obj, null, 2) + LF; } };
+    if (w.lightMax != null) put('author/light_le_' + w.lightMax + '.json', { condition: 'minecraft:location_check', predicate: { light: { light: { max: w.lightMax } } } });
+    if (w.lightMin != null) put('author/light_ge_' + w.lightMin + '.json', { condition: 'minecraft:location_check', predicate: { light: { light: { min: w.lightMin } } } });
+    if (w.weather) put('author/weather_' + w.weather + '.json', weatherPred(w.weather));
+    if (w.biomeIn) put('author/rule_biome_' + s + '.json', { condition: 'minecraft:location_check', predicate: { biomes: biomeSet(w.biomeIn) } });
+    if (w.biomeNot) put('author/rule_notbiome_' + s + '.json', { condition: 'minecraft:location_check', predicate: { biomes: biomeSet(w.biomeNot) } });
+  }
+}
 // 下界要塞：location_check.structures 接受 id 列表（HolderSet：either(TagKey, List)）
 F['data/' + NS + '/predicate/spawn/in_fortress.json'] = JSON.stringify({
   condition: 'minecraft:location_check',
