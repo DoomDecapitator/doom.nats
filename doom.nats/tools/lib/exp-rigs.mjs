@@ -1,4 +1,4 @@
-// tools/lib/exp-rigs.mjs —— 实验性「AJ/BDEngine rig 桥接」的**唯一**读取/校验入口（v4.25）。
+// tools/lib/exp-rigs.mjs —— 实验性「AJ/第三方 rig 工具链 rig 桥接」的**唯一**读取/校验入口（v4.25）。
 //
 // 契约（与作者规则层同款，很重要）：
 //   **空 = 不存在。** `rules/rigs.json` 缺文件 / 空文件 / `{}` ⇒ `EXP_RIGS.active === false`，
@@ -6,7 +6,7 @@
 //   （由 `tools/check_static.mjs` 的两个变体 `--check` 把守）。
 //
 // 为什么要这一层（背景结论，别推翻）：
-//   Animated Java / BDEngine 导出的是**资源包 + display 实体骨架 + 动画函数**；display 是 `Display`
+//   Animated Java / 第三方 rig 工具链 导出的是**资源包 + display 实体骨架 + 动画函数**；display 是 `Display`
 //   实体、**不是 `Mob`** ⇒ 没有 `MobCategory`/`SpawnPlacements`/`checkDespawn`/`finalizeSpawn`，
 //   当不了群系表里的物种。A 方案「**真实体当内核，rig 当外观**」：
 //     内核（普通生物）走原有刷怪链 → 在同一位置召唤 rig → rig 挂到内核上（乘客）⇒ 自动跟随移动/消失。
@@ -15,12 +15,12 @@
 //   {
 //     "<rig id>": {
 //       "carrier": "minecraft:glow_squid",  // 必填：真实体内核（必须是注册表里的物种）
-//       "rig": "calamar:summon",            // 必填：第三方 rig 的召唤入口函数 id
+//       "rig": "rigns:summon",            // 必填：第三方 rig 的召唤入口函数 id
 //       "carrier_nbt": "{Silent:1b,...}",   // 可选：并入内核的 SNBT（隐形/静音/无 AI…）
 //       "rig_args": "{args:{}}",            // 可选：传给 rig 召唤函数的宏参数（默认 {args:{}}）
-//       "rig_root_tag": "calamar1727993704352", // 可选：rig 根的标签（AJ 默认 aj.global.root）
+//       "rig_root_tag": "rigns1727993704352", // 可选：rig 根的标签（AJ 默认 aj.global.root）
 //       "claim_radius": 2,                  // 可选：认领 rig 实体云的半径（默认 2 格）
-//       "on_spawn": "calamar:start_animation",  // 可选：挂载完成后调用的函数（@s = 内核）
+//       "on_spawn": "rigns:start_animation",  // 可选：挂载完成后调用的函数（@s = 内核）
 //       "cat": "water_creature",            // 可选：类别（默认取注册表里内核的类别）
 //       "count_with_carrier": true,         // 可选：内核是否计入 mobcap（默认 true）
 //       "mount": true,                       // 可选：是否挂载（默认 true）
@@ -75,7 +75,7 @@ for (const [id, v] of Object.entries(raw)) {
     if (!ALLOWED.has(k)) problems.push('rigs.json[' + id + ']：未知字段 ' + k + '（可用：' + [...ALLOWED].join('/') + '）');
   }
   if (!TYPE_RE.test(String(v.carrier ?? ''))) problems.push('rigs.json[' + id + '].carrier 缺失或不是实体 id（如 minecraft:glow_squid）');
-  if (!FN_RE.test(String(v.rig ?? ''))) problems.push('rigs.json[' + id + '].rig 缺失或不是函数 id（如 calamar:summon）');
+  if (!FN_RE.test(String(v.rig ?? ''))) problems.push('rigs.json[' + id + '].rig 缺失或不是函数 id（如 rigns:summon）');
   if (v.on_spawn != null && !FN_RE.test(String(v.on_spawn))) problems.push('rigs.json[' + id + '].on_spawn 不是函数 id：' + v.on_spawn);
   if (v.rig_root_tag != null && !TAG_RE.test(String(v.rig_root_tag))) problems.push('rigs.json[' + id + '].rig_root_tag 非法（只允许 [a-z0-9_.-]）：' + v.rig_root_tag);
   if (v.carrier_nbt != null && !snbtOk(v.carrier_nbt)) problems.push('rigs.json[' + id + '].carrier_nbt 必须是 SNBT 复合（以 { 开头、以 } 结尾）');

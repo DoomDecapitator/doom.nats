@@ -1,10 +1,10 @@
-// _work/verify_exp_aj.mjs —— 实验性 AJ/BDEngine rig 桥接（v4.25）真机验收
+// _work/verify_exp_aj.mjs —— 实验性 AJ/第三方 rig 工具链 rig 桥接（v4.25）真机验收
 //
 //   RCON_PORT=25582 node _work/verify_exp_aj.mjs [--phase all|rig|empty] [--keep]
 //
 // 前置：隔离实例 mcserver-aj（25572/RCON 25582）在跑，且已装：
 //   · 本变体产物（DOOM_EXP=1 DOOM_RULES=rules/examples/aj DOOM_OUTDIR=_work/aj-build）
-//   · 第三方 rig 包 zz-aj-gigantic-squid（**只用于验收，不并入产物**）
+//   · 第三方 rig 包 zz-aj-thirdparty-rig（**只用于验收，不并入产物**）
 // 探针原则（沿用 v4.23 的教训）：**不自己重算语义**，一律调产物里的真函数（mob/biome/**、spawn/emit、
 //   exp/aj/sweep、util/void_kill），并读 scoreboard / NBT 的结果。
 //
@@ -12,7 +12,7 @@
 //   · `ride` 的实体参数必须是**单实体**选择器（否则 "Only one entity is allowed…"）⇒ 一律加 limit=1 或 @n。
 //   · display 实体上**没有** RootVehicle NBT（哪怕正在被骑）⇒ 判"是否挂载"要用乘客闭包（exp/aj/sweep 的 live）。
 //   · `minecraft:marker` **不能**载客（"Item Display couldn't start riding Marker"）⇒ 挂载没有枢纽层。
-//   · 第三方包 gigantic-squid 的 pack.mcmeta 用 min_format/max_format ⇒ 1.21.6 不认，必须补 pack_format 才可选。
+//   · 第三方包 thirdparty-rig 的 pack.mcmeta 用 min_format/max_format ⇒ 1.21.6 不认，必须补 pack_format 才可选。
 import fs from 'node:fs';
 import path from 'node:path';
 import { R } from './_root.mjs';
@@ -81,10 +81,10 @@ const badLoad = (tail.match(/Failed to load function/g) || []).length;
 ok('0 加载期门：/reload 0 个 Failed to load function', badLoad === 0, '本轮 ' + badLoad + ' 个');
 
 const packList = await cmd('datapack list');
-if (!/zz-aj-gigantic-squid/.test(packList)) {
-  console.error('❌ 第三方 rig 包 zz-aj-gigantic-squid 未启用（下面的验收没意义）：' + packList.slice(0, 240));
+if (!/zz-aj-thirdparty-rig/.test(packList)) {
+  console.error('❌ 第三方 rig 包 zz-aj-thirdparty-rig 未启用（下面的验收没意义）：' + packList.slice(0, 240));
   console.error('   原因：它的 pack.mcmeta 用 min_format/max_format（更新的 schema）⇒ 1.21.6 找不到 pack_format，包不可选。');
-  console.error('   修法（只动验收实例里的副本，不改第三方内容）：补 "pack_format": 80 → /datapack enable "file/zz-aj-gigantic-squid"');
+  console.error('   修法（只动验收实例里的副本，不改第三方内容）：补 "pack_format": 80 → /datapack enable "file/zz-aj-thirdparty-rig"');
   r.close(); process.exit(2);
 }
 
@@ -130,7 +130,7 @@ async function rngFor(biomeFn, cat, slug) {
   return null;
 }
 const emitAt = (x, y, z) => cmd(`execute positioned ${x} ${y} ${z} run function ${NS}:spawn/emit with storage ${NS}:sel`);
-const ids = { squid: 'gigantic_squid', zombie: 'placeholder_probe' };
+const ids = { squid: 'demo_rig', zombie: 'placeholder_probe' };
 /** 掷点 + 生成 + 等一拍 + 清扫一次（live 标记由 sweep 写） */
 async function spawnRig(biomeFn, cat, slug, x, y, z) {
   const hit = await rngFor(biomeFn, cat, slug);
@@ -290,7 +290,7 @@ if (PHASE === 'empty') {
   await killAll();
   const carBefore = await count(`@e[type=minecraft:zombie,tag=${NS}.spawned]`);
   // 先清掉上一相残留的 sel.rig：$sel 是持久 storage，不清的话读到的 rig 值是上一相留下的
-  // （实测踩过：空构建里 $sel.rig 仍显示 gigantic_squid ⇒ 误判）；真正的判据是"有没有 display"。
+  // （实测踩过：空构建里 $sel.rig 仍显示 demo_rig ⇒ 误判）；真正的判据是"有没有 display"。
   await cmd('data remove storage doom.nats:sel rig');
   const z = await rngFor('plains', 'monster', 'zombie');
   if (z) {
@@ -310,7 +310,7 @@ if (PHASE === 'empty') {
 
 // ---------------------------------------------------------------- ⑦ 动画由谁驱动 + 成本量级
 if (PHASE === 'all' || PHASE === 'rig') {
-  const animateDir = R('_work/aj-ref/gigantic-squid/data/calamar/function/animate');
+  const animateDir = R('_work/aj-ref/thirdparty-rig/data/rigns/function/animate');
   let kf = 0, merges = 0, schedules = 0, ticks = 0, mergesPerKeyframe = 0;
   if (fs.existsSync(animateDir)) {
     for (const f of fs.readdirSync(animateDir)) {
@@ -320,7 +320,7 @@ if (PHASE === 'all' || PHASE === 'rig') {
       schedules += (txt.match(/^schedule function /gm) || []).length;
     }
     mergesPerKeyframe = kf ? Math.round((merges / kf) * 10) / 10 : 0;
-    const main = fs.readFileSync(R('_work/aj-ref/gigantic-squid/data/calamar/function/main.mcfunction'), 'utf8');
+    const main = fs.readFileSync(R('_work/aj-ref/thirdparty-rig/data/rigns/function/main.mcfunction'), 'utf8');
     ticks = (main.match(/^execute /gm) || []).length;
   }
   const coreTick = fs.readFileSync(R('_work/aj-build/data/doom.nats/function/core/tick.mcfunction'), 'utf8');

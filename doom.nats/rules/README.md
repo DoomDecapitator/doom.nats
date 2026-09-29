@@ -263,12 +263,12 @@ function doom.nats:author/set_group_by_y with storage doom.nats:author_in
 
 ---
 
-## 8. 实验性 AJ / BDEngine rig 桥接（v4.25，`rules/rigs.json`）
+## 8. 实验性 AJ / 第三方 rig 工具链 rig 桥接（v4.25，`rules/rigs.json`）
 
 > **默认不存在**：`rules/rigs.json` 是 `{}` / 缺文件 ⇒ 生成器**不产出任何 `exp/aj/**`**，`spawn/emit` 与 `core/tick`
 > 也一个字都不多（默认变体 `check_static` 仍 0 error / 2 warning）。这一层**只进实验性变体**（`DOOM_EXP=1 ⇒ v4x/doom.nats`）。
 
-**要解决的问题**：Animated Java / BDEngine 导出的"自定义生物"是 **display 实体骨架 + 动画函数**；display 不是 `Mob`
+**要解决的问题**：Animated Java / 第三方 rig 工具链 导出的"自定义生物"是 **display 实体骨架 + 动画函数**；display 不是 `Mob`
 （没有 `MobCategory`/`SpawnPlacements`/`checkDespawn`/`finalizeSpawn`）⇒ 当不了群系表里的物种。
 本层的做法是 **A 方案「真实体当内核，rig 当外观」**：内核（普通生物）照原样走刷怪链，rig 在同一位置被召唤并**挂到内核上**。
 
@@ -276,13 +276,13 @@ function doom.nats:author/set_group_by_y with storage doom.nats:author_in
 
 ```json
 {
-  "gigantic_squid": {
+  "demo_rig": {
     "carrier": "minecraft:squid",
-    "rig": "calamar:summon",
+    "rig": "rigns:summon",
     "carrier_nbt": "{Silent:1b,active_effects:[{id:\"minecraft:invisibility\",amplifier:0,duration:-1,show_particles:0b}]}",
     "rig_args": "{args:{}}",
-    "rig_root_tag": "calamar1727993704352",
-    "on_spawn": "calamar:start_animation",
+    "rig_root_tag": "rigns1727993704352",
+    "on_spawn": "rigns:start_animation",
     "cat": "water_creature",
     "count_with_carrier": true,
     "mount": true,
@@ -294,10 +294,10 @@ function doom.nats:author/set_group_by_y with storage doom.nats:author_in
 | 字段 | 必填 | 默认 | 说明 |
 |---|---|---|---|
 | `carrier` | ✅ | —— | 真实体内核（**必须**是生物注册表里的物种；一个内核只能配一个 rig） |
-| `rig` | ✅ | —— | 第三方 rig 的**召唤入口函数** id（AJ：`<ns>:<blueprint>/summon`；BDEngine：`<ns>:summon`） |
+| `rig` | ✅ | —— | 第三方 rig 的**召唤入口函数** id（AJ：`<ns>:<blueprint>/summon`；第三方 rig 工具链：`<ns>:summon`） |
 | `carrier_nbt` | | 无 | 并入内核的 SNBT（隐形/静音/无 AI…） |
-| `rig_args` | | `{args:{}}` | 传给 rig 召唤函数的宏参数（AJ/BDEngine 约定读 `$(args)`） |
-| `rig_root_tag` | | `aj.global.root` | rig **根** display 上带的标签（AJ 的约定；BDEngine 导出是作者自定义的那一串） |
+| `rig_args` | | `{args:{}}` | 传给 rig 召唤函数的宏参数（AJ/第三方 rig 工具链 约定读 `$(args)`） |
+| `rig_root_tag` | | `aj.global.root` | rig **根** display 上带的标签（AJ 的约定；第三方 rig 工具链 导出是作者自定义的那一串） |
 | `on_spawn` | | 无 | 挂载完成后调用的函数（@s = 内核），典型用途：启动第三方动画 |
 | `cat` | | 取注册表 | 类别（只影响标签与诊断；**必须**与注册表一致，否则构建报错） |
 | `count_with_carrier` | | `true` | 内核是否计入 mobcap；`false` ⇒ 给内核打 `PersistenceRequired:1b`（原版语义：持久生物不计入 `SpawnState`，代价是也免疫消失层/`debug/clear`） |

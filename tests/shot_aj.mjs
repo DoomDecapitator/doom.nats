@@ -11,7 +11,7 @@
 //
 // 输出：
 //   _work/aj-shots/aj-rig-<时间戳>.png / .json       中间产物
-//   doom.nats/reports/图-实验性AJ巨人鱿鱼-<日期>.png  成品（进报告）
+//   doom.nats/reports/图-实验性AJ样例 rig-<日期>.png  成品（进报告）
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -265,7 +265,7 @@ text(70, ly + 44, 'GREEN = CARRIER (REAL MOB) AND MOUNT LINKS', [200, 230, 200],
 quad([620, ly + 50], [640, ly + 44], [660, ly + 50], [640, ly + 56], [70, 110, 190]);
 quad([646, ly + 50], [666, ly + 44], [686, ly + 50], [666, ly + 56], [215, 195, 70]);
 text(700, ly + 44, 'BLOCKS = RIG PARTS (COLOR = block_state)', [210, 210, 220], 2);
-text(24, H - 20, 'SOURCE calamar:summon (Gigantic Squid, Modrinth gigantic-squid) -- THIRD-PARTY, ACCEPTANCE ONLY, NOT SHIPPED', [150, 150, 160], 2);
+text(24, H - 20, 'SOURCE rigns:summon (第三方 rig 样例, Modrinth thirdparty-rig) -- THIRD-PARTY, ACCEPTANCE ONLY, NOT SHIPPED', [150, 150, 160], 2);
 
 // ---------------------------------------------------------------- 4) 写 PNG
 const crcTable = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
@@ -282,7 +282,7 @@ for (let y = 0; y < H; y++) { raw[y * (W * 3 + 1)] = 0; px.copy(raw, y * (W * 3 
 const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 const outShot = path.join(SHOTS, `aj-rig-${stamp}.png`);
 fs.writeFileSync(outShot, png);
-const reportPng = R('doom.nats/reports/图-实验性AJ巨人鱿鱼-20260929.png');
+const reportPng = R('doom.nats/reports/图-实验性AJ样例 rig-20260929.png');
 fs.mkdirSync(path.dirname(reportPng), { recursive: true });
 fs.copyFileSync(outShot, reportPng);
 console.log('出图：' + outShot);

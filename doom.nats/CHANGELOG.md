@@ -10,7 +10,7 @@
 
 ---
 
-## v4.25 — 2026-09-29 · 实验性 AJ/BDEngine rig 桥接（真实体当内核，rig 当外观）
+## v4.25 — 2026-09-29 · 实验性 AJ/第三方 rig 工具链 rig 桥接（真实体当内核，rig 当外观）
 
 - **新输入 `rules/rigs.json`（实验性）**：`{carrier, rig, carrier_nbt?, rig_args?, rig_root_tag?, on_spawn?, cat?, count_with_carrier?, mount?}`；
   校验入口 `tools/lib/exp-rigs.mjs`。**空/缺文件 ⇒ 整条链路不生成任何东西**（并清理陈旧 `exp/aj/**`）。
@@ -28,10 +28,10 @@
   ② `minecraft:marker` **不能载客**；③ 多个 display 乘客**落在同一个挂载点**（实测 Pos 全同）
   且 **display 上没有 `RootVehicle`** ⇒ 判挂载要用乘客闭包。
 - **静态门**：默认变体 **0 error / 2 warning**（逐字节不变）· rig 启用的实验性产物 lint **0 error / 2 warning**
-  （`calamar:*` 被列为"需随包提供"的外部依赖）。
-- **第三方资产**：验收用的 Gigantic Squid（Modrinth，**All-Rights-Reserved**）**只放测试实例，不进产物**；
+  （`rigns:*` 被列为"需随包提供"的外部依赖）。
+- **第三方资产**：验收用的 第三方 rig 样例（Modrinth，**第三方许可**）**只放测试实例，不进产物**；
   其 `pack.mcmeta` 用新 schema（`min_format/max_format`）在 1.21.6 不可选 ⇒ 副本补 `pack_format:80` 才可用。
-- 报告：`reports/验收-实验性AJ桥接-20260929.md`（含图 `reports/图-实验性AJ巨人鱿鱼-20260929.png`，副路自绘；
+- 报告：`reports/验收-实验性AJ桥接-20260929.md`（含图 `reports/图-实验性AJ样例 rig-20260929.png`，副路自绘；
   主路 mineflayer+prismarine-viewer 被 1.21.6 移动包兼容问题挡住，见报告第八章）。
 
 ## v4.24 — 2026-09-29 · 运行时刻作者层（改 storage 即刻生效）+ 实验性变体

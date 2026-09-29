@@ -1,4 +1,4 @@
-// gen_ctm_exp_aj.mjs —— 生成「实验性 AJ/BDEngine rig 桥接」（v4.25）。
+// gen_ctm_exp_aj.mjs —— 生成「实验性 AJ/第三方 rig 工具链 rig 桥接」（v4.25）。
 //
 //   DOOM_EXP=1 node tools/gen_ctm_exp_aj.mjs [--check]        # 只有实验性变体（v4x/doom.nats）才有这一层
 //
@@ -8,7 +8,7 @@
 // 机制（A 方案「真实体当内核，rig 当外观」）：
 //   spawn/emit（该物种的 $sel.rig 存在时）→ exp/aj/emit_sel → exp/aj/emit/<id>
 //     → execute summon <carrier> → exp/aj/post/<id>（= post/<slug> 标准收尾 + 内核 NBT/标签）
-//       → exp/aj/rigsummon/<id>（**外部包**的召唤函数，例如 calamar:summon）
+//       → exp/aj/rigsummon/<id>（**外部包**的召唤函数，例如 rigns:summon）
 //       → 认领 rig 实体（根 + 半径内未归属的 display，跳过"已经是别人乘客"的骨骼）
 //       → rig 全云直接当内核的乘客 → exp/aj/on_spawn/<id>（可选钩子，如启动第三方动画）
 //   清扫：core/tick（仅实验性变体 + rigs 非空时多一行）→ exp/aj/tick（40t 分频）→ exp/aj/sweep
@@ -102,9 +102,9 @@ for (const r of RIGS) {
   // 3b) rig 召唤（外部包；单独一个文件 ⇒ 缺包时只本文件加载失败）
   F['data/' + NS + '/function/exp/aj/rigsummon/' + r.id + '.mcfunction'] = [
     '# ' + NS + ':exp/aj/rigsummon/' + r.id + ' —— 召唤第三方 rig（@s = 内核，位置 = 内核位置）',
-    '# ⚠ 引用的 ' + r.rig + ' 属于**外部包**（Animated Java / BDEngine 导出）：没装那个包时，',
+    '# ⚠ 引用的 ' + r.rig + ' 属于**外部包**（Animated Java / 第三方 rig 工具链 导出）：没装那个包时，',
     '#   **只有本文件**加载失败（内核照常生成、判定链不受影响，只是没有外观）。',
-    '# 宏参数按 AJ/BDEngine 约定放在 $(args)：rig_args=' + r.rig_args,
+    '# 宏参数按 AJ/第三方 rig 工具链 约定放在 $(args)：rig_args=' + r.rig_args,
     'data modify storage ' + NS + ':exp_aj_args root set value ' + r.rig_args,
     'function ' + r.rig + ' with storage ' + NS + ':exp_aj_args root',
     '',
@@ -124,9 +124,9 @@ for (const r of RIGS) {
   }
   L.push('# ① 认领本次召唤的 rig 实体（rig 的召唤在下面，夹在 pre 标记与认领之间）。',
     '#   做法：召唤前给场上**已有**的 display 打 pre 标记，召唤后把"没有 pre 标记"的整批认领 ⇒ 两种结构都覆盖：',
-    '#   · BDEngine 型：骨架 = 多个并列 display（组实体 + 组实体自己的乘客方块）⇒ 全是新出现的，整批认领；',
+    '#   · 第三方 rig 工具链 型：骨架 = 多个并列 display（组实体 + 组实体自己的乘客方块）⇒ 全是新出现的，整批认领；',
     '#   · AJ 型：根 + 骨骼（骨骼是根的乘客）⇒ 也全是新出现的，整批认领；骨骼随后标成 child，不会被单独挂载。',
-    '# 为什么不按"是不是乘客"判归属：BDEngine 的组实体自带乘客方块 ⇒ 那样会漏掉半个骨架',
+    '# 为什么不按"是不是乘客"判归属：第三方 rig 工具链 的组实体自带乘客方块 ⇒ 那样会漏掉半个骨架',
     '#   （真机踩过：50 个 display 只认领到 18 个，其余被清扫层当孤儿收走）。',
     '# 为什么用"pre 前后差分"而不是半径：召唤在一次函数调用内完成，窗口内新出现的 display 只有本次 rig；',
     '#   半径法在"同点连生两只"时会串味（真机踩过：两个骨架共 100 只，只认到 50）。',
@@ -138,7 +138,7 @@ for (const r of RIGS) {
       'execute as @n[type=#' + DISPLAY_TYPE_TAG + ',tag=' + rootTag + ',distance=..0.01] run tag @s add ' + T.root,
       'execute as @e[type=#' + DISPLAY_TYPE_TAG + ',tag=!' + T.pre + '] run tag @s add ' + T.rig,
       'tag @e[type=#' + DISPLAY_TYPE_TAG + ',tag=' + T.pre + '] remove ' + T.pre,
-      '# ③ 挂载：只挂"自己不是别人乘客"的那一批（AJ 的骨骼跟着根走、BDEngine 的方块跟着组实体走）。',
+      '# ③ 挂载：只挂"自己不是别人乘客"的那一批（AJ 的骨骼跟着根走、第三方 rig 工具链 的方块跟着组实体走）。',
       '#   方向是 rig 骑内核（反过来内核就成了乘客，会被钉在不会自己走的 display 上）。',
       'execute as @e[tag=' + T.rig + '] on passengers run tag @s add ' + T.child,
       'tag @s add ' + T.anchor,
@@ -249,7 +249,7 @@ F['data/' + NS + '/function/exp/aj/placeholder/summon.mcfunction'] = [
   '# ' + NS + ':exp/aj/placeholder/summon —— 占位 rig（**零依赖**：只用原版 display 实体手搓的可辨认骨架）',
   '# 用途：① 没有第三方包时的桥接回归 ② 判断"挂载/跟随/清扫"是桥接的问题还是某个具体 rig 的问题。',
   '# 造型：红色躯干 + 黄色头 + 蓝色手臂（全部 block_display），根是不可见的 item_display。',
-  '# 位置：全部在召唤点（相对布局由各自的 transformation.translation 决定 ⇒ 与 BDEngine 导出的结构同型）。',
+  '# 位置：全部在召唤点（相对布局由各自的 transformation.translation 决定 ⇒ 与 第三方 rig 工具链 导出的结构同型）。',
   'summon minecraft:item_display ~ ~ ~ {Tags:["aj.global.root","aj.new","' + NS + '.exp.aj.placeholder"],teleport_duration:1,transformation:{translation:[0f,0f,0f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],scale:[0f,0f,0f]}}',
   'summon minecraft:block_display ~ ~ ~ {Tags:["aj.new","' + NS + '.exp.aj.placeholder"],teleport_duration:1,block_state:{Name:"minecraft:red_concrete"},transformation:{translation:[0f,1.2f,0f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],scale:[0.6f,0.9f,0.6f]}}',
   'summon minecraft:block_display ~ ~ ~ {Tags:["aj.new","' + NS + '.exp.aj.placeholder"],teleport_duration:1,block_state:{Name:"minecraft:yellow_concrete"},transformation:{translation:[0f,2.0f,0f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],scale:[0.35f,0.35f,0.35f]}}',
