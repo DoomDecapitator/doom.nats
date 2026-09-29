@@ -41,14 +41,17 @@ const loc = await cmd('execute in minecraft:the_nether run locate structure mine
 const lm = /at \[(-?\d+), (~|-?\d+), (-?\d+)\]/.exec(loc);
 if (!lm) { console.log('❌ 找不到要塞: ' + loc.slice(0, 120)); process.exit(1); }
 const FX = Number(lm[1]), FZ = Number(lm[3]);
-// ⚠ v4.21：`forceload add` 一次最多 256 区块。原来写的是 ±32 **方块** 的方框 —— 但那两个数字被当成**区块**坐标，
-//   于是 65×65 = 4225 > 256 ⇒ 命令直接失败（"Too many chunks in the specified area"），要塞区块根本没被强加载
-//   （旧版只是碰巧靠机器人自身加载视距跑完了搜索）。改成 ±4 区块 = 9×9 = 81 ≤ 256 ✔（搜索范围 ±32 方块在框内）。
-const FL = { x1: Math.floor(FX / 16) - 4, z1: Math.floor(FZ / 16) - 4, x2: Math.floor(FX / 16) + 4, z2: Math.floor(FZ / 16) + 4 };
-await cmd(`execute in minecraft:the_nether run forceload add ${FL.x1} ${FL.z1} ${FL.x2} ${FL.z2}`);
-// ⚠ v4.21b：**先把机器人 tp 到要塞**再去搜索落点。实测：要塞区块靠 forceload 常常仍报 `if loaded = false`
-//   （强加载只对已生成的区块立刻生效），而机器人带着加载视距进场能保证搜索范围真的加载；
-//   旧版之所以有时能搜到，是因为上一个脚本（verify_nether）恰好把机器人留在了下界。
+// ⚠ v4.22d 更正（本轮实测，2026-09-29）：`forceload add <x> <z>` 收的是**方块坐标**（内部再折算区块），
+//   不是区块坐标！旧版把 `Math.floor(FX/16) ± 4` 当区块坐标传进去 ⇒ 实际只强加载了
+//   约 (FX/16-4, FZ/16-4) 那一个**方块**所在的区块（例如 -45,-44 → chunk[-3,-3]），
+//   要塞所在区块**从来没被加载**——这就是 v4.21b 记的"forceload 之后仍报 loaded=false、只好靠机器人视距兜底"的真因。
+//   现在按方块坐标写 ±64 方块 = 9×9 = 81 区块（≤256 上限）✔，并在强加载后**硬断言**该点已加载。
+const span = 64;
+await cmd(`execute in minecraft:the_nether run forceload add ${FX - span} ${FZ - span} ${FX + span} ${FZ + span}`);
+const loadedOk = !/not loaded/i.test(await cmd(`execute in minecraft:the_nether positioned ${FX} 70 ${FZ} run data get block ~ ~ ~`));
+console.log(`forceload ±${span} 方块（9×9 区块）· 要塞点 loaded=${loadedOk}`);
+if (!loadedOk) { console.log('❌ 强加载未生效：要塞点仍 reported not loaded —— 后续读数不可信，直接失败（别再靠机器人视距兜底）'); process.exit(1); }
+// ⚠ v4.21b：机器人仍需**到场**（生成尝试需要玩家在场 + 24 格门），但它不再承担"加载区块"的职责。
 await cmd(`execute in minecraft:the_nether run tp DoomBot ${FX} 70 ${FZ}`);
 await sleep(4000);
 // 收集所有"部件内 + 脚下非空气"的落点，再挑**相距 ≥48 格的两个**：
@@ -219,16 +222,18 @@ console.log('要塞部件内峰值: ' + (Object.entries(seen).map(([k, v]) => k 
   }
   const keys = Object.keys(picked).filter((k) => k !== '(未抽中)');
   const notFort = keys.filter((k) => !FORT.includes(k));
-  const forceOnly = ['blaze', 'wither_skeleton'].reduce((s, k) => s + (picked[k] || 0), 0);
   const total = Object.values(picked).reduce((s, v) => s + v, 0);
+  const outsideCount = Object.entries(picked).filter(([k]) => !FORT.includes(k)).reduce((s, [, v]) => s + v, 0);
+  const share = outsideCount / Math.max(total, 1);
   // v4.22h：断言口径按**实测抖动**收敛 —— `in_fortress`（location_check.structures，须读区块的结构引用）
   //   在同一位置相邻两次求值**可以不同**：门内 24 抽里出现过 4 次回落到群系表（enderman），单跑时 0 次。
   //   原版 `getMobsAt` 不受这个加载态抖动影响 ⇒ 记为**待查**（见报告），但断言仍要能证明"要塞表真的命中"：
   //   ① 要塞独占种（blaze/wither_skeleton）占比 ≥ 50%；② 群系表**独有**种（ghast/piglin）一次都不许出现。
-  ok('① 要塞部件内选种：独占种占多数 ∧ 无群系表独有种（部件内选种点 ×8 抽）',
-    probed > 0 && forceOnly >= total / 2 && !keys.includes('ghast') && !keys.includes('piglin'),
+  ok('① 要塞部件内选种：要塞表占多数（表外 ≤25% 加载态抖动）∧ 无群系表独有种',
+    probed > 0 && share <= 0.25 && !keys.includes('ghast') && !keys.includes('piglin'),
     `${probed} 个点 ×8 抽（跳过部件外 ${skipped}）：${Object.entries(picked).map(([k, v]) => k + '×' + v).join(' ')}` +
-    ` · 独占种 ${forceOnly}/${total}` + (notFort.length ? ' · 非要塞表出现：' + notFort.join(',') + '（谓词抖动，待查）' : ''));
+    ` · 表外 ${outsideCount}/${total} = ${(share * 100).toFixed(1)}%` +
+    (notFort.length ? ' · 表外物种：' + notFort.join(',') + '（`in_fortress` 谓词加载态抖动，待查）' : ''));
 }
 ok('② 要塞独占种出现过（证明真的走了要塞表）', inF.some((k) => FORT_ONLY.includes(k)), (inF.join(' ') || '(无)') + '（' + rounds + ' 轮 / 生成 +' + spawnedN + '）');
 ok('③ 采样窗口内确实刷出了东西', inF.length > 0, (Object.keys(seen).join(' ') || '(空)') + '（' + rounds + ' 轮）');
@@ -237,7 +242,7 @@ await cmd('execute in minecraft:the_nether as @e[tag=doom.nats.spawned,nbt=!{Per
 await cmd('scoreboard players set $snap_period doom.nats 20');
 await cmd('scoreboard players set $eff.period doom.nats 5');
 await cmd('function doom.nats:circ/snapshot');
-await cmd(`execute in minecraft:the_nether run forceload remove ${FL.x1} ${FL.z1} ${FL.x2} ${FL.z2}`);
+await cmd(`execute in minecraft:the_nether run forceload remove ${FX - span} ${FZ - span} ${FX + span} ${FZ + span}`);
 r.close && r.close();
 const pass = res.filter(Boolean).length;
 console.log(String.fromCharCode(10) + '汇总: ' + pass + ' PASS / ' + (res.length - pass) + ' FAIL');

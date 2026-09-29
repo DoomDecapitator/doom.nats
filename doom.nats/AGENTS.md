@@ -33,7 +33,7 @@
    - **测试脚本里的宏调用必须在与被测谓词相同的 `positioned` 上下文里**：`function <ns>:biome/dispatch`
      读的是调用点的 `in_fortress`，漏了 `positioned` 就在控制台所在的主世界求值 ⇒ 永远 false（实测 enderman×40）。
    - 另外记住：`data modify storage <id> set value {…}` **缺 path 会被 Brigadier 拒**（要塞 e2e 曾整轮用错原点）；
-     `forceload add` 的参数是**区块坐标**且一次 ≤256 区块；生成器模板串里不能出现反引号。
+     `forceload add` 的参数是**方块坐标**（v4.22d 更正，见下）且一次 ≤256 区块；生成器模板串里不能出现反引号。
 
 1. **消失层把"最近玩家"写成了"任一玩家"**（`verify_multibot` ②③ 一直报的就是它）：
    v4.17 的写法 `execute as @a at @s as @e[tag=…,distance=129..] run void_kill` 是"对**每个**玩家各判一次、超距就杀"
@@ -52,8 +52,15 @@
    数字：`rules 12/4 → 16/0`、`animals 4/2 → 6/0`、`persist 9/1 → 10/0`。
 3. **测试脚本里这些写法必定假红**（本轮一次性清掉）：
    - `data modify storage <id> set value {…}` **缺 path 会被 Brigadier 拒** ⇒ 原点/配置根本没写进去（要塞 e2e 走了几十轮"空原点"）；
-   - `forceload add a b c d` 的参数是**区块坐标**、一次最多 **256** 区块 ⇒ `±32` 这种写法直接失败（要塞/群系/末地探针都踩过）；
-     另外 forceload 的区块**不一定立刻 loaded**，`if biome`/`if block` 会返回**空串**而不是 false；
+   - `forceload add a b c d` 的参数是**方块坐标**（v4.22d 更正：不是区块坐标！）、一次最多 **256** 区块 ⇒
+     ① `±32`（方块）写法 = 65×65 区块 > 256 ⇒ 命令直接失败；
+     ② 按"区块坐标"传（例如 `Math.floor(X/16)±4`）**命令会成功但加载错的地方**（传 -45,-44 实际标的是 `chunk[-3,-3]`），
+     要塞探针因此长期读到 `not loaded` 而靠机器人视距兜底；
+     ⇒ **凡是靠 forceload 的用例，强加载后必须回读一次 `data get block` 判 loaded，不满足就 exit 1**（别静默降级）。
+   - forceload 的区块**不一定立刻 loaded**；`if biome`/`if block` 在未加载位置返回**空串**而不是 false。
+     更根本的一条（引擎语义，`LocationPredicate.java:49-53`）：`location_check` 的 `structures` 与 `biomes`
+     **都被 `level.isLoaded(pos)` 短路** ⇒ 未加载区块上它们**恒假**。结论：要塞/结构谓词的"抖动"多数是探针点落在未加载区块，
+     不是包行为（结案见 `reports/诊断-in_fortress抖动-20260929.md`）；
    - `SECONDS` 之类"带默认值的参数解析"要用 `Number(x) || 60` 且**先取数组元素**：`argv[indexOf('--x')+1]` 在缺参时取到 `argv[0]`（node 路径）⇒ `NaN` ⇒ 采样循环一次都不进；
    - `execute at @e[type=player,name=DoomBot] run function …` 在机器人不在场时**静默不执行** ⇒ 计数/配置停在旧值（`verify_animals` 的 `$cnt.creature` 一致性问题就是这么来的）；
    - 探针里的两条判定**必须写进同一条 execute** 才是合取（`if A run …1` + `unless B run …2` 分两条 = 或）；
@@ -393,3 +400,27 @@ ported/optimized/v3 verify 各 0 blocking · sim v1-v3 无告警 · sim_v4 27/0 
   （以前只留汇总行 ⇒ 红了无法复盘，只能靠复现猜，本轮为此多跑了两轮门）。
 - 纪律：**别留下别的名字的 bot**。门的 ③ 看到场上有玩家就不自起机器人（`verify_nether` 需要 `DoomBot`/`Doom_Flare`），
   留一个 `ABot` 在线会让 `verify_nether` 直接以「没有可用的玩家」整门假 FAIL（实测踩到）。
+
+
+## v4.22d：`in_fortress` 抖动结案 + 两条测试台硬规则（2026-09-29）
+
+**结论**：「要塞谓词 ~17% 抖动」既不是随机、也不是包缺陷。两层原因都在**测试台**：
+
+1. **引擎语义**：`LocationPredicate#matches`（1.21.6 反编译 `LocationPredicate.java:49-53`）里
+   `boolean loaded = level.isLoaded(pos)` **同时短路 `biomes` 与 `structures`** ⇒ 位置所在区块没加载，
+   谓词**恒假**（不是"读不到"，是直接假）。原版 CTM 只在**已加载且 ticking** 的区块里尝试生成 ⇒ 生产路径永不撞这条；
+   本包调的就是引擎谓词 ⇒ **语义与原版一致**。
+2. **`forceload` 坐标单位搞错了**：`forceload add <x1> <z1> [<x2> <z2>]` 收的是**方块坐标**。
+   旧脚本传 `Math.floor(X/16)±4`（区块坐标）⇒ 命令成功、回显 `Marked chunk [...]`，但标的是**另一个区块**
+   （传 `-45,-44` 实际加载 `chunk[-3,-3]`）⇒ 要塞区块从没被强加载，只能靠机器人视距兜底 ——
+   这就是 v4.21b 记的"forceload 之后仍报 `loaded=false`"的真因。
+
+**数字（受控复现，隔离实例 fid 25581，同一要塞点 200 次求值）**：未加载 `0/200 = 0.0%` · 强加载 `200/200 = 100.0%` ·
+只加载 5 个候选点中的 1 个 `80/200 = 40.0%`（逐点全部 0% 或 100%，**零抖动**）；
+端到端（主服 25565，同一要塞）：修前 `表外 1/24 = 4.2%`（ghast 混入，2 PASS/1 FAIL）→ 修后 **`表外 0/24 = 0.0%`，3 PASS / 0 FAIL**。
+
+**规矩（写进脚本，别再犯）**：
+
+- 靠 forceload 的用例：强加载后**回读** `data get block` 判 `loaded`，不满足 **exit 1**，不许静默降级；
+- 在任意坐标戳结构/群系谓词的测试：先强加载该坐标的区块，否则读数是"加载态混合值"；
+- `_work/verify_fortress_e2e.mjs` 已按此修（`forceload add` 用 ±64 方块 = 9×9 区块 + loaded 硬断言）。

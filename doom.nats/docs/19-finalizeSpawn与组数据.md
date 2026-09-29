@@ -499,3 +499,18 @@ return isInNetherFortressBounds(pos, level, cat, sm)   // 硬编码：cat==MONST
 
 **仍保留的近似（重申 §八）**：原版路径①用**整体包围盒**（full）、路径②用 piece，而数据包只有 piece 级 API
 ⇒ "要塞盒内、piece 外、脚下下界砖"那一圈本包会回落到群系表。属**不可达**缺口，已在 §八 记录。
+
+## 十、`in_fortress` 抖动结案：`isLoaded` 门 + forceload 坐标单位（2026-09-29 · v4.22d）
+
+§八 更正了 piece/full 语义之后，要塞端到端用例仍留了一条「`in_fortress` 同位置 ~17% 加载态抖动（待查）」。本轮结案：
+
+1. **引擎语义（源码依据）**：`LocationPredicate#matches`（1.21.6 反编译 `LocationPredicate.java:49-53`）里
+   `boolean loaded = level.isLoaded(pos);` 同时短路 `biomes` 与 `structures` 两个谓词 —— 位置所在区块没加载时**恒假**。
+   原版 CTM 只在已加载且 ticking 的区块内尝试生成，所以生产路径不撞这条；本包直接调引擎谓词 ⇒ **与原版一致**，无需改包。
+2. **测试台 bug**：`forceload add <x> <z>` 收的是**方块坐标**；旧脚本传 `Math.floor(X/16) ± 4`（区块坐标）⇒
+   加载到了完全不相干的区块（传 `-45,-44` 实际标 `chunk[-3,-3]`），要塞区块从未被强加载 —— 这才是"forceload 之后仍 `loaded=false`"的真因。
+
+**数字**：受控复现（隔离实例·同一点 200 次）未加载 `0.0%` / 强加载 `100.0%` / 混合 `40.0%`（逐点非 0 即 100，**无抖动**）；
+端到端（主服 25565·同一要塞）修前 `表外 1/24 = 4.2%`（`ghast` 混入，2 PASS/1 FAIL）→ 修后 **`0/24 = 0.0%`，3 PASS / 0 FAIL**。
+脚本已加"强加载后回读 loaded，不满足即 exit 1"的硬断言（不再靠机器人视距兜底）。
+详见 `reports/诊断-in_fortress抖动-20260929.md`。
