@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 
 const ROOT = path.resolve(import.meta.dirname, '..', '..');
 const IDS = [/\bgigantic/i, /\bcalamar\b/i, /\bbdengine\b/i, /巨人鱿鱼/, /All-Rights-Reserved/i];
-const PATHS = [/[A-Za-z]:\\Users\\|\/c\/Users\/[A-Za-z]/, /C:\Users\/, /Downloads[\/]datapack/];
+const PATHS = [/[A-Za-z]:\\Users\\/, /\/c\/Users\//, /Downloads[\\/]datapack/];
 const SELF = ['tools/check_leak.mjs'];
 let files = [];
 try { files = execFileSync('git', ['-c', 'core.quotepath=false', 'ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean); }
