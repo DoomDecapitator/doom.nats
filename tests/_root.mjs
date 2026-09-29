@@ -1,6 +1,6 @@
 // _work/_root.mjs —— 可移植路径解析（测试脚本用）
 //
-// 为什么需要：这些脚本最早写死在作者机器的绝对路径（`C:/Users/Dell/Downloads/datapack/...`），
+// 为什么需要：这些脚本最早写死在作者机器的绝对路径（`<仓库根>/...`），
 // 别人 clone 下来跑不了。本模块按「从脚本位置向上找仓库根」的方式解析，两种布局都能用：
 //   · 作者工作区：<root>/doom.nats（生成器+文档+报告）+ <root>/v4/doom.nats（产物）+ <root>/_work（测试）
 //   · 发布仓库：  <root>/doom.nats + <root>/v4 + <root>/tests（脚本副本）

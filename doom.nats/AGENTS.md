@@ -26,7 +26,7 @@
 - 数字：`check_static` **0 error / 2 warning** · `verify_author_runtime` std **15/0** · exp **19/0** ·
   `verify_author_rules` default **5/0** · author **6/0** · `auto_gate` 全绿（`reports/验收-作者运行时层-20260929.md`）。
 
-## v4.25：实验性 AJ/BDEngine rig 桥接（真实体当内核，rig 当外观）
+## v4.25：实验性 AJ/第三方 rig 工具链 rig 桥接（真实体当内核，rig 当外观）
 
 - **输入 `rules/rigs.json`（实验性）**：字段表/用法/坑见 `rules/README.md` §8；校验入口 `tools/lib/exp-rigs.mjs`
   （空/缺 ⇒ 整条链路不存在）。生成器 `tools/gen_ctm_exp_aj.mjs`（实验性变体专属）⇒ `exp/aj/**` 17 个文件；
@@ -39,13 +39,13 @@
   ① `ride` 的实体参数必须是**单实体**选择器（`@e[tag=x]` 会报 "Only one entity is allowed"）⇒ 加 `limit=1` 或 `@n`；
   ② 方向必须"**rig 骑内核**"（反过来内核成乘客、不再自己走）；**`minecraft:marker` 不能载客**（"couldn't start riding Marker"）；
   ③ display **没有 `RootVehicle`**（哪怕正在被骑）⇒ 判"是否挂载"用"活内核的乘客闭包"（`exp.aj.live`），别用 NBT 字段；
-  ④ 多个 display 乘客**落在同一挂载点**（实测 3 个 Pos 全同）⇒ 骨架布局不会被"乘客序号"打乱，但 **BDEngine 的骨架不是一棵树**
+  ④ 多个 display 乘客**落在同一挂载点**（实测 3 个 Pos 全同）⇒ 骨架布局不会被"乘客序号"打乱，但 **第三方 rig 工具链 的骨架不是一棵树**
   （根 + 16 个并列组实体，组实体自带乘客方块）⇒ 认领必须"**pre 差集整云**"、挂载只挂"自己不是别人乘客"的那批。
 - **`$sel` 是持久 storage**：rig 分支的守卫必须是**带类型**的复合匹配 `{rig:"<id>",type:"<载体>"}`，
   只写 `rig` 会被上一只的残留值骗到（空 rigs 构建里实测到）；多条 rig 守卫要写成**多行**（同一行多个 `if` 是"与"不是"或"）。
 - **运行时刻条目的局限**：`storage doom.nats:author/exp` 的 entries 走 `author/emit_rt`，拿不到 rig
   （要用就写构建期 `rules/entries.json`）。
-- 报告：`reports/验收-实验性AJ桥接-20260929.md`（三栏对照 + 全部数字 + 诚实清单）；图：`reports/图-实验性AJ巨人鱿鱼-20260929.png`。
+- 报告：`reports/验收-实验性AJ桥接-20260929.md`（三栏对照 + 全部数字 + 诚实清单）；图：`reports/图-实验性AJ样例 rig-20260929.png`。
 
 ## v4.23：作者规则层（默认 = 原版，可高度自定义）
 
