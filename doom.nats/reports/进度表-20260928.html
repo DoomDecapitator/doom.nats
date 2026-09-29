@@ -1,0 +1,32 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>子代理进度汇总 · doom 工程</title>
+<style>
+body{font-family:"Microsoft YaHei",system-ui,sans-serif;margin:24px;background:#111;color:#e8e8e8}
+h1{font-size:20px;margin:0 0 4px}.sub{color:#9aa;font-size:12px;margin-bottom:16px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid #333;padding:8px 10px;vertical-align:top;text-align:left}
+th{background:#1d1f24;color:#cfd6e4;font-weight:600}
+tr:nth-child(even) td{background:#16181c}
+.ok{color:#5ec27a;font-weight:600}.warn{color:#e0b341;font-weight:600}.bad{color:#e06c6c;font-weight:600}.run{color:#5aa9e6;font-weight:600}
+code{background:#22262c;padding:1px 4px;border-radius:3px;font-size:12px}
+.k{color:#9aa;font-size:12px}
+</style></head><body>
+<h1>子代理进度汇总</h1>
+<div class="sub">生成时间 2026-09-28 09:41:29 · 工程 doom.nats（doom.nats）+ opencode（doom.ui） · 端口占用 25565,25567,25575,25577</div>
+<table><thead><tr><th style="width:8%">代理</th><th style="width:22%">任务</th><th style="width:13%">状态</th><th style="width:31%">已验数字 / 成果</th><th style="width:26%">产物与剩余</th></tr></thead><tbody>
+<tr><td><code>ec88e018</code></td><td>保真度 backlog（P0-3 / P1-6 / P1-7 + 消失层真机 bug）</td><td class="ok">✅ 完成并冻结</td><td>P0-3 22/0 · P1-6 8/0 · P1-7 6/17→10/13 · persist 10/0 · animals 6/0 · lint L13（红→绿自证）</td><td>docs/19 §七 · AGENTS v4.17 · reports/保真度backlog-20260928-1554.md</td></tr><tr><td><code>62c4a4ec</code></td><td>P1-5 世界出生点 24 格排除</td><td class="ok">✅ 完成并冻结</td><td>verify_spawn24 9/0 ×6 连绿（226981 点整数≡浮点 0 不一致）· mcdoc +4 键（42 键）</td><td>reports/验证-出生点24格-20260928.md · docs/18 §2.2b · docs/21</td></tr><tr><td><code>54dc31f2</code></td><td>复核工具 gate_merge + 三个 verify 脚本加固</td><td class="ok">✅ 完成</td><td>最终四门 **4 PASS / 0 FAIL**；③ 14 脚本 138/0；④ 完整回归 20/0</td><td>_work/gate_merge.mjs · reports/回归-2026-09-28092321.md</td></tr><tr><td><code>fce6fae6</code></td><td>Q7 地图 worldgen 覆盖端到端</td><td class="run">⏳ 运行中（①② 收口）</td><td>导出器遍历式重写（红：TypeError/0 字节文件+双冒号非法 → 绿：66 项表合法）· 命名空间折子目录 · cost 阈值逐字节复现 · 修 apply_worldgen 两处静默字段名 bug</td><td>**③ 三相位数字未交**（唯一空白）</td></tr><tr><td><code>d5dcb81b</code></td><td>doom.ui 真机验收</td><td class="warn">⚠️ 已强制收尾（曾空转 5h/85M tok）</td><td>53 用例/334 断言 49/53 PASS · F-1~F-6 修复 + F-7/F-8/F-9/F-12 打磨 · lint-ui（U1–U11）· macro-smoke · verify-ui-all</td><td>reports/验收-20260928-1309.md（62KB）· 验收-补充-20260928-1738.md；**打磨后真机复测未跑**</td></tr><tr><td><code>d72556b1</code></td><td>doom.ui 补跑（限时委派）</td><td class="bad">❌ 失败（空间用尽）</td><td>无产出；现场已清理（25566/25576 占用 0）</td><td>待办：`node tools/doomtest/verify-ui-all.mjs`（一条命令）</td></tr><tr><td><code>3f69b54a</code></td><td>早期侦察与索引类任务</td><td class="ok">✅ 已结束（idle）</td><td>属历史任务，产物已在仓库内（源码细节报告 / 外部资料 / doom.schedule 侦察 / 测试服启动）</td><td>—</td></tr>
+</tbody></table>
+<h2 style="font-size:16px;margin:20px 0 6px">主线（doom.nats）当前状态</h2>
+<ul style="font-size:13px;line-height:1.7">
+<li>四门：① 静态 <span class="ok">PASS</span>（0 error/2 warning）· ② 引擎加载 <span class="ok">PASS</span>（Failed to load 0 条）· ③ 真机 14 脚本 <span class="ok">138 PASS / 0 FAIL</span> · ④ 完整回归 <span class="ok">20 PASS / 0 FAIL</span>（<code>reports/回归-2026-09-28092321.md</code>）</li>
+<li>安装一致性：<code>v4</code> = 测试世界 = 用户存档 = <b>586 文件</b>，<code>diff -rq</code> 差异 <b>0</b>（<span class="ok">逐字节一致</span>）</li>
+<li>唯一空白：<span class="bad">Q7 三相位数字</span>（原版 roster ⇒ 预期 0 / <code>--worldgen</code> ⇒ 预期僵尸 / 还原 ⇒ 回 0）</li>
+<li>doom.ui：打磨后<b>真机复测未跑</b>，一条命令：<code>node tools/doomtest/verify-ui-all.mjs</code>（跑完 kill 25566 实例）</li>
+</ul>
+<h2 style="font-size:16px;margin:16px 0 6px">教训索引（已固化）</h2>
+<ul style="font-size:13px;line-height:1.7">
+<li>宏函数<b>先实例化再执行</b> ⇒ 函数内才产生的宏参数会让整函数失效（<code>rot</code>/<code>$(v)</code>/马 <code>$(h)</code> 各踩一次）</li>
+<li>产物禁裸 <code>undefined</code>/<code>NaN</code>（<b>lint L13</b>；曾让 <code>mob/struct/monument_monster</code> 失效、加载门翻红）</li>
+<li>消失层 <code>distance=129..</code> 以<b>函数执行位置</b>（世界出生点）为参考 ⇒ 玩家远离出生点会整片静默清空（已改逐玩家判定）</li>
+<li>并发跑回归 = 数字不可信（曾同时 2×regress + 2×mcauto + 2×bot）；委派长任务必须<b>限时</b>（本次 85M tokens 空转即此教训）</li>
+</ul>
+</body></html>

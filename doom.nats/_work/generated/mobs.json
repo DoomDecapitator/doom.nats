@@ -1,0 +1,504 @@
+{
+ "note": "CTM 复刻用生物条目；minCount/maxCount 不在此表（按群系存于 rosters），maxCluster 的特例值待源码复核",
+ "defaults": {
+  "maxCluster": 4
+ },
+ "count": 47,
+ "mobs": {
+  "minecraft:armadillo": {
+   "type": "minecraft:armadillo",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 6,
+   "minMaxVariants": [
+    "1..2",
+    "2..3"
+   ]
+  },
+  "minecraft:axolotl": {
+   "type": "minecraft:axolotl",
+   "category": "axolotls",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 1,
+   "minMaxVariants": [
+    "4..6"
+   ]
+  },
+  "minecraft:bat": {
+   "type": "minecraft:bat",
+   "category": "ambient",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 53,
+   "minMaxVariants": [
+    "8..8"
+   ]
+  },
+  "minecraft:bogged": {
+   "type": "minecraft:bogged",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "4..4"
+   ]
+  },
+  "minecraft:camel": {
+   "type": "minecraft:camel",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 1,
+   "minMaxVariants": [
+    "1..1"
+   ]
+  },
+  "minecraft:chicken": {
+   "type": "minecraft:chicken",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 27,
+   "minMaxVariants": [
+    "4..4"
+   ]
+  },
+  "minecraft:cod": {
+   "type": "minecraft:cod",
+   "category": "water_ambient",
+   "nbt": {},
+   "maxCluster": 8,
+   "biomeCount": 6,
+   "minMaxVariants": [
+    "3..6"
+   ]
+  },
+  "minecraft:cow": {
+   "type": "minecraft:cow",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 24,
+   "minMaxVariants": [
+    "4..4"
+   ]
+  },
+  "minecraft:creeper": {
+   "type": "minecraft:creeper",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 52,
+   "minMaxVariants": [
+    "4..4"
+   ]
+  },
+  "minecraft:dolphin": {
+   "type": "minecraft:dolphin",
+   "category": "water_creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 5,
+   "minMaxVariants": [
+    "1..2"
+   ]
+  },
+  "minecraft:donkey": {
+   "type": "minecraft:donkey",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 6,
+   "biomeCount": 6,
+   "minMaxVariants": [
+    "1..1",
+    "1..2",
+    "1..3"
+   ]
+  },
+  "minecraft:drowned": {
+   "type": "minecraft:drowned",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 1,
+   "biomeCount": 12,
+   "minMaxVariants": [
+    "1..1",
+    "4..4"
+   ]
+  },
+  "minecraft:enderman": {
+   "type": "minecraft:enderman",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "spawnCost": true,
+   "biomeCount": 60,
+   "minMaxVariants": [
+    "1..4",
+    "4..4"
+   ]
+  },
+  "minecraft:fox": {
+   "type": "minecraft:fox",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 5,
+   "minMaxVariants": [
+    "2..4"
+   ]
+  },
+  "minecraft:frog": {
+   "type": "minecraft:frog",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "2..5"
+   ]
+  },
+  "minecraft:ghast": {
+   "type": "minecraft:ghast",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 1,
+   "spawnCost": true,
+   "biomeCount": 3,
+   "minMaxVariants": [
+    "1..1",
+    "4..4"
+   ]
+  },
+  "minecraft:glow_squid": {
+   "type": "minecraft:glow_squid",
+   "category": "underground_water_creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 53,
+   "minMaxVariants": [
+    "4..6"
+   ]
+  },
+  "minecraft:goat": {
+   "type": "minecraft:goat",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 3,
+   "minMaxVariants": [
+    "1..3"
+   ]
+  },
+  "minecraft:hoglin": {
+   "type": "minecraft:hoglin",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 1,
+   "minMaxVariants": [
+    "3..4"
+   ]
+  },
+  "minecraft:horse": {
+   "type": "minecraft:horse",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 6,
+   "biomeCount": 5,
+   "minMaxVariants": [
+    "2..6"
+   ]
+  },
+  "minecraft:husk": {
+   "type": "minecraft:husk",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 1,
+   "minMaxVariants": [
+    "4..4"
+   ]
+  },
+  "minecraft:llama": {
+   "type": "minecraft:llama",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 4,
+   "minMaxVariants": [
+    "4..4",
+    "4..6"
+   ]
+  },
+  "minecraft:magma_cube": {
+   "type": "minecraft:magma_cube",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "2..5",
+    "4..4"
+   ]
+  },
+  "minecraft:mooshroom": {
+   "type": "minecraft:mooshroom",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 1,
+   "minMaxVariants": [
+    "4..8"
+   ]
+  },
+  "minecraft:ocelot": {
+   "type": "minecraft:ocelot",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "1..1",
+    "1..3"
+   ]
+  },
+  "minecraft:panda": {
+   "type": "minecraft:panda",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "1..2"
+   ]
+  },
+  "minecraft:parrot": {
+   "type": "minecraft:parrot",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "1..2"
+   ]
+  },
+  "minecraft:pig": {
+   "type": "minecraft:pig",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 25,
+   "minMaxVariants": [
+    "1..2",
+    "4..4"
+   ]
+  },
+  "minecraft:piglin": {
+   "type": "minecraft:piglin",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "3..4",
+    "4..4"
+   ]
+  },
+  "minecraft:polar_bear": {
+   "type": "minecraft:polar_bear",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 4,
+   "minMaxVariants": [
+    "1..2"
+   ]
+  },
+  "minecraft:pufferfish": {
+   "type": "minecraft:pufferfish",
+   "category": "water_ambient",
+   "nbt": {},
+   "maxCluster": 8,
+   "biomeCount": 3,
+   "minMaxVariants": [
+    "1..3"
+   ]
+  },
+  "minecraft:rabbit": {
+   "type": "minecraft:rabbit",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 12,
+   "minMaxVariants": [
+    "2..3",
+    "2..6"
+   ]
+  },
+  "minecraft:salmon": {
+   "type": "minecraft:salmon",
+   "category": "water_ambient",
+   "nbt": {},
+   "maxCluster": 8,
+   "biomeCount": 6,
+   "minMaxVariants": [
+    "1..5"
+   ]
+  },
+  "minecraft:sheep": {
+   "type": "minecraft:sheep",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 26,
+   "minMaxVariants": [
+    "2..4",
+    "4..4"
+   ]
+  },
+  "minecraft:skeleton": {
+   "type": "minecraft:skeleton",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "spawnCost": true,
+   "biomeCount": 53,
+   "minMaxVariants": [
+    "4..4",
+    "5..5"
+   ]
+  },
+  "minecraft:slime": {
+   "type": "minecraft:slime",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 54,
+   "minMaxVariants": [
+    "1..1",
+    "4..4"
+   ]
+  },
+  "minecraft:spider": {
+   "type": "minecraft:spider",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 52,
+   "minMaxVariants": [
+    "4..4"
+   ]
+  },
+  "minecraft:squid": {
+   "type": "minecraft:squid",
+   "category": "water_creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 11,
+   "minMaxVariants": [
+    "1..2",
+    "1..4",
+    "4..4"
+   ]
+  },
+  "minecraft:stray": {
+   "type": "minecraft:stray",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "4..4"
+   ]
+  },
+  "minecraft:strider": {
+   "type": "minecraft:strider",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "spawnCost": true,
+   "biomeCount": 5,
+   "minMaxVariants": [
+    "1..2"
+   ]
+  },
+  "minecraft:tropical_fish": {
+   "type": "minecraft:tropical_fish",
+   "category": "water_ambient",
+   "nbt": {},
+   "maxCluster": 8,
+   "biomeCount": 5,
+   "minMaxVariants": [
+    "8..8"
+   ]
+  },
+  "minecraft:turtle": {
+   "type": "minecraft:turtle",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 1,
+   "minMaxVariants": [
+    "2..5"
+   ]
+  },
+  "minecraft:witch": {
+   "type": "minecraft:witch",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 1,
+   "biomeCount": 52,
+   "minMaxVariants": [
+    "1..1"
+   ]
+  },
+  "minecraft:wolf": {
+   "type": "minecraft:wolf",
+   "category": "creature",
+   "nbt": {},
+   "maxCluster": 8,
+   "biomeCount": 9,
+   "minMaxVariants": [
+    "1..1",
+    "2..4",
+    "4..4",
+    "4..8"
+   ]
+  },
+  "minecraft:zombie": {
+   "type": "minecraft:zombie",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 52,
+   "minMaxVariants": [
+    "4..4"
+   ]
+  },
+  "minecraft:zombie_villager": {
+   "type": "minecraft:zombie_villager",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 1,
+   "biomeCount": 52,
+   "minMaxVariants": [
+    "1..1"
+   ]
+  },
+  "minecraft:zombified_piglin": {
+   "type": "minecraft:zombified_piglin",
+   "category": "monster",
+   "nbt": {},
+   "maxCluster": 4,
+   "biomeCount": 2,
+   "minMaxVariants": [
+    "2..4",
+    "4..4"
+   ]
+  }
+ }
+}

@@ -1,0 +1,18 @@
+# 开发/本地产物
+*.log
+*.tmp
+*.bak
+*.bak-*
+mcserver/
+mcserver-*/
+**/world/
+**/eula.txt
+**/server.properties
+**/usercache.json
+**/ops.json
+**/banned-*.json
+**/*.jar
+node_modules/
+**/node_modules/
+Thumbs.db
+.DS_Store

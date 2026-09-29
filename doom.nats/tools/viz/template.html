@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>doom.nats 点位物理模型</title>
+<style>
+  :root { --bg:#0f1216; --panel:#171b21; --line:#2a313a; --fg:#d7dde5; --dim:#8b97a6; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg);
+    font:13px/1.5 "Segoe UI",system-ui,"Microsoft YaHei",sans-serif; overflow:hidden; }
+  #app { display:flex; height:100%; }
+  #panel { width:280px; flex:0 0 280px; background:var(--panel); border-right:1px solid var(--line);
+    overflow-y:auto; padding:12px 14px 24px; }
+  #panel h1 { font-size:14px; margin:0 0 2px; }
+  #panel h2 { font-size:12px; color:var(--dim); margin:16px 0 6px; text-transform:uppercase; letter-spacing:.06em; }
+  #panel .sub { color:var(--dim); font-size:11px; margin-bottom:10px; }
+  label.row { display:flex; align-items:center; gap:6px; padding:2px 0; cursor:pointer; }
+  select,button { background:#0f1216; color:var(--fg); border:1px solid var(--line); border-radius:5px;
+    padding:4px 6px; font:inherit; width:100%; }
+  button { cursor:pointer; margin-top:6px; }
+  button:hover { border-color:#3d4650; }
+  .stat { display:flex; justify-content:space-between; padding:1px 0; }
+  .stat b { font-weight:600; }
+  .bar { height:9px; background:#0f1216; border:1px solid var(--line); border-radius:3px; overflow:hidden; margin:2px 0 4px; }
+  .bar > i { display:block; height:100%; background:linear-gradient(90deg,#2f6f8f,#59b6d8); }
+  .barlab { display:flex; justify-content:space-between; color:var(--dim); font-size:11px; }
+  .legend { display:grid; grid-template-columns:1fr 1fr; gap:2px 8px; font-size:11px; }
+  .legend span { display:flex; align-items:center; gap:5px; }
+  .sw { width:9px; height:9px; border-radius:2px; flex:0 0 9px; }
+  canvas { flex:1; display:block; cursor:grab; }
+  canvas.drag { cursor:grabbing; }
+  #hud { position:fixed; right:12px; bottom:10px; color:var(--dim); font-size:11px; text-align:right;
+    pointer-events:none; text-shadow:0 1px 3px #000; }
+  kbd { background:#0f1216; border:1px solid var(--line); border-radius:3px; padding:0 4px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="panel">
+    <h1>doom.nats 点位模型</h1>
+    <div class="sub" id="packinfo"></div>
+
+    <h2>场景</h2>
+    <select id="scen"></select>
+
+    <h2>图层</h2>
+    <label class="row"><input type="checkbox" id="L.attempt" checked> 尝试点（灰）</label>
+    <label class="row"><input type="checkbox" id="L.spawn" checked> 刷怪点（按类型着色）</label>
+    <label class="row"><input type="checkbox" id="L.dir"> 朝向锥</label>
+    <label class="row"><input type="checkbox" id="L.grid" checked> 地面网格</label>
+    <label class="row"><input type="checkbox" id="L.rings" checked> 距离环</label>
+    <label class="row"><input type="checkbox" id="L.vert" checked> 垂线（投影到下界）</label>
+
+    <h2>视图</h2>
+    <button id="reset">重置视角</button>
+    <button id="top">正俯视</button>
+    <button id="side">正侧视</button>
+    <div class="stat" style="margin-top:8px"><span>点数</span><b id="npts">–</b></div>
+    <div class="stat"><span>FPS</span><b id="fps">–</b></div>
+
+    <h2>统计</h2>
+    <div class="stat"><span>尝试</span><b id="s.att">–</b></div>
+    <div class="stat"><span>刷怪</span><b id="s.sp">–</b></div>
+    <div class="stat"><span>成功率</span><b id="s.rate">–</b></div>
+    <div class="stat"><span>水平距离</span><b id="s.dist">–</b></div>
+    <div class="stat"><span>点高度 y</span><b id="s.y">–</b></div>
+
+    <h2>距离直方图（每 6 格）</h2>
+    <div id="h.dist"></div>
+
+    <h2>俯仰直方图（每 15°）</h2>
+    <div id="h.pitch"></div>
+
+    <h2>刷怪类型</h2>
+    <div class="legend" id="legend"></div>
+  </aside>
+  <canvas id="c"></canvas>
+</div>
+<div id="hud">
+  拖拽旋转 · 滚轮缩放 · <kbd>Shift</kbd>+拖拽平移 · <kbd>双击</kbd>重置
+</div>
+
+<script>
+const DATA = /*__POINTS__*/;
+const TYPES = DATA.types;
+const TYPE_COLOR = {};
+(function () {
+  const pal = ['#e06c75','#98c379','#e5c07b','#61afef','#c678dd','#56b6c2','#abb2bf','#d19a66','#7f9cf5','#f78fb3','#4ec9b0','#ffb86c'];
+  TYPES.forEach((t, i) => { TYPE_COLOR[t] = pal[i % pal.length]; });
+})();
+
+const cvs = document.getElementById('c');
+const ctx = cvs.getContext('2d');
+let W = 0, H = 0, DPR = Math.min(2, window.devicePixelRatio || 1);
+function resize() {
+  W = cvs.clientWidth; H = cvs.clientHeight;
+  cvs.width = Math.round(W * DPR); cvs.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize);
+
+// ---------- 相机：绕目标点旋转的透视投影 ----------
+const cam = { az: -0.9, el: 0.62, dist: 220, tx: 0, ty: 64, tz: 0 };
+function project(p) {
+  // 世界 → 相机
+  const dx = p[0] - cam.tx, dy = p[1] - cam.ty, dz = p[2] - cam.tz;
+  const ca = Math.cos(cam.az), sa = Math.sin(cam.az);
+  const x1 = dx * ca - dz * sa, z1 = dx * sa + dz * ca;
+  const ce = Math.cos(cam.el), se = Math.sin(cam.el);
+  const y2 = dy * ce - z1 * se, z2 = dy * se + z1 * ce;
+  const zc = z2 + cam.dist;                       // 相机前方
+  if (zc < 1) return null;
+  const f = (H * 0.5) / Math.tan(0.5 * 1.0);      // 视野约 57°
+  return [W * 0.5 + (x1 * f) / zc, H * 0.5 - (y2 * f) / zc, zc];
+}
+
+// ---------- 图层开关 ----------
+const layer = {};
+['attempt','spawn','dir','grid','rings','vert'].forEach((k) => {
+  const el = document.getElementById('L.' + k);
+  layer[k] = el.checked;
+  el.addEventListener('change', () => { layer[k] = el.checked; draw(); });
+});
+
+// ---------- 场景切换 ----------
+let scen = DATA.scenarios[0];
+const sel = document.getElementById('scen');
+DATA.scenarios.forEach((s, i) => {
+  const o = document.createElement('option');
+  o.value = i; o.textContent = s.name + '（' + s.attempts.length + ' 尝试）';
+  sel.appendChild(o);
+});
+sel.addEventListener('change', () => { scen = DATA.scenarios[+sel.value]; fitCamera(); stats(); draw(); });
+document.getElementById('packinfo').textContent = DATA.pack + ' · ' + DATA.ticks + ' tick/场景 · ' + DATA.stamp;
+
+function fitCamera() {
+  cam.tx = scen.player[0]; cam.tz = scen.player[2];
+  cam.ty = scen.player[1] + 6;
+  cam.dist = 210; cam.az = -0.9; cam.el = 0.62;
+}
+document.getElementById('reset').addEventListener('click', () => { fitCamera(); draw(); });
+document.getElementById('top').addEventListener('click', () => { cam.az = -Math.PI / 2; cam.el = 1.52; draw(); });
+document.getElementById('side').addEventListener('click', () => { cam.az = -Math.PI / 2; cam.el = 0.02; draw(); });
+
+// ---------- 交互 ----------
+let drag = null;
+cvs.addEventListener('pointerdown', (e) => {
+  drag = { x: e.clientX, y: e.clientY, shift: e.shiftKey, az: cam.az, el: cam.el, tx: cam.tx, ty: cam.ty };
+  cvs.classList.add('drag'); cvs.setPointerCapture(e.pointerId);
+});
+cvs.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (drag.shift) {
+    const s = cam.dist / 600;
+    cam.tx = drag.tx - (dx * Math.cos(cam.az) + dy * Math.sin(cam.az)) * s;
+    cam.ty = drag.ty + dy * s * 0.8;
+  } else {
+    cam.az = drag.az + dx * 0.008;
+    cam.el = Math.max(-1.5, Math.min(1.55, drag.el + dy * 0.006));
+  }
+  draw();
+});
+cvs.addEventListener('pointerup', () => { drag = null; cvs.classList.remove('drag'); });
+cvs.addEventListener('wheel', (e) => { e.preventDefault(); cam.dist = Math.max(20, Math.min(2000, cam.dist * (e.deltaY > 0 ? 1.12 : 0.89))); draw(); }, { passive: false });
+cvs.addEventListener('dblclick', () => { fitCamera(); draw(); });
+
+// ---------- 采样：点太多时抽稀，保证交互流畅 ----------
+function sample(arr, max) {
+  if (arr.length <= max) return arr;
+  const step = arr.length / max, out = [];
+  for (let i = 0; i < max; i++) out.push(arr[Math.floor(i * step)]);
+  return out;
+}
+const MAXPTS = 6000;
+
+// ---------- 绘制 ----------
+let lastT = performance.now(), frames = 0, fpsAcc = 0;
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const py = scen.player;
+
+  // 地面网格（合成世界：groundY 之下为实心）
+  if (layer.grid) {
+    const gy = scen.groundY, R = 130, S = 13;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(80,110,140,0.28)';
+    for (let x = -R; x <= R; x += S) {
+      const a = project([py[0] + x, gy, py[2] - R]), b = project([py[0] + x, gy, py[2] + R]);
+      if (a && b) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+    }
+    for (let z = -R; z <= R; z += S) {
+      const a = project([py[0] - R, gy, py[2] + z]), b = project([py[0] + R, gy, py[2] + z]);
+      if (a && b) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+    }
+    // 地面填充暗示
+    const c0 = project([py[0] - R, gy, py[2] - R]), c1 = project([py[0] + R, gy, py[2] - R]),
+          c2 = project([py[0] + R, gy, py[2] + R]), c3 = project([py[0] - R, gy, py[2] + R]);
+    if (c0 && c1 && c2 && c3) {
+      ctx.fillStyle = 'rgba(40,70,95,0.16)';
+      ctx.beginPath(); ctx.moveTo(c0[0], c0[1]); ctx.lineTo(c1[0], c1[1]);
+      ctx.lineTo(c2[0], c2[1]); ctx.lineTo(c3[0], c3[1]); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  // 距离环（以玩家为中心）
+  if (layer.rings) {
+    ctx.strokeStyle = 'rgba(120,160,190,0.30)';
+    ctx.setLineDash([4, 4]);
+    for (let r = 24; r <= 120; r += 24) {
+      ctx.beginPath();
+      let started = false;
+      for (let a = 0; a <= 64; a++) {
+        const th = (a / 64) * Math.PI * 2;
+        const p = project([py[0] + Math.cos(th) * r, scen.groundY, py[2] + Math.sin(th) * r]);
+        if (!p) { started = false; continue; }
+        if (!started) { ctx.moveTo(p[0], p[1]); started = true; } else ctx.lineTo(p[0], p[1]);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  // 尝试点
+  const att = sample(scen.attempts, MAXPTS);
+  if (layer.attempt) {
+    ctx.fillStyle = 'rgba(170,190,210,0.55)';
+    for (const a of att) {
+      const p = project(a);
+      if (p) ctx.fillRect(p[0] - 1, p[1] - 1, 2, 2);
+    }
+  }
+
+  // 垂线 + 朝向锥
+  if (layer.vert || layer.dir) {
+    ctx.lineWidth = 1;
+    for (const a of att) {
+      const p = project(a);
+      if (!p) continue;
+      if (layer.vert) {
+        const g = project([a[0], scen.groundY, a[2]]);
+        if (g) {
+          ctx.strokeStyle = 'rgba(120,150,180,0.16)';
+          ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(g[0], g[1]); ctx.stroke();
+        }
+      }
+      if (layer.dir && a.length > 4) {
+        const yaw = a[3] * Math.PI / 180, pitch = a[4] * Math.PI / 180;
+        const cp = Math.cos(pitch), L = 6;
+        const tip = [a[0] - Math.sin(yaw) * cp * L, a[1] - Math.sin(pitch) * L, a[2] + Math.cos(yaw) * cp * L];
+        const q = project(tip);
+        if (q) {
+          ctx.strokeStyle = a[4] > 0 ? 'rgba(224,108,117,0.22)' : 'rgba(97,175,239,0.22)';
+          ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // 刷怪点：按类型着色，画得更大
+  if (layer.spawn) {
+    for (const s of scen.spawns) {
+      const p = project([s[1], s[2], s[3]]);
+      if (!p) continue;
+      ctx.fillStyle = TYPE_COLOR[TYPES[s[0]]] || '#fff';
+      const r = Math.max(2, Math.min(7, 260 / p[2]));
+      ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // 玩家
+  const pp = project([py[0], py[1], py[2]]);
+  if (pp) {
+    ctx.fillStyle = '#7ee787';
+    ctx.beginPath(); ctx.arc(pp[0], pp[1], 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(126,231,135,0.5)';
+    ctx.beginPath(); ctx.arc(pp[0], pp[1], 11, 0, Math.PI * 2); ctx.stroke();
+  }
+  document.getElementById('npts').textContent = scen.attempts.length + ' / ' + scen.spawns.length;
+
+  frames++;
+  const now = performance.now();
+  if (now - lastT > 500) { fpsAcc = Math.round((frames * 1000) / (now - lastT)); frames = 0; lastT = now; document.getElementById('fps').textContent = fpsAcc; }
+}
+
+// ---------- 统计面板 ----------
+function stats() {
+  const att = scen.attempts, sp = scen.spawns, py = scen.player;
+  const dists = att.map((a) => Math.hypot(a[0] - py[0], a[2] - py[2]));
+  const ys = att.map((a) => a[1]);
+  const mm = (arr) => arr.length ? [Math.min(...arr), Math.max(...arr), arr.reduce((x, y) => x + y, 0) / arr.length] : [0, 0, 0];
+  const [d0, d1, da] = mm(dists), [y0, y1, ya] = mm(ys);
+  document.getElementById('s.att').textContent = att.length;
+  document.getElementById('s.sp').textContent = sp.length;
+  document.getElementById('s.rate').textContent = att.length ? ((sp.length / att.length) * 100).toFixed(2) + '%' : '–';
+  document.getElementById('s.dist').textContent = d0.toFixed(0) + ' / ' + d1.toFixed(0) + ' / ' + da.toFixed(1) + ' 格';
+  document.getElementById('s.y').textContent = y0.toFixed(0) + ' / ' + y1.toFixed(0) + ' / ' + ya.toFixed(1);
+
+  const bars = (host, arr, lo, hi, step, fmt) => {
+    const bins = [];
+    for (let v = lo; v < hi; v += step) bins.push([v, 0]);
+    arr.forEach((v) => { const i = Math.floor((v - lo) / step); if (i >= 0 && i < bins.length) bins[i][1]++; });
+    const max = Math.max(1, ...bins.map((b) => b[1]));
+    host.innerHTML = '';
+    bins.forEach(([v, n]) => {
+      const d = document.createElement('div');
+      d.innerHTML = '<div class="bar"><i style="width:' + ((n / max) * 100).toFixed(1) + '%"></i></div>' +
+        '<div class="barlabel"><span>' + fmt(v) + '</span><span>' + n + '</span></div>';
+      host.appendChild(d);
+    });
+  };
+  bars(document.getElementById('h.dist'), dists.filter((d) => d < 132), 0, 132, 6, (v) => v + '');
+  bars(document.getElementById('h.pitch'), att.map((a) => a[4]), -90, 90, 15, (v) => v + '°');
+
+  const counts = new Map();
+  sp.forEach((s) => { const t = TYPES[s[0]]; counts.set(t, (counts.get(t) || 0) + 1); });
+  const lg = document.getElementById('legend');
+  lg.innerHTML = '';
+  [...counts].sort((a, b) => b[1] - a[1]).forEach(([t, n]) => {
+    const d = document.createElement('span');
+    d.innerHTML = '<i class="sw" style="background:' + (TYPE_COLOR[t] || '#fff') + '"></i>' + t + ' ×' + n;
+    lg.appendChild(d);
+  });
+}
+
+// ---------- 启动 ----------
+resize(); fitCamera(); stats(); draw();
+window.addEventListener('keydown', (e) => { if (e.key === 'r') { fitCamera(); draw(); } });
+</script>
+</body>
+</html>

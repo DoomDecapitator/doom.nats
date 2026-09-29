@@ -1,0 +1,15 @@
+{
+  "condition": "minecraft:location_check",
+  "predicate": {
+    "block": {
+      "blocks": [
+        "minecraft:air",
+        "minecraft:cave_air",
+        "minecraft:void_air",
+        "minecraft:short_grass",
+        "minecraft:tall_grass",
+        "minecraft:fern"
+      ]
+    }
+  }
+}
