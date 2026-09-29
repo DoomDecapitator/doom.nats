@@ -33,8 +33,8 @@ const has = async (n) => /passed/i.test(await send('execute if entity ' + n));
 const b1 = (await has('DoomBot')) ? await surfaceY(-240, -592) : null;
 const b2 = (await has('DoomBot2')) ? await surfaceY(-700, -592) : null;
 console.log('锚点地表: DoomBot(-240,-592) y=' + (b1 || 64) + ' · DoomBot2(-700,-592) y=' + (b2 || 64));
-if (b1) await send(`execute in minecraft:overworld run tp DoomBot -240 ${b1} -592`);
-if (b2) await send(`execute in minecraft:overworld run tp DoomBot2 -700 ${b2} -592`);
+await send(`execute in minecraft:overworld run tp DoomBot -240 ${b1 ?? 90} -592`);   // 扫描失败也拉回来（否则机器人可能被上一个脚本留在下界 ⇒ multibot 前置假红）
+await send(`execute in minecraft:overworld run tp DoomBot2 -700 ${b2 ?? 90} -592`);
 await send('gamerule doDaylightCycle false');
 await send('time set midnight');
 const p1 = await send('data get entity DoomBot Pos');
@@ -48,3 +48,10 @@ console.log('  ' + (await send('scoreboard players get #anch.k doom.nats')));
 console.log('  ' + (await send('time query daytime')));
 r.close && r.close();
 process.exit(0);
+// 回读（2026-09-29 补）：把"机器人到底在哪个维度、站在哪"打出来 ——
+//   要塞脚本会把机器人留在下界，之后单跑 multibot 会因为"相距只有 167 格"假红（实测）。
+for (const n of ["DoomBot", "DoomBot2"]) {
+  const pos = await send(`data get entity @e[type=player,name=${n},limit=1] Pos`);
+  const dim = await send(`data get entity @e[type=player,name=${n},limit=1] Dimension`);
+  console.log("anchor 回读 " + n + ": " + String(dim).replace(/.*following entity data: /, "") + "  " + String(pos).replace(/.*following entity data: /, ""));
+}
