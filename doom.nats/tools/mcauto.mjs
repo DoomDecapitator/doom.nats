@@ -28,7 +28,9 @@ const KILL_PORTS = MC_PORT + ',' + MC_RCON_PORT;
 const WORLD = path.join(SRV, 'world');
 const LOG = path.join(SRV, 'logs', 'latest.log');
 const RUNLOG = path.join(SRV, 'run.log');
-const JAVA = 'C:/Users/Dell/AppData/Local/Packages/Microsoft.4297127D64EC6_8wekyb3d8bbwe/LocalCache/Local/runtime/java-runtime-delta/windows-x64/java-runtime-delta/bin/java.exe';
+// java 可执行：JAVA_BIN 环境变量 > 本机默认（微软商店版 java runtime）> PATH 里的 java
+const JAVA_DEFAULT = 'C:/Users/Dell/AppData/Local/Packages/Microsoft.4297127D64EC6_8wekyb3d8bbwe/LocalCache/Local/runtime/java-runtime-delta/windows-x64/java-runtime-delta/bin/java.exe';
+const JAVA = process.env.JAVA_BIN || (fs.existsSync(JAVA_DEFAULT) ? JAVA_DEFAULT : 'java');
 
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i !== -1 && argv[i + 1] ? argv[i + 1] : d; };

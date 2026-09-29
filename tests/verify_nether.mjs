@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_nether.mjs —— 真机验证「下界维度里也能刷怪」（端到端）
 //
 //   node _work/verify_nether.mjs
@@ -158,5 +159,5 @@ r.close();
 const fails = results.filter((x) => !x.pass).length;
 console.log('');
 console.log('汇总: ' + (results.length - fails) + ' PASS / ' + fails + ' FAIL');
-fs.writeFileSync('C:/Users/Dell/Downloads/datapack/_work/verify-nether.json', JSON.stringify({ at: new Date().toISOString(), spot, results }, null, 2));
+fs.writeFileSync(W('_work/verify-nether.json'), JSON.stringify({ at: new Date().toISOString(), spot, results }, null, 2));
 process.exit(fails ? 1 : 0);

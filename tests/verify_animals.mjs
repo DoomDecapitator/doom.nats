@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_animals.mjs —— 被动生物（creature）端到端验证 v3
 //
 //   node _work/verify_animals.mjs
@@ -89,14 +90,14 @@ for (let i = 0; i < 4; i++) {
   if (i === 3) console.log('⚠ 前置：清场后 creature 额度仍满 $cnt.creature=' + c + ' / $cap.creature=' + capv + '（后面的 ③ 大概率红，请先查这个）');
 }
 
-const detect = fs.readFileSync('C:/Users/Dell/Downloads/datapack/v4/doom.nats/data/doom.nats/function/biome/detect.mcfunction', 'utf8');
+const detect = fs.readFileSync(R('v4/doom.nats/data/doom.nats/function/biome/detect.mcfunction'), 'utf8');
 const biomeById = {};
 for (const line of detect.split('\n')) {
   const m = /if biome ~ ~ ~ minecraft:([a-z_]+) run scoreboard players set \$snap\.biome doom\.nats (\d+)/.exec(line);
   if (m) biomeById[m[2]] = 'minecraft:' + m[1];
 }
 const here = biomeById[await score('$snap.biome')] || '(未收录)';
-const rosters = JSON.parse(fs.readFileSync('C:/Users/Dell/Downloads/datapack/doom.nats/_work/generated/biome-rosters.json', 'utf8')).rosters;
+const rosters = JSON.parse(fs.readFileSync(R('doom.nats/_work/generated/biome-rosters.json'), 'utf8')).rosters;
 console.log('当前群系: ' + here + ' | 类别: ' + (rosters[here] ? Object.keys(rosters[here].categories).join(',') : '(无)'));
 
 // 试验台：离玩家 30 格（**必须 > 24**，否则原版玩家禁区直接否决）
@@ -149,7 +150,7 @@ ok('① 试验草台就位（离玩家 30 格 ⇒ 不在 24 格禁区内）', (a
   //   creature 计数去比（实测 regress 里 5/1：r5=69 r6=22，源头就是它）。这里显式刷新成本世界。
   await cmd('execute in minecraft:overworld run function doom.nats:circ/detect_dim_att');
   // 逐段自检（诊断用：失败时一眼看出是哪一步）
-  const RULES_JSON = JSON.parse(fs.readFileSync('C:/Users/Dell/Downloads/datapack/doom.nats/_work/generated/entity-rules.json', 'utf8'));
+  const RULES_JSON = JSON.parse(fs.readFileSync(R('doom.nats/_work/generated/entity-rules.json'), 'utf8'));
   const sheepRuleId = RULES_JSON.byType['minecraft:sheep'];
   for (const [seg, fn] of [['distance', 'check/distance'], ['light', 'check/light'], ['block', 'check/block'], ['entity', 'check/entity']]) {
     await set('$chk.ok', 1); await set('$chk.reason', 0);
@@ -175,7 +176,7 @@ ok('① 试验草台就位（离玩家 30 格 ⇒ 不在 24 格禁区内）', (a
   const N = 40;
   const before = await score('$spawned.total');
   await cmd('data merge storage doom.nats:sel {type:"minecraft:sheep",slug:"sheep",cat:"creature",min:1,max:2,nbt:{Tags:["doom.nats.spawned","doom.nats.cat.creature"]}}');
-  const sheepRule = JSON.parse(fs.readFileSync('C:/Users/Dell/Downloads/datapack/doom.nats/_work/generated/entity-rules.json', 'utf8')).byType['minecraft:sheep'];
+  const sheepRule = JSON.parse(fs.readFileSync(R('doom.nats/_work/generated/entity-rules.json'), 'utf8')).byType['minecraft:sheep'];
   for (let i = 0; i < N; i++) {
     await set('$grp.sel', 1);       // 跳过群系抽签，直接用喂进去的物种
     await set('$grp.sized', 1);
@@ -241,5 +242,5 @@ r.close();
 const fails = results.filter((x) => !x.pass).length;
 console.log('');
 console.log('汇总: ' + (results.length - fails) + ' PASS / ' + fails + ' FAIL');
-fs.writeFileSync('C:/Users/Dell/Downloads/datapack/_work/verify-animals.json', JSON.stringify({ at: new Date().toISOString(), biome: here, results }, null, 2));
+fs.writeFileSync(W('_work/verify-animals.json'), JSON.stringify({ at: new Date().toISOString(), biome: here, results }, null, 2));
 process.exit(fails ? 1 : 0);

@@ -12,6 +12,38 @@
    `doDaylightCycle=false` + `time midnight`、`doMobSpawning=false`（由本包接管）、
    锚定机器人 `DoomBot` / `DoomBot2`（相距 >400 格，例：`(-240,71,-592)` 与 `(-700,64,-592)`）。
 
+## 路径与环境变量（可移植）
+
+脚本**不写死任何绝对路径**：每个脚本首行 `import { R, W } from './_root.mjs';`，
+由 `_root.mjs` 从脚本位置**向上找仓库根**，两种布局都能自动解析：
+
+| 布局 | 仓库根 | 脚本所在 | `_work/...` 解析到 |
+|---|---|---|---|
+| 作者工作区 | `<…>/datapack` | `_work/` | `<根>/_work/...` |
+| 发布仓库（本目录） | `<…>/doom.nats` | `tests/` | `<根>/doom.nats/_work/...`，再退到 `<根>/tests/...`（取第一个存在的） |
+
+- `R(rel)`（只读）：按候选列表（原路径 → `doom.nats/rel` → `tests/rel` → 去掉 `_work/` 前缀的同名候选）
+  找第一个**存在**的文件，都不存在才回落到 `<根>/rel`。
+- `W(rel)`（输出）：落到输出目录，并自动建目录。
+
+| 环境变量 | 默认值 | 作用 |
+|---|---|---|
+| `DOOM_ROOT` | 自动向上查找（含 `v4/doom.nats` 或 `doom.nats/tools` 的目录） | 显式指定仓库根 |
+| `DOOM_OUT` | 有 `_work/` 就用仓库根；否则用 `doom.nats/`；最后兜底 `tests/_artifacts` | 输出目录（`W()` 的根） |
+| `MC_LOG` | `_work/mcserver/logs/latest.log` | **换实例**时的服务端日志（`verify_rules.mjs`、`verify_mode.mjs`） |
+| `RCON_PORT` | `25575` | RCON 端口（`doom.nats/tools/mcrcon.mjs`，verify 脚本经它连服） |
+| `MC_PORT` | `25565` | 服务器端口（`doom.nats/tools/mcauto.mjs`、`regress.mjs`） |
+| `JAVA_BIN` | 本机默认 java runtime；不存在则用 PATH 里的 `java` | `doom.nats/tools/mcauto.mjs` 起服用的 java |
+
+换实例（例如旁路的 `mcserver-wg`）复跑单条：
+
+```bash
+MC_LOG=../_work/mcserver-wg/logs/latest.log RCON_PORT=25581 node verify_rules.mjs
+```
+
+> 默认的 25565 / RCON 25575 就是「前置」里那台常驻服；另起实例务必显式覆盖端口与日志路径，
+> 别和正在玩的服务器抢端口。
+
 ## 四道门（一次全跑）
 
 ```bash

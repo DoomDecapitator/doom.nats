@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // tools/propose_tags.mjs —— (b) 按**真实地形**自动补全方块标签
 //
 //   node tools/propose_tags.mjs --save "<存档目录>" [--step 4] [--out <报告路径>]
@@ -64,9 +65,9 @@ const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i !== -1 && argv[i + 1] ? argv[i + 1] : d; };
 const SAVE = path.resolve(arg('--save', ''));
 const STEP = Number(arg('--step', '4'));
-const OUT = path.resolve(arg('--out', 'C:/Users/Dell/Downloads/datapack/_work/generated/proposed-tags.json'));
+const OUT = path.resolve(arg('--out', W('_work/generated/proposed-tags.json')));
 const PACK = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'v4', 'doom.nats');
-const REF = 'C:/Users/Dell/Downloads/datapack/_work/ref/vanillatags-block.txt';
+const REF = R('_work/ref/vanillatags-block.txt');
 if (!SAVE || !fs.existsSync(path.join(SAVE, 'region'))) { console.error('用法: --save "<存档目录>"（需含 region/）'); process.exit(2); }
 
 const AIR = new Set(['minecraft:air', 'minecraft:cave_air', 'minecraft:void_air']);

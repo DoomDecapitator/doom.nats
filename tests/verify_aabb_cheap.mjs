@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_aabb_cheap.mjs —— 真机验证 v4.17（P1-7）「AABB 便宜版」：
 //   · 可站立（下方支撑）：#standable ∪ #full_collision（原版 isFaceSturdy(UP) ≡ 满立方）
 //   · 可生成空位（本体/上方）：#spawnable_at（v4.17 移除了 fluid `water` 与有碰撞盒的 `snow`）
@@ -124,7 +125,7 @@ const pass = results.filter((x) => x.pass).length;
 console.log('\n=== 判定矩阵: ' + pass + ' 通过 / ' + (results.length - pass) + ' 否决 ===');
 const out = { at: new Date().toISOString(), effPeriod: await score('$eff.period'), results };
 const file = process.argv.includes('--before') ? '_work/aabb-cheap-before.json' : '_work/aabb-cheap.json';
-fs.writeFileSync('C:/Users/Dell/Downloads/datapack/' + file, JSON.stringify(out, null, 2));
+fs.writeFileSync(W(file), JSON.stringify(out, null, 2));
 console.log('写入 ' + file);
 
 // ---- 可选：与基线对比 ----

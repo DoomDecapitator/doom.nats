@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_rules.mjs —— 真机验证 v4.13「逐实体规则 + 逐实体光照」修正（v2：自建受控试验场）
 //
 //   node _work/verify_rules.mjs
@@ -8,7 +9,7 @@
 import fs from 'node:fs';
 import { openRcon } from '../doom.nats/tools/mcrcon.mjs';
 
-const LOG = 'C:/Users/Dell/Downloads/datapack/_work/mcserver/logs/latest.log';
+const LOG = process.env.MC_LOG || R('_work/mcserver/logs/latest.log');   // 换实例：MC_LOG=<实例>/logs/latest.log
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const results = [];
 const ok = (name, pass, detail) => { results.push({ name, pass, detail: String(detail) }); console.log((pass ? '✅ ' : '❌ ') + name + '  ' + detail); };
@@ -247,5 +248,5 @@ r.close();
 const fails = results.filter((x) => !x.pass).length;
 console.log('');
 console.log('汇总: ' + (results.length - fails) + ' PASS / ' + fails + ' FAIL');
-fs.writeFileSync('C:/Users/Dell/Downloads/datapack/_work/verify-rules.json', JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
+fs.writeFileSync(W('_work/verify-rules.json'), JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
 process.exit(fails ? 1 : 0);

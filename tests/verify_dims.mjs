@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_dims.mjs —— 真机验证「维度参数」（v4.14）
 //
 //   node _work/verify_dims.mjs
@@ -162,5 +163,5 @@ r.close();
 const fails = results.filter((x) => !x.pass).length;
 console.log('');
 console.log('汇总: ' + (results.length - fails) + ' PASS / ' + fails + ' FAIL');
-fs.writeFileSync('C:/Users/Dell/Downloads/datapack/_work/verify-dims.json', JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
+fs.writeFileSync(W('_work/verify-dims.json'), JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
 process.exit(fails ? 1 : 0);

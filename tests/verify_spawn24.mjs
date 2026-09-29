@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_spawn24.mjs —— P1-5「世界出生点 24 格排除」真机验证（v4.17）
 //
 //   node _work/verify_spawn24.mjs
@@ -223,7 +224,7 @@ console.log(String.fromCharCode(10) + '汇总: ' + pass + ' PASS / ' + (res.leng
 const rep = ['# P1-5 世界出生点 24 格排除 · 真机验证', '', `时间: ${new Date().toISOString()}`, `玩家: ${JSON.stringify(P)} · 候选点: ${JSON.stringify(Q)}`, '',
   `合计 ${pass} PASS / ${res.length - pass} FAIL`, '', `（控制台逐条见运行输出）`].join('\n');
 try {
-  const out = 'C:/Users/Dell/Downloads/datapack/doom.nats/reports/验证-出生点24格-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.md';
+  const out = W('doom.nats/reports/验证-出生点24格-') + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.md';
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, rep);
   console.log('报告已写入 ' + out);

@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_struct_overrides.mjs —— 真机验证 v4.17（P1-6）「结构 spawn_overrides」。
 //
 //   用法：RCON_PORT=25581 node _work/verify_struct_overrides.mjs
@@ -124,6 +125,6 @@ for (const [name, biome, cat] of [['ancient_city', 'deep_dark', 'monster'], ['an
 await freeAll(['pillager_outpost', 'swamp_hut', 'monument', 'ancient_city', 'trial_chambers'], Array(5).fill('minecraft:overworld'));
 const pass = results.filter((x) => x.pass).length;
 console.log('\n汇总: ' + pass + ' PASS / ' + (results.length - pass) + ' FAIL');
-fs.writeFileSync('C:/Users/Dell/Downloads/datapack/_work/verify-struct-overrides.json', JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
+fs.writeFileSync(W('_work/verify-struct-overrides.json'), JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
 r.close?.();
 process.exit(results.some((x) => !x.pass) ? 1 : 0);

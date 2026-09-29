@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_group.mjs —— 真机验证 v4.15「finalizeSpawn 组数据层」（SpawnGroupData 复刻）
 //
 //   node _work/verify_group.mjs
@@ -269,7 +270,7 @@ const n0 = () => {};
   await cmd(`forceload add ${bcx - 2} ${bcz - 2} ${bcx + 2} ${bcz + 2}`);
   await sleep(1200);
   // ⚠ v4.21b：**先记录原群系，再 fillbiome**（旧顺序是先填后记 ⇒ 记下来的是"填过的"值，收尾"还原"等于没还原）。
-  const IDX = JSON.parse(fs.readFileSync('C:/Users/Dell/Downloads/datapack/v4 doom.nats/data/doom.nats/biome-index.json'.replace('v4 ', 'v4/'), 'utf8')).map;
+  const IDX = JSON.parse(fs.readFileSync(R('v4/doom.nats/data/doom.nats/biome-index.json'), 'utf8')).map;
   const origBiome = async (rx, rz) => { await cmd(ATP + `execute positioned ~${rx} ~ ~${rz} run function doom.nats:biome/detect_at`); return IDX[String(await score('$sel.biome'))]; };
   const origA = await origBiome(10, 10);
   const origB = await origBiome(-11, -11);
@@ -453,7 +454,7 @@ const fail = results.length - pass;
 console.log('\n=== 结果: ' + pass + ' PASS / ' + fail + ' FAIL ===');
 const rep = ['# v4.15 组数据层真机验证', '', `时间: ${new Date().toISOString()}`, `位置: ${JSON.stringify(P)}`, '', '| 断言 | 结果 | 细节 |', '| --- | --- | --- |',
   ...results.map((x) => `| ${x.name} | ${x.pass ? 'PASS' : 'FAIL'} | ${x.detail.replace(/\|/g, '/')} | `), '', `合计 ${pass} PASS / ${fail} FAIL`].join('\n');
-const out = 'C:/Users/Dell/Downloads/datapack/doom.nats/reports/验证-组数据层-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.md';
+const out = W('doom.nats/reports/验证-组数据层-') + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.md';
 try { fs.mkdirSync(out.replace(/\/[^/]+$/, ''), { recursive: true }); fs.writeFileSync(out, rep); console.log('报告已写入 ' + out); } catch (e) { console.log('报告写入失败: ' + e.message); }
 r.close?.();
 process.exit(fail ? 1 : 0);

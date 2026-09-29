@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_struct_aabb.mjs —— 真机验证 v4.14b/c：AABB 近似（宽体/高体）与下界要塞结构优先
 //
 //   node _work/verify_struct_aabb.mjs
@@ -32,7 +33,7 @@ const selType = async () => {
   const m = /type:\s*"([^"]+)"/.exec(t);
   return m ? m[1] : '(无)';
 };
-const RULES = JSON.parse(fs.readFileSync('C:/Users/Dell/Downloads/datapack/doom.nats/_work/generated/entity-rules.json', 'utf8'));
+const RULES = JSON.parse(fs.readFileSync(R('doom.nats/_work/generated/entity-rules.json'), 'utf8'));
 
 console.log('=== AABB 近似 + 下界要塞结构优先 · 真机验证 ===');
 // ---- 测试卫生（v4.14e/2）：冻结快照 + 暂停刷怪（加固版）
@@ -231,5 +232,5 @@ r.close();
 const fails = results.filter((x) => !x.pass).length;
 console.log('');
 console.log('汇总: ' + (results.length - fails) + ' PASS / ' + fails + ' FAIL');
-fs.writeFileSync('C:/Users/Dell/Downloads/datapack/_work/verify-struct-aabb.json', JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
+fs.writeFileSync(W('_work/verify-struct-aabb.json'), JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
 process.exit(fails ? 1 : 0);

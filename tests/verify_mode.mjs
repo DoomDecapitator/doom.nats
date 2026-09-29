@@ -1,3 +1,4 @@
+import { R, W } from './_root.mjs';   // 可移植路径解析（见 tests/README.md）
 // _work/verify_mode.mjs —— 真机验证「生存直用模式」开关（mode/survival|manual|off|auto）
 //
 // 前提：常驻测试服在跑（RCON 25575），且 v4 已装进 _work/mcserver/world/datapacks。
@@ -12,7 +13,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { openRcon } from '../doom.nats/tools/mcrcon.mjs';
 
-const LOG = 'C:/Users/Dell/Downloads/datapack/_work/mcserver/logs/latest.log';
+const LOG = process.env.MC_LOG || R('_work/mcserver/logs/latest.log');   // 换实例：MC_LOG=<实例>/logs/latest.log
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const results = [];
 const ok = (name, pass, detail) => { results.push({ name, pass, detail }); console.log((pass ? '✅ ' : '❌ ') + name + '  ' + detail); };
@@ -117,7 +118,7 @@ r.close();
 const pass = results.filter((x) => x.pass).length;
 console.log('');
 console.log('汇总: ' + pass + ' PASS / ' + (results.length - pass) + ' FAIL');
-const out = 'C:/Users/Dell/Downloads/datapack/_work/verify-mode.json';
+const out = W('_work/verify-mode.json');
 fs.writeFileSync(out, JSON.stringify({ at: new Date().toISOString(), results }, null, 2));
 console.log('结果: ' + path.resolve(out));
 process.exit(results.every((x) => x.pass) ? 0 : 1);
