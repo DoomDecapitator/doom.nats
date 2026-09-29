@@ -95,3 +95,56 @@ node doom.nats/tools/lint_ctm.mjs          # 单跑 lint
 **All Rights Reserved · Beta** —— 见 [LICENSE](LICENSE)。
 可以自用/游玩/原样转发；二次发布修改版或商用请先取得许可。
 本仓库不含 Minecraft/Mojang 资产，也不含反编译产物：`doom.nats/tools` 里的规则表是对**原版可观察行为**的复刻与归纳。
+
+---
+
+## 现在，刷怪规则全都能由你定义（v4.25）
+
+### 玩法 A：在游戏里直接改（不用重启、不用重装包）
+
+改的是存储 `doom.nats:author`，**下一拍就按新规则判定**：
+
+```
+/function doom.nats:author/show     看现在改了什么
+/function doom.nats:author/reset    一键回到原版
+```
+
+三个普通例子（复制就能用）：
+
+```
+让僵尸也能刷在树叶上（原版树叶不算能站的地方）
+/data modify storage doom.nats:author entityRules."minecraft:zombie".belowAny set value ["minecraft:leaves"]
+
+雷暴时，深海多出一种僵尸（权重 40，跟原有物种一起抽）
+/data modify storage doom.nats:author entries append value {id:"storm",biomes:["#minecraft:is_deep_ocean"],category:"monster",mob:"minecraft:zombie",weight:40,when:{thundering:true}}
+
+越深越挤：僵尸一组 4 到 6 只，在地表只出 1 只（按 Y 轴分段定义数量）
+/data modify storage doom.nats:author counts.groupByY."minecraft:zombie" set value [{yMax:0,min:4,max:6},{yMin:1,min:1,max:1}]
+```
+
+### 玩法 B：写进文件（跟着包走、能发给别人）
+
+改 `doom.nats/rules/` 里三个文件，然后重新生成一次：
+
+```
+rules/entity-rules.json   某个生物怎么刷：落位面、光照、高度、群系、天气
+rules/entries.json        额外加一条：什么条件下、刷什么、多少只、带什么 NBT
+rules/counts.json         数量曲线：每次几只、这一类的总容量随高度怎么变
+```
+
+细节字段表和更多例子在 `doom.nats/rules/README.md`（含四个完整用例）。
+
+### 机制（为什么这么写就能改）
+
+- 判定是**每次刷怪尝试当场读**的，所以你写的是"**什么时候允许它出现**"，不是"把它调快"。
+- 权重是"**条件成立才并进池子**"：雷暴不开，这条就不在候选表里，等于原版。
+- 能定义的维度：**落位面**（额外方块标签）· **天气/时间**（雷暴、下雨）· **高度**（Y 窗口与数量曲线）· **群系**（白名单/黑名单，可用群系标签）· **光照**（上下限）· **数量**（每次几只、这一类容量）。
+- 默认**什么都不改**：`rules/` 为空且 storage 为空时，行为与原版一致（这是每次提交都会自动验的一条契约）。
+
+### 实验性变体 `v4x`：超出原版的能力
+
+`near`（附近有什么才刷，例如"狼群附近才出羊"）、`on_spawn`（出生特效：粒子/音效/播报/额外 NBT）、预设包（血月、雷暴季、深渊）属于**非原版**能力，只在**实验性变体** `dist/doom.nats-v4x-experimental.zip` 里，并且带**引擎门**：世界必须在创建时开启对应实验性玩法，否则包会被拒绝加载。
+
+### 明确做不到的（免得你白试）
+
+全新的模型/贴图/AI/寻路（数据包管不了客户端资源与实体行为）；给"原本没有这一类别的群系"加怪（那要改世界生成）；让生物之间产生因果关系（例如"蜘蛛吃虫"，那是行为层的事）。
