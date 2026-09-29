@@ -14,7 +14,7 @@ const IDS = [/\bgigantic/i, /\bcalamar\b/i, /\bbdengine\b/i, /巨人鱿鱼/, /Al
 const PATHS = [/[A-Za-z]:\\Users\\/, /\/c\/Users\//, /Downloads[\\/]datapack/];
 const SELF = ['tools/check_leak.mjs'];
 let files = [];
-try { files = execFileSync('git', ['-c', 'core.quotepath=false', 'ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean); }
+try { files = execFileSync(process.env.DOOM_GIT || 'git', ['-c', 'core.quotepath=false', 'ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean); }
 catch { console.error('（不在 git 仓库里：改用全目录扫描）'); files = []; }
 if (!files.length) {
   const walk = (d, out = []) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { if (e.name === '.git' || e.name === 'node_modules') continue; const p = path.join(d, e.name); e.isDirectory() ? walk(p, out) : out.push(path.relative(ROOT, p)); } return out; };
