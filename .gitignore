@@ -1,0 +1,25 @@
+# 本地产物（不进仓库）——公开仓库顶层只允许 README.md / LICENSE / CHANGELOG.md / dist/ / docs/ / src/ / .github/
+*.log
+harness/
+doom.log/
+# _work/ 下面两条都锚定**仓库根**：根上的 _work/ 是本地产物，src/_work/generated/ 是**源码**（生成器输入，必须进仓库）
+/_work/
+_work/mcserver*/
+# pack/ = 在 src/ 里跑生成器后产出的数据包（想改包的人自己生成；成品看 dist/ 的 zip）
+/pack/
+mcserver/
+mcserver-*/
+**/world/
+**/eula.txt
+**/server.properties
+**/usercache.json
+**/ops.json
+**/banned-*.json
+**/*.jar
+node_modules/
+**/node_modules/
+*.tmp
+*.bak
+*.bak-*
+Thumbs.db
+.DS_Store

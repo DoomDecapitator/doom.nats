@@ -1,0 +1,15 @@
+{
+  "_note": "用例 ①③：改原版的逐实体规则。空文件（{}）= 原版行为，产物逐字节不变。",
+
+  "minecraft:zombie": {
+    "_comment": "① 僵尸可以刷在树叶上：把 #minecraft:leaves 并进「下方算落位面」的集合（原版树叶不算可站立）",
+    "belowAny": ["minecraft:leaves"]
+  },
+
+  "minecraft:glow_squid": {
+    "_comment": "③ 发光鱿鱼在草地上生成：落位改陆生、光照改「暗」（想白天也刷就写 none）、删掉原版的 y ≤ seaLevel-33 窗口",
+    "place": "ground",
+    "light": "dark",
+    "ySea": null
+  }
+}

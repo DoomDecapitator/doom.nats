@@ -1,0 +1,109 @@
+name: Bug 报告
+description: 装了 doom.nats 之后出现异常（不刷怪 / 刷得不对 / 报错 / 卡顿）
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        先谢谢你来报问题 🙏 这份表单要的四样东西（版本、变体、日志、截图）是定位问题的全部线索 ——
+        缺哪样都可能让排查原地打转。**能让世界复现的最小步骤**最值钱。
+
+        报之前顺手看一眼：[已知限制](https://github.com/DoomDecapitator/doom.nats/blob/main/docs/wiki/已知限制.md) 与 [FAQ](https://github.com/DoomDecapitator/doom.nats/blob/main/docs/wiki/FAQ.md)。
+
+  - type: input
+    id: pack_version
+    attributes:
+      label: 包版本
+      description: zip 文件名里的版本号（例如 v4.25），或 `dist/*.zip` 的名字
+      placeholder: v4.25
+    validations:
+      required: true
+
+  - type: dropdown
+    id: variant
+    attributes:
+      label: 用的是哪个变体
+      options:
+        - 默认变体 doom.nats-v4.25.zip
+        - 实验性变体 doom.nats-v4x-experimental.zip
+        - 两个都装了（请改成一个再试）
+        - 不确定
+    validations:
+      required: true
+
+  - type: input
+    id: mc_version
+    attributes:
+      label: Minecraft 版本与运行方式
+      description: 游戏版本 + 单人存档还是服务器（服务器请写服务端类型，例如 Fabric / Paper，及是否装模组）
+      placeholder: 1.21.6 · 单人存档 / 1.21.6 · Fabric 服务器
+    validations:
+      required: true
+
+  - type: input
+    id: checksum
+    attributes:
+      label: 校验值核对结果
+      description: 跑过 `sha256sum -c doom.nats-v4.25.zip.sha256`（或 PowerShell 的 Get-FileHash）吗？结果是什么
+      placeholder: OK / 不一致 / 没跑
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤（最小步骤）
+      description: 从进世界开始，一步步写；能写坐标/维度/时间/天气更好
+      placeholder: |
+        1. 新建 1.21.6 世界，装包，/reload
+        2. /time set midnight，站在平原（约 0,70,0）
+        3. 等 2 分钟，一只怪物都没有
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望什么 / 实际发生了什么
+      placeholder: |
+        期望：夜里应该刷出僵尸、苦力怕
+        实际：完全没有；/function doom.nats:debug/reject_report 显示 reason=4 占 100%
+    validations:
+      required: true
+
+  - type: textarea
+    id: rules
+    attributes:
+      label: 你改过规则吗（改了什么就贴什么）
+      description: 运行时刻 storage 的改动（`/function doom.nats:author/show` 的输出最有用），或构建期 rules/*.json 的内容
+      placeholder: 没改 / 只改了 zombie 的 belowAny
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志片段
+      description: `logs/latest.log` 里与 doom.nats 有关的行（尤其 "Failed to load function"、"Unknown"、报错栈）
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图 / 录屏
+      description: 直接拖图片进来；F3 调试屏、`/function doom.nats:debug/env` 的输出、现场照片都行
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我看过"已知限制 / FAQ"，里面没有同样的问题
+          required: false
+        - label: 我贴的日志里没有个人信息（服务器 IP、玩家 UUID、token 等）
+          required: true

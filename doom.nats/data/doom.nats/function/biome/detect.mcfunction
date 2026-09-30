@@ -1,0 +1,71 @@
+# doom.nats:biome/detect —— 探测执行者所在群系（写 $snap.biome 为表内序号；每快照节拍一次）
+#
+# 为什么缓存：逐次刷怪都枚举 65 个群系太贵；而群系在 20 tick 内几乎不变。
+# 未收录的群系保持 0（= 不刷怪），便于作者显式声明允许刷怪的群系。
+# v4.17（Q7）：表里可以有非 minecraft 命名空间的地图群系（--worldgen 合并进来的）—— 在表内就能被探测到。
+scoreboard players set $snap.biome doom.nats 0
+execute if biome ~ ~ ~ minecraft:badlands run scoreboard players set $snap.biome doom.nats 1
+execute if biome ~ ~ ~ minecraft:bamboo_jungle run scoreboard players set $snap.biome doom.nats 2
+execute if biome ~ ~ ~ minecraft:basalt_deltas run scoreboard players set $snap.biome doom.nats 3
+execute if biome ~ ~ ~ minecraft:beach run scoreboard players set $snap.biome doom.nats 4
+execute if biome ~ ~ ~ minecraft:birch_forest run scoreboard players set $snap.biome doom.nats 5
+execute if biome ~ ~ ~ minecraft:cherry_grove run scoreboard players set $snap.biome doom.nats 6
+execute if biome ~ ~ ~ minecraft:cold_ocean run scoreboard players set $snap.biome doom.nats 7
+execute if biome ~ ~ ~ minecraft:crimson_forest run scoreboard players set $snap.biome doom.nats 8
+execute if biome ~ ~ ~ minecraft:dark_forest run scoreboard players set $snap.biome doom.nats 9
+execute if biome ~ ~ ~ minecraft:deep_cold_ocean run scoreboard players set $snap.biome doom.nats 10
+execute if biome ~ ~ ~ minecraft:deep_dark run scoreboard players set $snap.biome doom.nats 11
+execute if biome ~ ~ ~ minecraft:deep_frozen_ocean run scoreboard players set $snap.biome doom.nats 12
+execute if biome ~ ~ ~ minecraft:deep_lukewarm_ocean run scoreboard players set $snap.biome doom.nats 13
+execute if biome ~ ~ ~ minecraft:deep_ocean run scoreboard players set $snap.biome doom.nats 14
+execute if biome ~ ~ ~ minecraft:desert run scoreboard players set $snap.biome doom.nats 15
+execute if biome ~ ~ ~ minecraft:dripstone_caves run scoreboard players set $snap.biome doom.nats 16
+execute if biome ~ ~ ~ minecraft:end_barrens run scoreboard players set $snap.biome doom.nats 17
+execute if biome ~ ~ ~ minecraft:end_highlands run scoreboard players set $snap.biome doom.nats 18
+execute if biome ~ ~ ~ minecraft:end_midlands run scoreboard players set $snap.biome doom.nats 19
+execute if biome ~ ~ ~ minecraft:eroded_badlands run scoreboard players set $snap.biome doom.nats 20
+execute if biome ~ ~ ~ minecraft:flower_forest run scoreboard players set $snap.biome doom.nats 21
+execute if biome ~ ~ ~ minecraft:forest run scoreboard players set $snap.biome doom.nats 22
+execute if biome ~ ~ ~ minecraft:frozen_ocean run scoreboard players set $snap.biome doom.nats 23
+execute if biome ~ ~ ~ minecraft:frozen_peaks run scoreboard players set $snap.biome doom.nats 24
+execute if biome ~ ~ ~ minecraft:frozen_river run scoreboard players set $snap.biome doom.nats 25
+execute if biome ~ ~ ~ minecraft:grove run scoreboard players set $snap.biome doom.nats 26
+execute if biome ~ ~ ~ minecraft:ice_spikes run scoreboard players set $snap.biome doom.nats 27
+execute if biome ~ ~ ~ minecraft:jagged_peaks run scoreboard players set $snap.biome doom.nats 28
+execute if biome ~ ~ ~ minecraft:jungle run scoreboard players set $snap.biome doom.nats 29
+execute if biome ~ ~ ~ minecraft:lukewarm_ocean run scoreboard players set $snap.biome doom.nats 30
+execute if biome ~ ~ ~ minecraft:lush_caves run scoreboard players set $snap.biome doom.nats 31
+execute if biome ~ ~ ~ minecraft:mangrove_swamp run scoreboard players set $snap.biome doom.nats 32
+execute if biome ~ ~ ~ minecraft:meadow run scoreboard players set $snap.biome doom.nats 33
+execute if biome ~ ~ ~ minecraft:mushroom_fields run scoreboard players set $snap.biome doom.nats 34
+execute if biome ~ ~ ~ minecraft:nether_wastes run scoreboard players set $snap.biome doom.nats 35
+execute if biome ~ ~ ~ minecraft:ocean run scoreboard players set $snap.biome doom.nats 36
+execute if biome ~ ~ ~ minecraft:old_growth_birch_forest run scoreboard players set $snap.biome doom.nats 37
+execute if biome ~ ~ ~ minecraft:old_growth_pine_taiga run scoreboard players set $snap.biome doom.nats 38
+execute if biome ~ ~ ~ minecraft:old_growth_spruce_taiga run scoreboard players set $snap.biome doom.nats 39
+execute if biome ~ ~ ~ minecraft:pale_garden run scoreboard players set $snap.biome doom.nats 40
+execute if biome ~ ~ ~ minecraft:plains run scoreboard players set $snap.biome doom.nats 41
+execute if biome ~ ~ ~ minecraft:river run scoreboard players set $snap.biome doom.nats 42
+execute if biome ~ ~ ~ minecraft:savanna run scoreboard players set $snap.biome doom.nats 43
+execute if biome ~ ~ ~ minecraft:savanna_plateau run scoreboard players set $snap.biome doom.nats 44
+execute if biome ~ ~ ~ minecraft:small_end_islands run scoreboard players set $snap.biome doom.nats 45
+execute if biome ~ ~ ~ minecraft:snowy_beach run scoreboard players set $snap.biome doom.nats 46
+execute if biome ~ ~ ~ minecraft:snowy_plains run scoreboard players set $snap.biome doom.nats 47
+execute if biome ~ ~ ~ minecraft:snowy_slopes run scoreboard players set $snap.biome doom.nats 48
+execute if biome ~ ~ ~ minecraft:snowy_taiga run scoreboard players set $snap.biome doom.nats 49
+execute if biome ~ ~ ~ minecraft:soul_sand_valley run scoreboard players set $snap.biome doom.nats 50
+execute if biome ~ ~ ~ minecraft:sparse_jungle run scoreboard players set $snap.biome doom.nats 51
+execute if biome ~ ~ ~ minecraft:stony_peaks run scoreboard players set $snap.biome doom.nats 52
+execute if biome ~ ~ ~ minecraft:stony_shore run scoreboard players set $snap.biome doom.nats 53
+execute if biome ~ ~ ~ minecraft:sunflower_plains run scoreboard players set $snap.biome doom.nats 54
+execute if biome ~ ~ ~ minecraft:swamp run scoreboard players set $snap.biome doom.nats 55
+execute if biome ~ ~ ~ minecraft:taiga run scoreboard players set $snap.biome doom.nats 56
+execute if biome ~ ~ ~ minecraft:the_end run scoreboard players set $snap.biome doom.nats 57
+execute if biome ~ ~ ~ minecraft:the_void run scoreboard players set $snap.biome doom.nats 58
+execute if biome ~ ~ ~ minecraft:warm_ocean run scoreboard players set $snap.biome doom.nats 59
+execute if biome ~ ~ ~ minecraft:warped_forest run scoreboard players set $snap.biome doom.nats 60
+execute if biome ~ ~ ~ minecraft:windswept_forest run scoreboard players set $snap.biome doom.nats 61
+execute if biome ~ ~ ~ minecraft:windswept_gravelly_hills run scoreboard players set $snap.biome doom.nats 62
+execute if biome ~ ~ ~ minecraft:windswept_hills run scoreboard players set $snap.biome doom.nats 63
+execute if biome ~ ~ ~ minecraft:windswept_savanna run scoreboard players set $snap.biome doom.nats 64
+execute if biome ~ ~ ~ minecraft:wooded_badlands run scoreboard players set $snap.biome doom.nats 65

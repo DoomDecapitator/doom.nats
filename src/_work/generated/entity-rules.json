@@ -1,0 +1,358 @@
+{
+  "place": {
+    "ground": 0,
+    "any": 1,
+    "water": 2,
+    "water_surface": 3,
+    "below_tag": 4,
+    "lava": 5
+  },
+  "light": {
+    "none": 0,
+    "dark": 1,
+    "bright": 2,
+    "bat": 3,
+    "slime": 4,
+    "glow": 5,
+    "bl8": 6
+  },
+  "rules": [
+    {
+      "id": 1,
+      "sample": "minecraft:armadillo",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:armadillo_spawnable_on",
+      "tagId": 7
+    },
+    {
+      "id": 2,
+      "sample": "minecraft:axolotl",
+      "place": "below_tag",
+      "light": "none",
+      "tag": "minecraft:axolotls_spawnable_on",
+      "water": true,
+      "tagId": 11
+    },
+    {
+      "id": 3,
+      "sample": "minecraft:bat",
+      "place": "below_tag",
+      "light": "bat",
+      "tag": "minecraft:bats_spawnable_on",
+      "coins": [
+        "half"
+      ],
+      "belowSurface": true,
+      "tagId": 12
+    },
+    {
+      "id": 4,
+      "sample": "minecraft:blaze",
+      "place": "ground",
+      "light": "none",
+      "tagId": 0
+    },
+    {
+      "id": 5,
+      "sample": "minecraft:bogged",
+      "place": "ground",
+      "light": "dark",
+      "tagId": 0
+    },
+    {
+      "id": 6,
+      "sample": "minecraft:camel",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:animals_spawnable_on",
+      "cluster": 6,
+      "tagId": 1
+    },
+    {
+      "id": 7,
+      "sample": "minecraft:cat",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:animals_spawnable_on",
+      "tagId": 1
+    },
+    {
+      "id": 8,
+      "sample": "minecraft:cod",
+      "place": "water_surface",
+      "light": "none",
+      "river98": true,
+      "d64": true,
+      "tagId": 0
+    },
+    {
+      "id": 9,
+      "sample": "minecraft:dolphin",
+      "place": "water_surface",
+      "light": "none",
+      "tagId": 0
+    },
+    {
+      "id": 10,
+      "sample": "minecraft:donkey",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:animals_spawnable_on",
+      "cluster": 6,
+      "tagId": 1
+    },
+    {
+      "id": 11,
+      "sample": "minecraft:drowned",
+      "place": "water",
+      "light": "dark",
+      "coins": [
+        "1of40"
+      ],
+      "deep": true,
+      "moreDrowned": "1of15",
+      "tagId": 0
+    },
+    {
+      "id": 12,
+      "sample": "minecraft:enderman",
+      "place": "ground",
+      "light": "dark",
+      "tagId": 0
+    },
+    {
+      "id": 13,
+      "sample": "minecraft:fox",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:foxes_spawnable_on",
+      "tagId": 2
+    },
+    {
+      "id": 14,
+      "sample": "minecraft:frog",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:frogs_spawnable_on",
+      "tagId": 9
+    },
+    {
+      "id": 15,
+      "sample": "minecraft:ghast",
+      "place": "ground",
+      "light": "none",
+      "coins": [
+        "1of20"
+      ],
+      "cluster": 1,
+      "tagId": 0
+    },
+    {
+      "id": 16,
+      "sample": "minecraft:glow_squid",
+      "place": "water",
+      "light": "glow",
+      "ySea": -33,
+      "tagId": 0
+    },
+    {
+      "id": 17,
+      "sample": "minecraft:goat",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:goats_spawnable_on",
+      "tagId": 5
+    },
+    {
+      "id": 18,
+      "sample": "minecraft:guardian",
+      "place": "water",
+      "light": "none",
+      "coins": [
+        "1of20"
+      ],
+      "noSky": true,
+      "tagId": 0
+    },
+    {
+      "id": 19,
+      "sample": "minecraft:hoglin",
+      "place": "ground",
+      "light": "none",
+      "notWart": true,
+      "tagId": 0
+    },
+    {
+      "id": 20,
+      "sample": "minecraft:husk",
+      "place": "ground",
+      "light": "dark",
+      "sky": true,
+      "tagId": 0
+    },
+    {
+      "id": 21,
+      "sample": "minecraft:mooshroom",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:mooshrooms_spawnable_on",
+      "tagId": 10
+    },
+    {
+      "id": 22,
+      "sample": "minecraft:ocelot",
+      "place": "ground",
+      "light": "none",
+      "coins": [
+        "2of3"
+      ],
+      "tagId": 0
+    },
+    {
+      "id": 23,
+      "sample": "minecraft:panda",
+      "place": "any",
+      "light": "bright",
+      "tag": "minecraft:animals_spawnable_on",
+      "tagId": 1
+    },
+    {
+      "id": 24,
+      "sample": "minecraft:parrot",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:parrots_spawnable_on",
+      "tagId": 8
+    },
+    {
+      "id": 25,
+      "sample": "minecraft:piglin",
+      "place": "ground",
+      "light": "none",
+      "notWart": true,
+      "tagId": 0
+    },
+    {
+      "id": 26,
+      "sample": "minecraft:polar_bear",
+      "place": "below_tag",
+      "light": "bright",
+      "biome": "polar_bear",
+      "tagId": 0
+    },
+    {
+      "id": 27,
+      "sample": "minecraft:rabbit",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:rabbits_spawnable_on",
+      "tagId": 3
+    },
+    {
+      "id": 28,
+      "sample": "minecraft:slime",
+      "place": "ground",
+      "light": "slime",
+      "coins": [
+        "half",
+        "moon"
+      ],
+      "biome": "slime",
+      "tagId": 0
+    },
+    {
+      "id": 29,
+      "sample": "minecraft:spider",
+      "place": "ground",
+      "light": "dark",
+      "tagId": 0
+    },
+    {
+      "id": 30,
+      "sample": "minecraft:strider",
+      "place": "lava",
+      "light": "none",
+      "lavaToAir": true,
+      "tagId": 0
+    },
+    {
+      "id": 31,
+      "sample": "minecraft:tropical_fish",
+      "place": "water_surface",
+      "light": "none",
+      "river98": true,
+      "d64": true,
+      "grp1": true,
+      "cluster": 8,
+      "tagId": 0
+    },
+    {
+      "id": 32,
+      "sample": "minecraft:turtle",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:sand",
+      "yTurtle": true,
+      "tagId": 14
+    },
+    {
+      "id": 33,
+      "sample": "minecraft:wolf",
+      "place": "below_tag",
+      "light": "bright",
+      "tag": "minecraft:wolves_spawnable_on",
+      "cluster": 8,
+      "tagId": 4
+    }
+  ],
+  "byType": {
+    "minecraft:bat": 3,
+    "minecraft:sheep": 7,
+    "minecraft:pig": 7,
+    "minecraft:chicken": 7,
+    "minecraft:cow": 7,
+    "minecraft:armadillo": 1,
+    "minecraft:spider": 29,
+    "minecraft:zombie": 5,
+    "minecraft:zombie_villager": 5,
+    "minecraft:skeleton": 5,
+    "minecraft:creeper": 5,
+    "minecraft:slime": 28,
+    "minecraft:enderman": 12,
+    "minecraft:witch": 5,
+    "minecraft:glow_squid": 16,
+    "minecraft:parrot": 24,
+    "minecraft:panda": 23,
+    "minecraft:ocelot": 22,
+    "minecraft:strider": 30,
+    "minecraft:ghast": 15,
+    "minecraft:magma_cube": 4,
+    "minecraft:turtle": 32,
+    "minecraft:rabbit": 27,
+    "minecraft:drowned": 11,
+    "minecraft:cod": 8,
+    "minecraft:salmon": 8,
+    "minecraft:squid": 9,
+    "minecraft:zombified_piglin": 25,
+    "minecraft:hoglin": 19,
+    "minecraft:piglin": 25,
+    "minecraft:polar_bear": 26,
+    "minecraft:pufferfish": 8,
+    "minecraft:tropical_fish": 31,
+    "minecraft:dolphin": 9,
+    "minecraft:camel": 6,
+    "minecraft:husk": 20,
+    "minecraft:wolf": 33,
+    "minecraft:goat": 17,
+    "minecraft:fox": 13,
+    "minecraft:stray": 20,
+    "minecraft:axolotl": 2,
+    "minecraft:frog": 14,
+    "minecraft:bogged": 5,
+    "minecraft:donkey": 10,
+    "minecraft:mooshroom": 21,
+    "minecraft:horse": 10,
+    "minecraft:llama": 7
+  }
+}

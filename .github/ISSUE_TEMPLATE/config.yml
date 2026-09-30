@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 先看文档（安装 / 改规则 / 示例库 / FAQ）
+    url: https://github.com/DoomDecapitator/doom.nats/blob/main/docs/README.md
+    about: 九成"装不上 / 不刷怪 / 字段写错"的问题在这几页里有答案
+  - name: 已知限制（先对一下，免得白报）
+    url: https://github.com/DoomDecapitator/doom.nats/blob/main/docs/wiki/已知限制.md
+    about: 数据包能做到什么、做不到什么，以及已知偏差
+  - name: 版本与兼容（该下哪个 zip）
+    url: https://github.com/DoomDecapitator/doom.nats/blob/main/docs/25-兼容与版本.md
+    about: 版本 × 变体 × 是否需要实验性玩法

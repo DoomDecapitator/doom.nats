@@ -1,0 +1,1313 @@
+{
+ "note": "每群系每类别的权重和与条目数",
+ "index": {
+  "minecraft:badlands": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 5,
+    "weightSum": 46,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:bamboo_jungle": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 7,
+    "weightSum": 170,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 517,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:basalt_deltas": {
+   "creature": {
+    "entries": 1,
+    "weightSum": 60,
+    "maxGroup": 2
+   },
+   "monster": {
+    "entries": 2,
+    "weightSum": 140,
+    "maxGroup": 5
+   }
+  },
+  "minecraft:beach": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 1,
+    "weightSum": 5,
+    "maxGroup": 5
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:birch_forest": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 4,
+    "weightSum": 40,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:cherry_grove": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 3,
+    "weightSum": 5,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:cold_ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 2,
+    "weightSum": 30,
+    "maxGroup": 6
+   },
+   "water_creature": {
+    "entries": 1,
+    "weightSum": 3,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:crimson_forest": {
+   "creature": {
+    "entries": 1,
+    "weightSum": 60,
+    "maxGroup": 2
+   },
+   "monster": {
+    "entries": 3,
+    "weightSum": 15,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:dark_forest": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 4,
+    "weightSum": 40,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:deep_cold_ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 2,
+    "weightSum": 30,
+    "maxGroup": 6
+   },
+   "water_creature": {
+    "entries": 1,
+    "weightSum": 3,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:deep_dark": {},
+  "minecraft:deep_frozen_ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 1,
+    "weightSum": 1,
+    "maxGroup": 2
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 1,
+    "weightSum": 15,
+    "maxGroup": 5
+   },
+   "water_creature": {
+    "entries": 1,
+    "weightSum": 1,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:deep_lukewarm_ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 3,
+    "weightSum": 38,
+    "maxGroup": 8
+   },
+   "water_creature": {
+    "entries": 2,
+    "weightSum": 10,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:deep_ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_creature": {
+    "entries": 2,
+    "weightSum": 2,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:desert": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 2,
+    "weightSum": 13,
+    "maxGroup": 3
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:dripstone_caves": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 610,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:end_barrens": {
+   "monster": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:end_highlands": {
+   "monster": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:end_midlands": {
+   "monster": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:eroded_badlands": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 5,
+    "weightSum": 46,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:flower_forest": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 5,
+    "weightSum": 44,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:forest": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 5,
+    "weightSum": 45,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:frozen_ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 1,
+    "weightSum": 1,
+    "maxGroup": 2
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 1,
+    "weightSum": 15,
+    "maxGroup": 5
+   },
+   "water_creature": {
+    "entries": 1,
+    "weightSum": 1,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:frozen_peaks": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 1,
+    "weightSum": 5,
+    "maxGroup": 3
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:frozen_river": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 516,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 1,
+    "weightSum": 5,
+    "maxGroup": 5
+   },
+   "water_creature": {
+    "entries": 1,
+    "weightSum": 2,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:grove": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 3,
+    "weightSum": 13,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:ice_spikes": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 2,
+    "weightSum": 11,
+    "maxGroup": 3
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:jagged_peaks": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 1,
+    "weightSum": 5,
+    "maxGroup": 3
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:jungle": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 7,
+    "weightSum": 91,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 517,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:lukewarm_ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 3,
+    "weightSum": 45,
+    "maxGroup": 8
+   },
+   "water_creature": {
+    "entries": 2,
+    "weightSum": 12,
+    "maxGroup": 2
+   }
+  },
+  "minecraft:lush_caves": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "axolotls": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 1,
+    "weightSum": 25,
+    "maxGroup": 8
+   }
+  },
+  "minecraft:mangrove_swamp": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 5
+   },
+   "monster": {
+    "entries": 10,
+    "weightSum": 516,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 1,
+    "weightSum": 25,
+    "maxGroup": 8
+   }
+  },
+  "minecraft:meadow": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 3,
+    "weightSum": 5,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:mushroom_fields": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 1,
+    "weightSum": 8,
+    "maxGroup": 8
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:nether_wastes": {
+   "creature": {
+    "entries": 1,
+    "weightSum": 60,
+    "maxGroup": 2
+   },
+   "monster": {
+    "entries": 5,
+    "weightSum": 168,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_creature": {
+    "entries": 2,
+    "weightSum": 2,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:old_growth_birch_forest": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 4,
+    "weightSum": 40,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:old_growth_pine_taiga": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 7,
+    "weightSum": 60,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 540,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:old_growth_spruce_taiga": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 7,
+    "weightSum": 60,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:pale_garden": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:plains": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 6,
+    "weightSum": 46,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:river": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 615,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 1,
+    "weightSum": 5,
+    "maxGroup": 5
+   },
+   "water_creature": {
+    "entries": 1,
+    "weightSum": 2,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:savanna": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 7,
+    "weightSum": 52,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:savanna_plateau": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 9,
+    "weightSum": 68,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:small_end_islands": {
+   "monster": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:snowy_beach": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:snowy_plains": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 2,
+    "weightSum": 11,
+    "maxGroup": 3
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:snowy_slopes": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 2,
+    "weightSum": 9,
+    "maxGroup": 3
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:snowy_taiga": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 7,
+    "weightSum": 60,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:soul_sand_valley": {
+   "creature": {
+    "entries": 1,
+    "weightSum": 60,
+    "maxGroup": 2
+   },
+   "monster": {
+    "entries": 3,
+    "weightSum": 71,
+    "maxGroup": 5
+   }
+  },
+  "minecraft:sparse_jungle": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 6,
+    "weightSum": 58,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:stony_peaks": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:stony_shore": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:sunflower_plains": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 6,
+    "weightSum": 46,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:swamp": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 5,
+    "weightSum": 50,
+    "maxGroup": 5
+   },
+   "monster": {
+    "entries": 10,
+    "weightSum": 516,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:taiga": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 7,
+    "weightSum": 60,
+    "maxGroup": 4
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:the_end": {
+   "monster": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:the_void": {},
+  "minecraft:warm_ocean": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 9,
+    "weightSum": 520,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   },
+   "water_ambient": {
+    "entries": 2,
+    "weightSum": 40,
+    "maxGroup": 8
+   },
+   "water_creature": {
+    "entries": 2,
+    "weightSum": 12,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:warped_forest": {
+   "creature": {
+    "entries": 1,
+    "weightSum": 60,
+    "maxGroup": 2
+   },
+   "monster": {
+    "entries": 1,
+    "weightSum": 1,
+    "maxGroup": 4
+   }
+  },
+  "minecraft:windswept_forest": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 5,
+    "weightSum": 45,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:windswept_gravelly_hills": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 5,
+    "weightSum": 45,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:windswept_hills": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 5,
+    "weightSum": 45,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:windswept_savanna": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 7,
+    "weightSum": 52,
+    "maxGroup": 6
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  },
+  "minecraft:wooded_badlands": {
+   "ambient": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 8
+   },
+   "creature": {
+    "entries": 6,
+    "weightSum": 48,
+    "maxGroup": 8
+   },
+   "monster": {
+    "entries": 8,
+    "weightSum": 515,
+    "maxGroup": 4
+   },
+   "underground_water_creature": {
+    "entries": 1,
+    "weightSum": 10,
+    "maxGroup": 6
+   }
+  }
+ }
+}

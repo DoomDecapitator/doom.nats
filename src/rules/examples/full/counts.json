@@ -1,0 +1,18 @@
+{
+  "_note": "用例 ④：刷怪数量跟 Y 轴完全定义。空文件（{}）= 原版行为。",
+
+  "groupByY": {
+    "minecraft:zombie": [
+      { "yMax": 0, "min": 4, "max": 6 },
+      { "yMin": 1, "yMax": 63, "min": 2, "max": 3 },
+      { "yMin": 64, "min": 1, "max": 1 }
+    ]
+  },
+
+  "capByY": {
+    "monster": [
+      { "yMax": 0, "max": 200, "localMax": 140 },
+      { "yMin": 1, "max": 70, "localMax": 70 }
+    ]
+  }
+}

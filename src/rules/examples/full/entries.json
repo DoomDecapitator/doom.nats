@@ -1,0 +1,15 @@
+[
+  {
+    "_comment": "② 雷暴天气 + 深海群系：往 monster 池里加一条带自定义 NBT 的特例（悬在海面上方，原版不可能）",
+    "id": "thunder_deep_royal",
+    "comment": "深海雷暴僵尸：三叉戟 + 自定义名 + 金头盔（place/light 覆盖该条，其余仍按僵尸的原版规则）",
+    "biomes": ["#minecraft:is_deep_ocean"],
+    "category": "monster",
+    "mob": "minecraft:zombie",
+    "weight": 120,
+    "group": [1, 2],
+    "place": "any",
+    "when": { "thundering": true, "yMax": 62 },
+    "nbt": "{CustomName:'{\"text\":\"深海雷暴僵尸\",\"color\":\"aqua\"}',equipment:{mainhand:{id:\"minecraft:trident\",count:1},head:{id:\"minecraft:golden_helmet\",count:1}}}"
+  }
+]

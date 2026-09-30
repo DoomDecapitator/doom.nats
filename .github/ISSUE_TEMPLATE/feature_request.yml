@@ -1,0 +1,55 @@
+name: 功能请求
+description: 想要某种新的刷怪规则、新的能力或更好的文档
+title: "[功能] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提之前先看一眼 [24-玩家能改动的一切](https://github.com/DoomDecapitator/doom.nats/blob/main/docs/24-玩家能改动的一切.md)：
+        **很多需求现在就能改**（运行时刻 storage 立刻生效，不用重装包）。如果那里已经能实现，直接说"想要更省事的写法"也完全可以。
+
+  - type: textarea
+    id: want
+    attributes:
+      label: 你想要什么
+      description: 一句话说清：什么条件下、刷什么、怎么刷
+      placeholder: 想让"下雪的时候"只在雪原刷出流浪者，权重跟原本的骷髅一样
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: 为什么（玩法/地图场景）
+      placeholder: 做雪原主题的冒险地图，需要天气跟刷怪对上
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: 现在你怎么绕开它（可选）
+      description: 现在用什么土办法达到类似效果？搞不定也可以写"绕不开"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: variant_ok
+    attributes:
+      label: 如果这属于"原版没有的能力"，能接受它只出现在实验性变体里吗
+      description: 本包的原则是：逐条复刻原版的部分放默认变体；超出原版的（near / on_spawn / 预设这类）只放实验性变体
+      options:
+        - 可以，放实验性变体就行
+        - 希望默认变体也有（那要重新讨论"原版契约"）
+        - 不确定，你们判断
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: not_impossible
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我要的不是"新模型/新贴图/新 AI/新寻路"（数据包做不到这些，见 README 的"明确做不到的"）
+          required: true
