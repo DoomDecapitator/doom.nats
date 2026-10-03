@@ -2,6 +2,8 @@
 //
 //   node tools/mcrcon.mjs "cmd1" "cmd2" …
 //   环境变量 RCON_HOST / RCON_PORT / RCON_PASS 可覆盖（默认 127.0.0.1:25575 / nats）
+//   注：默认密码 `nats` 只是本工具在 127.0.0.1 上自起的**本地测试服**占位值，不是任何真实凭据；
+//      连你自己的服务器请用 RCON_PASS 覆盖。
 //
 // 协议：长度(4,LE) + 请求 id(4) + 类型(4) + 载荷 + 0x00 0x00
 //   客户端→服务端：3=登录 2=命令；服务端→客户端：2=登录应答 0=命令应答
@@ -12,7 +14,7 @@ import net from 'node:net';
 
 const HOST = process.env.RCON_HOST || '127.0.0.1';
 const PORT = Number(process.env.RCON_PORT || 25575);
-const PASS = process.env.RCON_PASS || 'nats';
+const PASS = process.env.RCON_PASS || 'nats';   // 本地测试服占位默认值（非真实凭据）
 
 const enc = (id, type, body) => {
   const payload = Buffer.from(body, 'utf8');

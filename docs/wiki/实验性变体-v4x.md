@@ -62,4 +62,4 @@
 - 默认变体与实验性变体**不要同时装**。
 - 引擎门只认 `pack.mcmeta` 里声明的旗标；1.21.6 没有"只开数据包实验"的干净开关，请权衡后再上。
 
-> 逐字段表（`rules/rigs.json`）见开发仓库 [rules/README.md](https://github.com/私有开发仓库/blob/main/doom.nats/rules/README.md)。
+> 逐字段表（`src/rules/rigs.json`）见 [src/rules/README.md](https://github.com/DoomDecapitator/doom.nats/blob/main/src/rules/README.md)。

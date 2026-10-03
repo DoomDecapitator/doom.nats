@@ -16,7 +16,7 @@
 
 > ## 当前状态：**v4.25 正式发布（Latest）**
 > v4.25 已从预发布转为**正式版**并设为 Latest —— 本版是 **Minecraft 1.21.6 的稳定版**；超出原版的实验性能力（`near` / `on_spawn` / 预设）在 `v4x` 变体里，装它要开对应实验性玩法（**自定义外观（AJ 桥接）源码在、未随本版成品发布**）。
-> 已跑过完整的真机验收（数字见 [CHANGELOG](CHANGELOG.md) 与开发仓库的 `reports/`）；**已知偏差仍逐条留档**。
+> 已跑过完整的真机验收（数字见 [CHANGELOG](CHANGELOG.md)；逐轮报告 `reports/` **不在本仓库**）；**已知偏差仍逐条留档**。
 > **可以装进存档玩，但请先备份存档。**
 
 
@@ -85,7 +85,7 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 |---|---|---|
 | **A · 在游戏里改**（推荐） | 改完**下一拍**就生效，不用重启、不用重装 | 存储 `doom.nats:author`：`/function doom.nats:author/show` 看现状、`author/reset` 一键回原版 |
 | **B · 运行时刻旋钮** | 立刻 | 计分板开关（密度、批次、调试报告…），清单见 [`docs/21-玩家可改清单.md`](docs/21-玩家可改清单.md) |
-| **C · 构建期规则**（要重新生成包） | 重新生成 + 换包 | 开发仓库的 `rules/*.json`：字段表见 [rules/README.md](https://github.com/私有开发仓库/blob/main/doom.nats/rules/README.md) |
+| **C · 构建期规则**（要重新生成包） | 重新生成 + 换包 | 本仓库 `src/rules/*.json`：字段表见 [`src/rules/README.md`](src/rules/README.md) |
 
 两条例子（复制就能用，全部示例见 [示例库](docs/wiki/示例库.md)）：
 
@@ -139,7 +139,7 @@ docs/                              玩家向文档 + docs/wiki/（Wiki 的 9 页
 
 另有两个隐藏文件：`.gitignore`（本地产物不进仓库）与 `.gitattributes`（产物按字节比对，不做 EOL 转换）。
 
-想自己改包就照 [Releases 里的 source 附件](Releases 的 source 附件README.md) 的「三步构建」（跑生成器 → `check_static` → 装包/打包）走。
+想自己改包就照 [`src/README.md`](src/README.md) 的「三步构建」（跑生成器 → `check_static` → 装包/打包）走。
 
 **怎么报问题**：走 [Issues](https://github.com/DoomDecapitator/doom.nats/issues/new/choose) 的表单 —— 会问你要版本、变体、`logs/latest.log` 片段和截图；按表单填，定位快很多。
 

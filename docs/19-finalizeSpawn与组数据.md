@@ -224,7 +224,7 @@ calc.getPotentialEnergyChange(pos, charge).getChange() > 0  ⇒ 拒绝
    `kill` 是空操作，清场必须放在 `forceload remove` **之前**。
 6. **同一台机器并行验证必须分开端口**：本次 doom.nats 用 25565/25575，另一个工作区的 doom.ui 验收用 25566/25576。
 7. **回归口径**：`regress.mjs --reuse --minutes 1 --curve 1` → **16 PASS / 0 FAIL**（报告
-   `reports/回归-2026-09-28045848.md`）；组数据层专项 `_work/verify_group.mjs` → **14 PASS / 0 FAIL**。
+   `reports/回归-2026-09-28045848.md`，**不在本仓库**）；组数据层专项 `_work/verify_group.mjs` → **14 PASS / 0 FAIL**。
 
 
 ---
@@ -250,7 +250,7 @@ execute if loaded ~ ~ ~ run function doom.nats:biome/detect_at
 **Q7（地图自带 worldgen）与"实验性世界生成"**：我们的 65 项 `biome-index` 与 roster 全部来自 vanilla worldgen；
 地图若自带/覆盖 `worldgen/biome/*.json`，索引表会失效（表现为"不收录 ⇒ 0 生成"，不会报错）。
 
-**✅ 已实现并跑完真机（2026-09-28 18:26–18:34，详见 `reports/验证-世界生成覆盖-20260928.md`）**：
+**✅ 已实现并跑完真机（2026-09-28 18:26–18:34，详见 `reports/验证-世界生成覆盖-20260928.md`，**该报告不在本仓库**）**：
 
 - `tools/apply_worldgen.mjs`（`--worldgen <含 data/ 的目录>` 可重复 / `--reset` / `--status`）把地图的
   `data/<ns>/worldgen/biome/*.json` 的 `spawners` / `spawn_costs` / `creature_spawn_probability` 合并进
@@ -514,4 +514,4 @@ return isInNetherFortressBounds(pos, level, cat, sm)   // 硬编码：cat==MONST
 端到端（主服 25565·同一要塞）：今晨验收门（旧脚本）与今天重跑（新脚本 + `loaded` 硬断言）**都是表外 `0/24 = 0.0%`、3 PASS / 0 FAIL**；「~17% 抖动」是更早一轮（判据收敛前）的记录。
 （隔离实例那次 `1/24 = 4.2%` 是环境差异读数，4200 轮 0 生成，不作证据。）
 脚本已加"强加载后回读 loaded，不满足即 exit 1"的硬断言（不再靠机器人视距兜底）。
-详见 `reports/诊断-in_fortress抖动-20260929.md`。
+详见 `reports/诊断-in_fortress抖动-20260929.md`（**不在本仓库**）。
