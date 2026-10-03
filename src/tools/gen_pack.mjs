@@ -289,6 +289,15 @@ scoreboard players operation $snap_phase ${NS} = $t ${NS}
 scoreboard players operation $snap_phase ${NS} %= $snap_period ${NS}
 execute if score $snap_phase ${NS} matches 0 run function ${NS}:circ/snapshot
 
+# v4.27 容量计数拆拍（P0 性能）：21 条整图盒式选择器不再挤在快照那一拍，摊到 20 拍内每拍 1~2 条
+#   （真机实测：修前那 1 Hz 的一拍 ≈820ms ⇒ P95≈940ms / avg≈51ms / tps 18.7；拆开后峰值 ≈41ms/拍）。
+#   相位**固定 20 拍、与 $snap_period 解耦**：冻结快照时计数照样 1 Hz 刷新（多个 verify_* 的前提就是冻结节拍）。
+#   执行上下文与修前一致（优先玩家所在维度），整图盒式选择器的语义不变。
+scoreboard players add $cap_phase ${NS} 1
+execute if score $cap_phase ${NS} matches 20.. run scoreboard players set $cap_phase ${NS} 0
+execute at @a[gamemode=!spectator,limit=1] run function ${NS}:check/caps_scan
+execute unless entity @a[gamemode=!spectator] run function ${NS}:check/caps_scan
+
 # 刷怪节拍：与情形生效参数联动（$eff.period 由 circ/apply 在快照里写入）
 # 密度控制（每分钟结算一次；$density=0 时只是空转）
 function ${NS}:ctrl/tick
@@ -346,8 +355,10 @@ function ${NS}:circ/apply
 function ${NS}:check/sealevel
 # v4.14d：容量计数必须在**玩家所在维度**里做（原版 SpawnState 是 per-level 的；
 #   core/tick 的执行上下文在世界出生点 ⇒ 不加这一层就会拿主世界的生物数去卡下界的额度）
-execute at @a[gamemode=!spectator,limit=1] run function ${NS}:check/caps
-execute unless entity @a[gamemode=!spectator] run function ${NS}:check/caps
+# v4.27：这里只算**容量公式**（纯算术）；21 条整图盒式选择器已拆到 core/tick → check/caps_scan，
+#   每拍只跑当拍那一组（原来是 1 Hz 一次性全扫 ≈820ms ⇒ P95≈940ms 的尖峰来源）。
+execute at @a[gamemode=!spectator,limit=1] run function ${NS}:check/caps_formula
+execute unless entity @a[gamemode=!spectator] run function ${NS}:check/caps_formula
 execute at @a[gamemode=!spectator,limit=1] run function ${NS}:biome/detect
 # 玩家层（蝙蝠规则要低于地表，用玩家位置近似）与月相亮度（八分制 0..8，史莱姆规则要用）
 execute store result score $snap.py ${NS} run data get entity @a[gamemode=!spectator,limit=1] Pos[1]

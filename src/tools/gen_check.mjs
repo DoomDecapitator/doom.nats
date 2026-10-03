@@ -92,40 +92,64 @@ const CAP_DIM_SUFFIX = [['minecraft:overworld', ''], ['minecraft:the_nether', '.
   const unknown = rosterCats.filter((c) => !MOB_CATS.includes(c));
   if (unknown.length) throw new Error('biome-rosters 里出现未纳入容量计数的类别：' + unknown.join(', ') + '（要同步 gen_check.mjs 的 MOB_CATS）');
 }
-// 计数查询必须带**覆盖全图的盒子**（x/dx/y/dy/z/dz）：不带位置约束的 @e 会跨维度选实体，
-//   execute in <维度> 也拦不住（v4.14g 真机实测，验证脚本 _work/dimtest7.mjs）。
+// 计数查询必须带**世界限定**约束：不带位置/体积约束的 @e 会跨维度选实体（`execute in <维度>` 拦不住）。
+//   v4.27 真机实测（两个维度各放一个带标签的盔甲架）：`execute in minecraft:the_nether if entity @e[tag=X]`
+//   能查到**主世界**的实体（=1）⇒ 维度限定只能靠选择器自己的世界限定约束。
+// v4.27 试过并**否决**的替代（别再试）：把盒子换成 `distance=..2000000000`。
+//   世界限定成立（跨维度查不到 =0）、代价≈0，但 2e9 的半径让区块段坐标溢出：
+//   每拍抛 `IllegalArgumentException: Start element (9223367638808264704) is larger than end element (-9223372036854775808)`
+//   （fastutil LongAVLTreeSet.subSet ← EntitySectionStorage ← ServerLevel.getEntities），**整个 core/tick 被中止**
+//   ⇒ 计数全 0、$spawned.total 冻结、一秒钟几十条 WARN。半径收到不溢出（≲3e7 方块，22 位区块段坐标的上限）
+//   又覆盖不了「两名玩家相距 >3e7」的世界 ⇒ 语义不等价。所以仍用盒子。
+//   另测：盒子的代价随**体积**增长 —— 同环境 10 次往返均值：裸 66.0ms · 微盒 16×16 63.3ms（≈免费）·
+//   中盒 8192×8192 53.6ms（≈免费）· 整图 60M×60M 149.0ms（+83ms）。21 条 × ≈50ms 就是那 1 Hz 的一拍。
 const CNT_BOX = 'x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500';
+// 全量一次刷（v4.26 的原样）—— 只留给 check/caps 这个**调试/验证入口**，不在任何节拍上跑（见下）。
 const cntBlock = MOB_CATS.flatMap((cat) => CAP_DIM_SUFFIX.flatMap(([dim, sfx]) => [
   'scoreboard players set $cnt.' + cat + sfx + ' ' + NS + ' 0',
   'execute in ' + dim + ' as @e[type=#' + NS + ':' + cat + ',nbt=!{PersistenceRequired:true},' + CNT_BOX + '] run scoreboard players add $cnt.' + cat + sfx + ' ' + NS + ' 1',
 ])).join(LF);
 
+// ---- v4.27（P0 性能）：容量计数**拆拍分摊** ----
+// 真机实测（函数级 RCON 计时 + 相位冻结）：上面这 21 条「整图盒式选择器」每条 ≈38ms，而且代价来自**盒子本身**、
+//   与场上实体数无关（当时场上仅 46 只）⇒ 21 条全挤在 circ/snapshot 那一拍 = 每 20 tick 一个 ≈820ms 尖峰：
+//   P50≈2ms / P95≈940ms / avg≈51ms / tps 18.7（追不上 20）。
+// 修法（语义不变）：按「类别 × 维度」摊到 20 拍内，每拍只跑 1~2 条 ⇒ 峰值从 820ms 降到 ≈41ms/拍；
+//   每组仍是 20 拍一轮 = 1 Hz，计数的「新鲜度上限」（1 秒）与修前完全一致，玩家可见行为不变。
+// 相位与 $snap_period **解耦**（固定 20 拍）：冻结快照（$snap_period=20000，多个 verify_* 的前提）时计数照样 1 Hz 刷新。
+//   —— 若跟着 $snap_period 走，冻结后相位只走到 0..19 中的一小段，部分类别会**永不刷新**。
+const CAP_GROUPS = MOB_CATS.flatMap((cat) => CAP_DIM_SUFFIX.map(([dim, sfx]) => ({ cat, dim, sfx })));
+const CAP_PHASE_PERIOD = 20;
+// 容量公式（纯算术 21 行，代价可忽略）：check/caps 与 check/caps_formula 共用同一份文本。
+const capFormula = MOB_CATS.map((cat) => [
+  'scoreboard players operation $cap.' + cat + ' ' + NS + ' = $snap.chunks ' + NS,
+  'scoreboard players operation $cap.' + cat + ' ' + NS + ' *= $eff.max_' + cat + ' ' + NS,
+  'scoreboard players operation $cap.' + cat + ' ' + NS + ' /= #289 ' + NS,
+]).flat().join(LF);
+// 拆拍计数：每组的 set+add 两条必须**同一拍**执行，否则计数会漏（所以两条都带同一个相位门）。
+// 相位 = (组号 + 1) % 20 ⇒ 多出来的第 21 组落在相位 1，相位 0（= 快照那一拍）只跑 1 条。
+const capScanBlock = CAP_GROUPS.map((g, i) => {
+  const ph = (i + 1) % CAP_PHASE_PERIOD;
+  const key = '$cnt.' + g.cat + g.sfx;
+  return [
+    '# 组 ' + i + '：' + g.cat + ' @ ' + g.dim.replace('minecraft:', '') + ' → 相位 ' + ph,
+    'execute if score $cap_phase ' + NS + ' matches ' + ph + ' run scoreboard players set ' + key + ' ' + NS + ' 0',
+    'execute if score $cap_phase ' + NS + ' matches ' + ph + ' run execute in ' + g.dim + ' as @e[type=#' + NS + ':' + g.cat + ',nbt=!{PersistenceRequired:true},' + CNT_BOX + '] run scoreboard players add ' + key + ' ' + NS + ' 1',
+  ];
+}).flat().join(LF);
+
 // ---- 容量：按原版公式刷新（catenate 到快照节拍）----
-F['data/' + NS + '/function/check/caps.mcfunction'] = `# ${NS}:check/caps —— 复刻 SpawnState.canSpawnForCategoryGlobal
+F['data/' + NS + '/function/check/caps.mcfunction'] = `# ${NS}:check/caps —— 容量公式 + 21 条全量计数（**调试/验证用的一次性入口，不在任何节拍上跑**）
 #
 #   cap = maxInstancesPerChunk × spawnableChunkCount / 289   （整数除法，源码逐字）
 # spawnableChunkCount 由 ${NS}:circ/snapshot 实测（execute if loaded 数出来的），不是估算。
-scoreboard players operation $cap.monster ${NS} = $snap.chunks ${NS}
-scoreboard players operation $cap.monster ${NS} *= $eff.max_monster ${NS}
-scoreboard players operation $cap.monster ${NS} /= #289 ${NS}
-scoreboard players operation $cap.creature ${NS} = $snap.chunks ${NS}
-scoreboard players operation $cap.creature ${NS} *= $eff.max_creature ${NS}
-scoreboard players operation $cap.creature ${NS} /= #289 ${NS}
-scoreboard players operation $cap.ambient ${NS} = $snap.chunks ${NS}
-scoreboard players operation $cap.ambient ${NS} *= $eff.max_ambient ${NS}
-scoreboard players operation $cap.ambient ${NS} /= #289 ${NS}
-scoreboard players operation $cap.water_creature ${NS} = $snap.chunks ${NS}
-scoreboard players operation $cap.water_creature ${NS} *= $eff.max_water_creature ${NS}
-scoreboard players operation $cap.water_creature ${NS} /= #289 ${NS}
-scoreboard players operation $cap.water_ambient ${NS} = $snap.chunks ${NS}
-scoreboard players operation $cap.water_ambient ${NS} *= $eff.max_water_ambient ${NS}
-scoreboard players operation $cap.water_ambient ${NS} /= #289 ${NS}
-scoreboard players operation $cap.underground_water_creature ${NS} = $snap.chunks ${NS}
-scoreboard players operation $cap.underground_water_creature ${NS} *= $eff.max_underground_water_creature ${NS}
-scoreboard players operation $cap.underground_water_creature ${NS} /= #289 ${NS}
-scoreboard players operation $cap.axolotls ${NS} = $snap.chunks ${NS}
-scoreboard players operation $cap.axolotls ${NS} *= $eff.max_axolotls ${NS}
-scoreboard players operation $cap.axolotls ${NS} /= #289 ${NS}
+#
+# v4.27（P0 性能）：本函数**不再是节拍路径**。它一次性扫 21 条整图盒式选择器（真机 ≈820ms），
+#   占住 1 Hz 那一拍就是 P95≈940ms / tps 18.7 的成因。节拍路径拆成两条：
+#     · circ/snapshot → check/caps_formula（只算容量公式）
+#     · core/tick 每拍 → check/caps_scan（计数按相位拆到 20 拍内，每拍 1~2 条）
+#   本函数原样保留为「公式 + 全量计数」，供调试/验证脚本一次性强制刷新（_work/verify_*.mjs 的调用点不变）。
+${capFormula}
 
 # 各类别当前计数（按注册表 tag 记数；每快照节拍刷一次）
 # v4.14d：按「类别实体类型标签」计数，并跳过原版持久生物 —— 与 SpawnState.createState 一致：
@@ -141,6 +165,28 @@ scoreboard players operation $cap.axolotls ${NS} /= #289 ${NS}
 #   验证：_work/dimtest7.mjs（主世界/下界各放一个带标签的盔甲架，盒子查询各得 1，无约束查询得 2）。
 ${cntBlock}
 
+`;
+
+// ---- v4.27：节拍路径拆成「公式」+「拆拍计数」两条 ----
+F['data/' + NS + '/function/check/caps_formula.mcfunction'] = `# ${NS}:check/caps_formula —— 容量公式（cap = maxInstancesPerChunk × spawnableChunkCount / 289）
+#
+# 每快照节拍由 circ/snapshot 调用（21 条纯算术，代价可忽略）。
+# v4.27：从 check/caps 拆出来 —— 那条 1 Hz 路径不再携带 21 条整图盒式选择器（真机 ≈820ms 的尖峰）。
+# 计数不在这里：由 core/tick 每拍调 check/caps_scan 按相位拆着刷（20 拍一轮 = 1 Hz）。
+# spawnableChunkCount 由 ${NS}:circ/snapshot 实测（execute if loaded 数出来的），不是估算。
+${capFormula}
+`;
+F['data/' + NS + '/function/check/caps_scan.mcfunction'] = `# ${NS}:check/caps_scan —— 容量计数（拆拍：每拍只跑当拍那一组）
+#
+# v4.27（P0 性能）：21 组「类别 × 维度」= 21 条整图盒式选择器，按相位摊到 20 拍内 ⇒ 每拍 1~2 条。
+#   真机实测（函数级 RCON 计时 + 相位冻结）：每条 ≈38ms，代价来自**盒子本身**、与实体数无关
+#   ⇒ 修前 21 条挤在快照那一拍 = 每 20 tick ≈820ms 尖峰（P50≈2ms / P95≈940ms / avg≈51ms / tps 18.7）。
+#   修后峰值 ≈41ms/拍；每组仍是 20 拍一轮 = 1 Hz ⇒ 计数的「新鲜度上限」（1 秒）与修前一致。
+# 由 core/tick **每 tick** 调用（不是 1 Hz 整扫）；相位 $cap_phase 由 core/tick 每拍自增回绕（固定 20 拍）。
+#   与 $snap_period **解耦**：冻结快照（$snap_period=20000，多个 verify_* 的前提）时计数照样 1 Hz 刷新。
+# 组号 → 相位：相位 = (组号 + 1) % 20 ⇒ 多出来的第 21 组落在相位 1，相位 0（= 快照那一拍）只跑 1 条。
+# 每组的 set 与 add 必须同一拍（否则计数会漏）；盒子不可省、也不可收窄 —— 不带位置/体积约束的 @e 会跨维度选实体（v4.14g 实测）。
+${capScanBlock}
 `;
 
 // ---- 每一步：失败写 reason 并短路 ----
