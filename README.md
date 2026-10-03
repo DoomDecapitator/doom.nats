@@ -25,7 +25,7 @@
 - **数据包本体（mcfunction 源码，可直接点开看）**：[`doom.nats/`](doom.nats/data/doom.nats/function) —— 里面就是这只包实际装入游戏的每个函数文件；成品 zip 在 `dist/`，JavaScript 生成器在 `src/`。
 - **生成器源码（JavaScript）**：[`src/`](src/) —— JavaScript 生成器 + 规则层 + 生成输入；不想读代码的话，直接下 `dist/` 的 zip 即可。
 - **成品（玩家下载）**：[`dist/`](dist/) —— `doom.nats-v4.25.zip`（默认）与 `doom.nats-v4x-experimental-v4.25.zip`（实验性）。
-- **同一份源码**也附在 [Releases](https://github.com/DoomDecapitator/doom.nats/releases) 的 `仓库 src/（生成器源码）`；开发仓库 （作者本机的测试台与验收报告，不随仓库分发） 有测试台与验收报告。
+- **同一份源码**就是本仓库顶层的 [`src/`](src/)（生成器 `tools/` + 规则层 `rules/` + 生成输入 `_work/generated/`）；[Releases](https://github.com/DoomDecapitator/doom.nats/releases) 页上 GitHub 自动生成的 **Source code (zip)** 是那个 tag 的整仓快照（含 `src/`）。真机测试台与验收报告是作者本机的东西，不随本仓库分发。
 
 ## 30 秒：下载 → 装 → 看它是否跑起来
 
@@ -132,7 +132,7 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 ```
 README.md  LICENSE  CHANGELOG.md   说明 / 许可 / 变更日志
 dist/                              唯一下载物：两个变体的 zip + 各自 sha256
-`src/`（生成器源码）                               源码：生成器 tools/ + 规则层 rules/ + 生成输入 _work/generated/
+src/                               源码：生成器 tools/ + 规则层 rules/ + 生成输入 _work/generated/
 docs/                              玩家向文档 + docs/wiki/（Wiki 的 9 页 Markdown 源）
 .github/ISSUE_TEMPLATE/            报 bug / 提功能的固定表单（要求版本 + 日志 + 截图）
 ```
@@ -143,7 +143,7 @@ docs/                              玩家向文档 + docs/wiki/（Wiki 的 9 页
 
 **怎么报问题**：走 [Issues](https://github.com/DoomDecapitator/doom.nats/issues/new/choose) 的表单 —— 会问你要版本、变体、`logs/latest.log` 片段和截图；按表单填，定位快很多。
 
-真机测试台 `tests/`、逐轮验收报告、CI 仍在开发仓库
+真机测试台 `tests/`、逐轮验收报告、CI 是作者本机的东西
 （作者本机的测试台与验收报告，不随仓库分发） —— 验收口径与每个版本的真机数字都在那里。
 
-> **源码在哪**：生成器是 JavaScript，玩家不需要读它，所以不放在本仓库顶层。源码以 `仓库 src/（生成器源码）` 附在 **Releases** 里，也可以直接浏览开发仓库 `作者本机的开发工作区`（生成器 / 规则层 / 测试台 / 验收报告）。
+> **源码在哪**：生成器是 JavaScript，就在**本仓库顶层** [`src/`](src/) —— 生成器 `tools/` + 规则层 `rules/` + 生成输入 `_work/generated/`。玩家不需要读它，只想要成品就下 `dist/` 的 zip；真机测试台与验收报告不随本仓库分发。

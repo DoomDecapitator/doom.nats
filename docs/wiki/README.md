@@ -43,5 +43,5 @@ bash docs/wiki/push-wiki.sh
 ## 维护约定
 
 - 页面里的跨页链接用 Wiki 原生语法 `[[页面名]]`，改名时记得同步。
-- 字段表若与开发仓库的 `rules/README.md` 冲突，**以 `rules/README.md` 为准**。
+- 字段表若与本仓库 `src/rules/README.md` 冲突，**以 `src/rules/README.md` 为准**。
 - 每页统一口径：**先结论、再命令、再注意**；命令放代码块；不写仓库内部细节。

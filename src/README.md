@@ -4,14 +4,14 @@
 
 - 只想玩：**不要用这个目录**，去下载 `dist/` 里的 zip（解压后丢进 `saves/<存档>/datapacks/`）。
 - 想改包 / 想看实现：从这里开始，照着下面「三步构建」走。
-- 想看更完整的开发环境（测试台、验收报告、CI）：开发仓库 `作者本机的开发工作区`。
+- 想看更完整的开发环境（测试台、验收报告、CI）：那是作者本机的东西，不随本仓库分发。
 
 ---
 
 # src/ —— 这个仓库的源码（生成器 + 规则层 + 生成输入）
 
 > **一句话**：这里是**源码** —— 生成数据包的那套生成器（`tools/`）、作者规则层（`rules/`）、以及生成器的输入数据（`_work/generated/`）。
-> **想改包**（改数值、改规则、加条目）就照下面的「三步构建」走；**想参与开发**（真机验收台、逐轮报告、CI）请去开发仓库 作者本机的开发工作区。
+> **想改包**（改数值、改规则、加条目）就照下面的「三步构建」走；**想参与开发**（真机验收台、逐轮报告、CI）需要作者本机的测试环境（不随本仓库分发）。
 
 先把两处东西分清 —— 这也是最多人问的那件事：
 
@@ -67,7 +67,7 @@ node src/tools/check_static.mjs          # 默认 + 实验性两个变体；只�
 | `tools/lint_pack.mjs` · `check_closure.mjs` · `check_leak.mjs` | 单点门：产物 lint（L1–L14）· 函数/storage/计分板引用闭包 · 泄漏与仓库顶层结构 |
 | `rules/` | **作者规则层**（构建期输入）：`entity-rules.json` / `entries.json` / `counts.json` / `rigs.json`，**默认全空 = 原版行为**。字段手册与四个用例见 [`rules/README.md`](rules/README.md) 与 `rules/examples/` |
 | `_work/generated/*.json` | **生成器的输入数据**（从原版 1.21.6 jar 导出的群系刷怪表、群系标签、碰撞盒、逐实体规则、分类表……）。它们**是源码的一部分，别删** —— 少了它们生成器跑不起来 |
-| `tools/_root.mjs`、`install.mjs`、`mcauto.mjs`、`mcrcon.mjs`、`collect.mjs`、`regress.mjs`… | 真机测试台那一套：代码在这儿能读能改，但**要用起来需要一台跑着的服务器 / 一个存档**（测试台本体在开发仓库） |
+| `tools/_root.mjs`、`install.mjs`、`mcauto.mjs`、`mcrcon.mjs`、`collect.mjs`、`regress.mjs`… | 真机测试台那一套：代码在这儿能读能改，但**要用起来需要一台跑着的服务器 / 一个存档**（测试台本体不随本仓库分发） |
 
 ## 哪些能直接跑、哪些不能（实测）
 
@@ -82,12 +82,12 @@ node src/tools/check_static.mjs          # 默认 + 实验性两个变体；只�
 | `node src/tools/check_leak.mjs` | 泄漏 + 顶层结构门（本机 git 不在 PATH 时：`DOOM_GIT=<git 完整路径> node src/tools/check_leak.mjs`；不在 git 仓库里时加 `DOOM_TOP=off`） |
 | `node src/tools/sim_v4.mjs 400` | 无头解释器跑 v4 本体。**能跑，但汇总会有 3 个 FAIL**：日志汇 `harness/doom.log` 属于测试台，不随本仓库发布 |
 
-| 不能直接跑（要开发仓库或外部环境） | 为什么 |
+| 不能直接跑（要作者本机环境或外部环境） | 为什么 |
 |---|---|
-| `install.mjs` / `mcauto.mjs` / `mcrcon.mjs` / `collect.mjs` / `regress.mjs` | 真机类：要一台开着 RCON 的服务器、一个存档、以及 `harness/` 测试台（都在开发仓库；普通玩家也不该去碰） |
+| `install.mjs` / `mcauto.mjs` / `mcrcon.mjs` / `collect.mjs` / `regress.mjs` | 真机类：要一台开着 RCON 的服务器、一个存档、以及 `harness/` 测试台（都不随本仓库分发；普通玩家也不该去碰） |
 | `export_biomes.mjs` / `export_rosters.mjs` / `export_biome_tags.mjs` / `export_mobs.mjs` | 要**原版 1.21.6 jar** 才能重新导出群系刷怪表（导出结果已经躺在 `_work/generated/` 里，日常改包不需要重导） |
 | `export_hitboxes.mjs` | 要**反编译产物** `_work/decomp/named.jar`；反编译产物不随任何仓库发布 |
-| 历史线（v1–v3 / 移植 / 优化）的那套工具 | **没随源码发布**（`doomify.mjs` · `port.mjs` · `optimize.mjs` · `verify.mjs` · `sim.mjs` · `viz.mjs` 及它们专用的 `tools/rules/`、`lib/exttag.mjs`、`lib/simrun.mjs`、`lib/snbt.mjs`）：它们处理的是 `original/` `ported/` `optimized/` `v3/` 这四个**不在本仓库**的目录，其中还带着旧项目名（玩家向仓库不许出现）。要看它们请去开发仓库 —— 本目录带的是 **v4 线的完整源码** |
+| 历史线（v1–v3 / 移植 / 优化）的那套工具 | **没随源码发布**（`doomify.mjs` · `port.mjs` · `optimize.mjs` · `verify.mjs` · `sim.mjs` · `viz.mjs` 及它们专用的 `tools/rules/`、`lib/exttag.mjs`、`lib/simrun.mjs`、`lib/snbt.mjs`）：它们处理的是 `original/` `ported/` `optimized/` `v3/` 这四个**不在本仓库**的目录，其中还带着旧项目名（玩家向仓库不许出现）。它们不随本仓库分发 —— 本目录带的是 **v4 线的完整源码** |
 | `propose_tags.mjs` | 要一个真实存档的地形文件（`.mca`）才能统计落点方块分布 |
 | `lint_spyglass.mjs` | 要本机装过 Spyglass；它是可选工具，不是生成依赖 |
 
@@ -106,11 +106,11 @@ node src/tools/check_static.mjs          # 默认 + 实验性两个变体；只�
   zip 里多了 9 个"生成器已不再产出"的历史文件（`check/cap_y/*` 7 个 + `check/coin.mcfunction`），
   以及一份手写的编辑器提示文件 `mcdoc/doom.nats/config.mcdoc`（见 [`../docs/21-玩家可改清单.md`](../docs/21-玩家可改清单.md)，没有生成器负责它）。
   默认配置下这三者都不会被调用，**对玩法没有影响**；重新生成不会带上它们。
-- `dist/` 的 zip 由开发仓库那边的产物打包，sha256 见 [`../README.md`](../README.md)；本目录保证的是"能从源码生成出来"，不是"与 zip 逐字节相同"。
+- `dist/` 的 zip 的 sha256 见 [`../README.md`](../README.md)；本目录保证的是"能从源码生成出来"，不是"与 zip 逐字节相同"。
 
 ## 参与开发
 
 生成器只算半张桌子。另一张桌子 —— 真机验收台（`tests/`）、逐轮取证报告（`reports/`）、CI、日志汇 `harness/` ——
-在开发仓库 作者本机的开发工作区：验收口径、每个版本的真机数字都在那里。
+验收口径、每个版本的真机数字在作者本机留档，不随本仓库分发。
 
 许可见 [`../LICENSE`](../LICENSE)：**All Rights Reserved · Beta** —— 自用 / 游玩 / 原样转发可以；二次发布修改版或商用请先取得许可。

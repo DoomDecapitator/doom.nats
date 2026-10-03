@@ -23,20 +23,20 @@ const GIT = process.env.DOOM_GIT || 'git';
 const ROOT = process.env.DOOM_ROOT ? path.resolve(process.env.DOOM_ROOT) : path.resolve(import.meta.dirname, '..', '..');
 const IDS = [/rigns\d*/i, /巨型鱿鱼/, /modrinth/i, /thirdparty-rig/i,  // 示例 rig 的识别信息（用户要求：不留残余）
   /\bgigantic/i, /\bcalamar\b/i, /\bbdengine\b/i, /巨人鱿鱼/, /All-Rights-Reserved/i];
-// 旧项目名：只在**玩家向仓库**里算泄漏（开发仓库保留历史线引用，例如 port/optimize 工具）
+// 旧项目名：只在**玩家向仓库**里算泄漏（本机开发布局保留历史线引用，例如 port/optimize 工具）
 const PUB_IDS = [
   new RegExp('\\b' + String.fromCharCode(115, 117, 115, 111) + '\\b', 'i'),
   new RegExp(String.fromCharCode(115, 117, 115, 111) + '\\.nats', 'i'),
 ];
-const PATHS = [/[A-Za-z]:[\\/]Users[\\/]/, /\/c\/Users\//, /datapack/];
+const PATHS = [/[A-Za-z]:[\\/]Users[\\/]/, /\/c\/Users\//, /[\\/]Downloads[\\/]/];
 // 自己（含三种布局下的相对路径）不参与扫描：本文件正文里就写着这些正则
 // 公开仓库自 2026-09-29 起把源码放进 src/ ⇒ 那份副本的相对路径是 src/tools/check_leak.mjs
 const SELF = ['tools/check_leak.mjs', 'doom.nats/tools/check_leak.mjs', 'src/tools/check_leak.mjs'];
 
-// 顶层白名单（两份 profile 分开写：玩家向仓库不许出现开发仓库那套目录）
+// 顶层白名单（两份 profile 分开写：玩家向仓库不许出现本机开发布局那套目录）
 // 玩家向仓库：2026-09-29 起多一个 src/ —— 用户要求"仓库还是要展示源码的"（生成器 + 规则层 + 生成器输入）
 const ALLOW_PUB = ['README.md', 'LICENSE', 'CHANGELOG.md', '.gitignore', '.gitattributes', 'dist', 'docs', 'rules', '.github', 'src', 'doom.nats'];
-// 开发仓库：**不含 src**（源码在开发仓库本来就以 doom.nats/ 的形式在顶层；那里加 src 只会放宽开发仓库的门）
+// 本机开发布局：**不含 src**（源码在那儿本来就以 doom.nats/ 的形式在顶层；那里加 src 只会放宽那道门）
 const ALLOW_DEV = ['README.md', 'LICENSE', 'CHANGELOG.md', '.gitignore', '.gitattributes', 'dist', 'docs', 'rules', '.github',
   'doom.nats', 'tests', 'harness', '.vscode', 'AGENTS.md', '_work', 'tools', 'pack', 'reports'];
 // 布局：玩家向仓库里没有生成器（doom.nats/tools），但有 dist/（.github/ 放 Issue 模板，2026-09-29 起允许）
@@ -98,12 +98,12 @@ if (process.env.DOOM_TOP === 'off') {
   }
   if (stray.length) {
     bad += stray.length;
-    console.log('❌ 顶层结构：' + stray.length + ' 个**已提交**的顶级条目不在白名单里（' + (IS_PUB ? '玩家向仓库' : '开发仓库') + '布局）');
+    console.log('❌ 顶层结构：' + stray.length + ' 个**已提交**的顶级条目不在白名单里（' + (IS_PUB ? '玩家向仓库' : '本机开发布局') + '布局）');
     for (const s of stray.slice(0, 20)) console.log('  ' + s);
     console.log('  白名单：' + [...ALLOW].sort().join(' / '));
     console.log('  （顶层多出来的东西十有八九是 shell 反引号/重定向误建的垃圾 —— 别 `git add -A` 蒙混过去）');
   } else {
-    console.log('✅ 顶层结构：' + top.size + ' 个顶级条目全在白名单内（' + (IS_PUB ? '玩家向仓库' : '开发仓库') + '布局 · 扫描 ' + files.length + ' 个文件）');
+    console.log('✅ 顶层结构：' + top.size + ' 个顶级条目全在白名单内（' + (IS_PUB ? '玩家向仓库' : '本机开发布局') + '布局 · 扫描 ' + files.length + ' 个文件）');
   }
 }
 

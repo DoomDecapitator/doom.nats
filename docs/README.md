@@ -3,7 +3,7 @@
 > 数据包本体在 [`../dist/`](../dist)：解压 zip 得到 `doom.nats/` 文件夹，整个丢进 `saves/<存档>/datapacks/`（服务器 `world/datapacks/`）→ 进游戏 `/reload`。
 > **成品在 [`../dist/`](../dist)，源码在 [`../src/`](../src/README.md)**：想改包就照 `src/README.md` 的三步构建走。
 > 本目录文档里若出现 `tools/*`、`_work/*` 这类路径，多数指的是本仓库的 [`../src/`](../src/README.md)（生成器与生成输入都在那儿）；
-> 只有真机测试台（`tests/`、`harness/`）与逐轮报告（`reports/`）在**开发仓库** 作者本机的开发工作区。
+> 只有真机测试台（`tests/`、`harness/`）与逐轮报告（`reports/`）是**作者本机**的东西（不随本仓库分发）。
 
 | 文档 | 对应版本 | 讲什么 |
 |---|---|---|
