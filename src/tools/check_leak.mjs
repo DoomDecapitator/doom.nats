@@ -98,12 +98,12 @@ if (process.env.DOOM_TOP === 'off') {
   }
   if (stray.length) {
     bad += stray.length;
-    console.log('❌ 顶层结构：' + stray.length + ' 个**已提交**的顶级条目不在白名单里（' + (IS_PUB ? '玩家向仓库' : '本机开发布局') + '布局）');
+    console.log('❌ 顶层结构：' + stray.length + ' 个**已提交**的顶级条目不在白名单里（' + (IS_PUB ? '玩家向仓库布局' : '本机开发布局') + '）');
     for (const s of stray.slice(0, 20)) console.log('  ' + s);
     console.log('  白名单：' + [...ALLOW].sort().join(' / '));
     console.log('  （顶层多出来的东西十有八九是 shell 反引号/重定向误建的垃圾 —— 别 `git add -A` 蒙混过去）');
   } else {
-    console.log('✅ 顶层结构：' + top.size + ' 个顶级条目全在白名单内（' + (IS_PUB ? '玩家向仓库' : '本机开发布局') + '布局 · 扫描 ' + files.length + ' 个文件）');
+    console.log('✅ 顶层结构：' + top.size + ' 个顶级条目全在白名单内（' + (IS_PUB ? '玩家向仓库布局' : '本机开发布局') + ' · 扫描 ' + files.length + ' 个文件）');
   }
 }
 
