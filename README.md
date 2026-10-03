@@ -25,35 +25,40 @@
 - **数据包本体（mcfunction 源码，可直接点开看）**：[`doom.nats/`](doom.nats/data/doom.nats/function) —— 里面就是这只包实际装入游戏的每个函数文件；成品 zip 在 `dist/`，JavaScript 生成器在 `src/`。
 - **生成器源码（JavaScript）**：[`src/`](src/) —— JavaScript 生成器 + 规则层 + 生成输入；不想读代码的话，直接下 `dist/` 的 zip 即可。
 - **成品（玩家下载）**：[`dist/`](dist/) —— `doom.nats-v4.25.zip`（默认）与 `doom.nats-v4x-experimental-v4.25.zip`（实验性）。
-- **同一份源码**也附在 [Releases](https://github.com/DoomDecapitator/doom.nats/releases) 的 `仓库 src/（生成器源码）`；开发仓库 私有开发仓库（不对外） 有测试台与验收报告。
+- **同一份源码**也附在 [Releases](https://github.com/DoomDecapitator/doom.nats/releases) 的 `仓库 src/（生成器源码）`；开发仓库 （作者本机的测试台与验收报告，不随仓库分发） 有测试台与验收报告。
 
 ## 30 秒：下载 → 装 → 看它是否跑起来
 
 | 步 | 做什么 |
 |---|---|
-| ① | 下载 [`dist/doom.nats-v4.25.zip`](dist)（默认变体）与它的 `.sha256` |
+| ① | 下载 [`dist/doom.nats-v4.25.zip`](dist)（默认变体），校验值见 `dist/SHA256SUMS.txt` |
 | ② | 解压，把 `doom.nats/` 整个放进 `<存档>/datapacks/`；服务器放 `world/datapacks/` |
 | ③ | 进世界 `/reload`，然后 `/function doom.nats:debug/env` 看环境快照 |
 
 装好会在聊天栏（和服务器日志）看到一句就绪提示；没看到就去 `logs/latest.log` 找加载报错。
 
+**怎么自证它真的在工作**（比"看到就绪提示"硬）：装好后跑 `/function doom.nats:debug/all`，看两行 ——
+`$spawned.total` **持续增长**，且 `$cnt.monster` **稳定停在上限**（默认变体 70；实测装机后 30 秒内从 48 爬到 70）。
+
 **要卸载**：删掉 `datapacks/doom.nats/` → `/reload` → `/function doom.nats:mode/auto` 把 `doMobSpawning` 还回原版。
 
 ## 校验下载的文件（一行）
 
-`dist/` 里每个 zip 都带同名 `.sha256`，在 zip 所在的目录里跑：
+`dist/SHA256SUMS.txt` 里是**当前发布物**的 sha256（每次发版重新生成）。在**仓库根目录**跑：
 
 ```
-Linux / macOS / Git Bash:   sha256sum -c doom.nats-v4.25.zip.sha256
-Windows PowerShell:         (Get-FileHash doom.nats-v4.25.zip -Algorithm SHA256).Hash
+Linux / macOS / Git Bash:   sha256sum -c dist/SHA256SUMS.txt
+Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $h,$f = $_ -split '\s+'; "$f => " + $(if ((Get-FileHash "dist/$f" -Algorithm SHA256).Hash.ToLower() -eq $h) {'OK'} else {'MISMATCH'}) }
 ```
 
-输出 `OK`（或哈希与 `.sha256` 里那一串相等）就是完整下载；不等就别用，重新下。当前值：
+全部输出 `OK` 就是完整下载；出现 `MISMATCH` 就别用，重新下。
+
+> ⚠️ 旧版 README 曾在表格里**写死过两个哈希值** —— 那是**过期值**（对应更早的构建）。校验一律以 `dist/SHA256SUMS.txt` 为准（实测与 zip 一致）。
 
 | 文件 | sha256 |
 |---|---|
-| `doom.nats-v4.25.zip` | `cd3473703bdcb51186ba10c26767f7385dfe5bf3c1c625602bfd260e63ea065e` |
-| `doom.nats-v4x-experimental-v4.25.zip` | `ddf72ddb393c432adc55066af9074b2bc8bb3f68312fe2980cce68746a1786a9` |
+
+
 
 ## 我该下载哪个（变体对照）
 
@@ -139,6 +144,6 @@ docs/                              玩家向文档 + docs/wiki/（Wiki 的 9 页
 **怎么报问题**：走 [Issues](https://github.com/DoomDecapitator/doom.nats/issues/new/choose) 的表单 —— 会问你要版本、变体、`logs/latest.log` 片段和截图；按表单填，定位快很多。
 
 真机测试台 `tests/`、逐轮验收报告、CI 仍在开发仓库
-私有开发仓库（不对外） —— 验收口径与每个版本的真机数字都在那里。
+（作者本机的测试台与验收报告，不随仓库分发） —— 验收口径与每个版本的真机数字都在那里。
 
 > **源码在哪**：生成器是 JavaScript，玩家不需要读它，所以不放在本仓库顶层。源码以 `仓库 src/（生成器源码）` 附在 **Releases** 里，也可以直接浏览开发仓库 `私有开发仓库`（生成器 / 规则层 / 测试台 / 验收报告）。

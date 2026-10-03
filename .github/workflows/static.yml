@@ -1,0 +1,23 @@
+# 静态门：生成器漂移 + lint + 引用闭包
+# 顺序遵循 src/README.md 的「三步构建」：先生成（pack/ 不进仓库），再检查。
+# 本机克隆实测：10 个生成器全绿；check_static 退出码 0（0 error / 2 warning）。
+name: static-gate
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: ① 生成（10 个生成器）
+        run: |
+          for g in gen_pack gen_pos gen_check gen_mobs gen_spawn gen_despawn gen_effects gen_debug gen_group gen_author; do
+            node "src/tools/$g.mjs" || exit 1
+          done
+      - name: ② 静态门（期望 0 error / 2 warning）
+        run: node src/tools/check_static.mjs
