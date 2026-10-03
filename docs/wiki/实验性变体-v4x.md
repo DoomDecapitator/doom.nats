@@ -31,7 +31,7 @@
 |---|---|---|
 | `near` | 条目里加 `when:{near:{type:"minecraft:wolf",radius:24,min:1}}` | **附近有什么才刷**（狼群附近才出羊） |
 | `on_spawn` | 条目里加 `on_spawn:1b`，再在数据包里建 `data/doom.nats/function/exp/on_spawn/<条目 id>.mcfunction` | 出生演出：粒子 / 音效 / 播报 / 额外 NBT |
-| 预设包 | `/function doom.nats:author/preset <名>` | 一键切换世界观：`blood_moon` / `storm_season` / `deep_dark` |
+| 预设包 | `/data merge storage doom.nats:exp_in {name:"<名>"}` → `/function doom.nats:exp/preset` | 一键切换世界观：`blood_moon` / `storm_season` / `deep_dark`（实测入口，`exp/preset` 是无参宏派发） |
 | 自定义外观 | 构建期规则 `rules/rigs.json` | 真实体当内核 + 骨架当外观（`ride` 挂载）：内核照常移动/消失，外观逐格跟随 |
 | 从手上的生物采样 | `/function doom.nats:author/add_entry` | 把你手上生物的样子（含 NBT）直接变成一条规则 |
 
