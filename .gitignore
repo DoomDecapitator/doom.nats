@@ -23,3 +23,9 @@ node_modules/
 *.bak-*
 Thumbs.db
 .DS_Store
+
+# 纵深防御（发布边界审计 2026-10-03）
+/reports/
+/tests/
+*.env
+credentials*

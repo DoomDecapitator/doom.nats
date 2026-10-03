@@ -14,4 +14,3 @@
 
 - [下载（Releases）](https://github.com/DoomDecapitator/doom.nats/releases)
 - [仓库 README](https://github.com/DoomDecapitator/doom.nats)
-- 私有开发仓库（不对外）

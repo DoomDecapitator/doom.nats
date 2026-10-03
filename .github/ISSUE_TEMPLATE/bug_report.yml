@@ -26,7 +26,7 @@ body:
       label: 用的是哪个变体
       options:
         - 默认变体 doom.nats-v4.25.zip
-        - 实验性变体 doom.nats-v4x-experimental.zip
+        - 实验性变体 doom.nats-v4x-experimental-v4.25.zip
         - 两个都装了（请改成一个再试）
         - 不确定
     validations:

@@ -4,7 +4,7 @@
 
 ## 一、下载与安装
 
-1. 下载 `dist/doom.nats-v4x-experimental.zip`
+1. 下载 `dist/doom.nats-v4x-experimental-v4.25.zip`
 2. 解压，把 `doom.nats/` 放进 `<存档>/datapacks/`（服务器 `world/datapacks/`）
 3. **创建一个新世界**（或改 `level.dat` 的启用实验性玩法），开启对应的实验性玩法开关
 4. `/reload`

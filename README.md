@@ -132,7 +132,7 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 ```
 README.md  LICENSE  CHANGELOG.md   说明 / 许可 / 变更日志
 dist/                              唯一下载物：两个变体的 zip + 各自 sha256
-Releases 的 source 附件                               源码：生成器 tools/ + 规则层 rules/ + 生成输入 _work/generated/
+`src/`（生成器源码）                               源码：生成器 tools/ + 规则层 rules/ + 生成输入 _work/generated/
 docs/                              玩家向文档 + docs/wiki/（Wiki 的 9 页 Markdown 源）
 .github/ISSUE_TEMPLATE/            报 bug / 提功能的固定表单（要求版本 + 日志 + 截图）
 ```
@@ -146,4 +146,4 @@ docs/                              玩家向文档 + docs/wiki/（Wiki 的 9 页
 真机测试台 `tests/`、逐轮验收报告、CI 仍在开发仓库
 （作者本机的测试台与验收报告，不随仓库分发） —— 验收口径与每个版本的真机数字都在那里。
 
-> **源码在哪**：生成器是 JavaScript，玩家不需要读它，所以不放在本仓库顶层。源码以 `仓库 src/（生成器源码）` 附在 **Releases** 里，也可以直接浏览开发仓库 `私有开发仓库`（生成器 / 规则层 / 测试台 / 验收报告）。
+> **源码在哪**：生成器是 JavaScript，玩家不需要读它，所以不放在本仓库顶层。源码以 `仓库 src/（生成器源码）` 附在 **Releases** 里，也可以直接浏览开发仓库 `作者本机的开发工作区`（生成器 / 规则层 / 测试台 / 验收报告）。

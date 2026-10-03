@@ -28,7 +28,7 @@ const PUB_IDS = [
   new RegExp('\\b' + String.fromCharCode(115, 117, 115, 111) + '\\b', 'i'),
   new RegExp(String.fromCharCode(115, 117, 115, 111) + '\\.nats', 'i'),
 ];
-const PATHS = [/[A-Za-z]:\\Users\\/, /\/c\/Users\//, /Downloads[\\/]datapack/];
+const PATHS = [/[A-Za-z]:[\\/]Users[\\/]/, /\/c\/Users\//, /datapack/];
 // 自己（含三种布局下的相对路径）不参与扫描：本文件正文里就写着这些正则
 // 公开仓库自 2026-09-29 起把源码放进 src/ ⇒ 那份副本的相对路径是 src/tools/check_leak.mjs
 const SELF = ['tools/check_leak.mjs', 'doom.nats/tools/check_leak.mjs', 'src/tools/check_leak.mjs'];
