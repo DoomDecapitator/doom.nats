@@ -9,13 +9,13 @@
 <!-- <p align="center"><img src="docs/assets/首屏效果.png" width="720" alt="doom.nats 在存档里跑起来的样子"></p> -->
 
 > **一句话**：用**纯数据包**复刻 Minecraft 原版的自然刷怪（NaturalSpawner 那一整套）—— 容量、区块计数、光照与逐实体规则、结构覆盖、消失层全都在，而且**规则归你改**。
-> **下哪个**：`dist/doom.nats-v4.25.zip`（默认变体，复刻原版刷怪，推荐）。只有想要 `near` / `on_spawn` / 预设 / 自定义外观，才下 `dist/doom.nats-v4x-experimental-v4.25.zip` —— 它**需要世界开启对应实验性玩法**，否则装不上。
+> **下哪个**：`dist/doom.nats-v4.25.zip`（默认变体，复刻原版刷怪，推荐）。只有想要 `near` / `on_spawn` / 预设 / 自定义外观，才下 `dist/doom.nats-v4x-experimental-v4.25.zip` —— 它**需要世界开启对应实验性玩法**，否则装不上。（其中**自定义外观（AJ 桥接）未随本版成品发布**：源码在 `src/tools/gen_exp_aj.mjs`，要自备非空 `rules/rigs.json` 并 `DOOM_EXP=1` 重生成，详见 [`docs/18-配置手册.md`](docs/18-配置手册.md) 附录。）
 > **怎么装**：解压 zip → 得到 `doom.nats/` 文件夹 → 整个丢进 `saves/<你的存档>/datapacks/`（服务器：`world/datapacks/`）→ 进游戏 `/reload`。
 > **怎么验**：下载后先对一下校验值 —— 见下面「校验下载的文件」。
 > **改规则**看 [`docs/24-玩家能改动的一切.md`](docs/24-玩家能改动的一切.md) 与 [示例库](docs/wiki/示例库.md)；版本/变体对照看 [`docs/25-兼容与版本.md`](docs/25-兼容与版本.md)。
 
 > ## 当前状态：**v4.25 正式发布（Latest）**
-> v4.25 已从预发布转为**正式版**并设为 Latest —— 本版是 **Minecraft 1.21.6 的稳定版**；超出原版的实验性能力（`near` / `on_spawn` / 预设 / 自定义外观）在 `v4x` 变体里，装它要开对应实验性玩法。
+> v4.25 已从预发布转为**正式版**并设为 Latest —— 本版是 **Minecraft 1.21.6 的稳定版**；超出原版的实验性能力（`near` / `on_spawn` / 预设）在 `v4x` 变体里，装它要开对应实验性玩法（**自定义外观（AJ 桥接）源码在、未随本版成品发布**）。
 > 已跑过完整的真机验收（数字见 [CHANGELOG](CHANGELOG.md) 与开发仓库的 `reports/`）；**已知偏差仍逐条留档**。
 > **可以装进存档玩，但请先备份存档。**
 

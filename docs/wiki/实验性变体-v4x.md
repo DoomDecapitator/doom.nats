@@ -1,6 +1,6 @@
 # 实验性变体 v4x
 
-**结论**：实验性变体 = 默认变体 + **超出原版的能力**（附近有谁才刷、出生演出、预设包、自定义外观）。它带**引擎门**：世界必须在**创建时**开启对应实验性玩法，否则包会被**拒绝加载**（不是警告）。
+**结论**：实验性变体 = 默认变体 + **超出原版的能力**（附近有谁才刷、出生演出、预设包；自定义外观桥接**源码在、未随本版成品发布**，见下表）。它带**引擎门**：世界必须在**创建时**开启对应实验性玩法，否则包会被**拒绝加载**（不是警告）。
 
 ## 一、下载与安装
 
@@ -32,10 +32,10 @@
 | `near` | 条目里加 `when:{near:{type:"minecraft:wolf",radius:24,min:1}}` | **附近有什么才刷**（狼群附近才出羊） |
 | `on_spawn` | 条目里加 `on_spawn:1b`，再在数据包里建 `data/doom.nats/function/exp/on_spawn/<条目 id>.mcfunction` | 出生演出：粒子 / 音效 / 播报 / 额外 NBT |
 | 预设包 | `/data merge storage doom.nats:exp_in {name:"<名>"}` → `/function doom.nats:exp/preset` | 一键切换世界观：`blood_moon` / `storm_season` / `deep_dark`（实测入口，`exp/preset` 是无参宏派发） |
-| 自定义外观 | 构建期规则 `rules/rigs.json` | 真实体当内核 + 骨架当外观（`ride` 挂载）：内核照常移动/消失，外观逐格跟随 |
+| 自定义外观（AJ 桥接） | 构建期规则 `rules/rigs.json` —— **源码在 `src/tools/gen_exp_aj.mjs`，未随 v4.25 成品发布**：本仓 `rules/rigs.json` 是 `{}`（成品 zip 里 `exp/aj` 条目 0 个），要用需自备非空配置（样例 `src/rules/examples/aj/rigs.json`）并 `DOOM_EXP=1` 重跑生成器 | 真实体当内核 + 骨架当外观（`ride` 挂载）：内核照常移动/消失，外观逐格跟随 |
 | 从手上的生物采样 | `/function doom.nats:author/add_entry` | 把你手上生物的样子（含 NBT）直接变成一条规则 |
 
-**自定义外观的两条关键行为**（实测）：
+**自定义外观的两条关键行为**（实测于**用非空 rigs 配置构建的实验构建**，不是 v4.25 成品）：
 
 - 位移误差 **0.0000 格**（逐格跟随）
 - **容量只数内核**——你挂 10 个骨架不会把 mobcap 吃爆
