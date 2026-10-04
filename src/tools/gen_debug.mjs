@@ -21,7 +21,7 @@ F['data/' + NS + '/function/debug/dryrun.mcfunction'] = `# ${NS}:debug/dryrun �
 #
 # 用法：/function ${NS}:debug/dryrun
 # 先抽点，再跳到那个点逐步判定，最后把每步结果打印出来（并写进 doom.log 的 [dump]）。
-function doom.log:info {message:"${NS} dryrun：抽点 → 距离 → 群系 → 选物种 → 光照 → 落位 → 容量"}
+function doom.log:info {code:"E911", message:"${NS} dryrun：抽点 → 距离 → 群系 → 选物种 → 光照 → 落位 → 容量"}
 function ${NS}:pos/pick
 function doom.log:dump {key:"pos.ok", message:"1=抽到合格区块 0=没抽到（区块未加载）"}
 execute if score $pos.ok ${NS} matches 1 run function ${NS}:debug/dryrun_at with storage ${NS}:pos

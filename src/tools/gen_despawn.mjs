@@ -111,7 +111,7 @@ function ${NS}:util/void_kill
 `;
 
 F['data/' + NS + '/function/debug/despawn_report.mcfunction'] = `# ${NS}:debug/despawn_report —— 消失统计（接 doom.log）
-function doom.log:info {message:"${NS} 消失层：硬消失 128 格（WATER_AMBIENT 64 格）· 概率 1/${DICE} 每 ${PERIOD} tick"}
+function doom.log:info {code:"E912", message:"${NS} 消失层：硬消失 128 格（WATER_AMBIENT 64 格）· 概率 1/${DICE} 每 ${PERIOD} tick"}
 function doom.log:dump {key:"despawn.dice", message:"掷骰分母（等效每 tick 1/800）"}
 tellraw @a [{"text":"[nats] 场上本包生成实体：","color":"gray"},{"selector":"@e[tag=${NS}.spawned]"},{"text":"  持久：","color":"gray"},{"selector":"@e[tag=${NS}.persistent]"}]
 `;

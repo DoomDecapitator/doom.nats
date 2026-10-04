@@ -222,7 +222,7 @@ F['data/' + NS + '/names.json'] = JSON.stringify({
 // ---------------------------------------------------------------- 1d) 注册表查看（接 doom.log）
 F['data/' + NS + '/function/debug/mobs.mcfunction'] = [
   '# ' + NS + ':debug/mobs —— 查看生物注册表规模与按类别的实体标签（走 doom.log 的 [dump]）',
-  'function doom.log:info {message:"' + NS + ' 生物注册表：条目 ' + Object.keys(mobsDoc.mobs).length + ' 条"}',
+  'function doom.log:info {code:"E913", message:"' + NS + ' 生物注册表：条目 ' + Object.keys(mobsDoc.mobs).length + ' 条"}',
   ...['monster', 'creature', 'ambient', 'water_ambient', 'water_creature', 'underground_water_creature', 'axolotls'].map((c) =>
     'function doom.log:dump {key:"mobs.' + c + '", message:"可用 @e[type=#' + NS + ':' + c + '] 筛选"}'),
   'tellraw @a [{"text":"[nats] 注册表清单见 data/' + NS + '/names.json；实体标签 #' + NS + ':<category>","color":"gray"}]',
