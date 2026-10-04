@@ -103,40 +103,71 @@ const CAP_DIM_SUFFIX = [['minecraft:overworld', ''], ['minecraft:the_nether', '.
 //   又覆盖不了「两名玩家相距 >3e7」的世界 ⇒ 语义不等价。所以仍用盒子。
 //   另测：盒子的代价随**体积**增长 —— 同环境 10 次往返均值：裸 66.0ms · 微盒 16×16 63.3ms（≈免费）·
 //   中盒 8192×8192 53.6ms（≈免费）· 整图 60M×60M 149.0ms（+83ms）。21 条 × ≈50ms 就是那 1 Hz 的一拍。
-const CNT_BOX = 'x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000,limit=500';
-// 全量一次刷（v4.26 的原样）—— 只留给 check/caps 这个**调试/验证入口**，不在任何节拍上跑（见下）。
+const CNT_BOX = 'x=-30000000,y=-64,z=-30000000,dx=60000000,dy=400,dz=60000000';
+// 旧选择器的饱和语义：limit=500 ⇒ 某类别超过 500 只时计数**封顶 500**（v4.28 的逐实体封顶与它等价）。
+const CNT_SATURATE = 500;
+// 全量一次刷（v4.26/v4.27 的原样）—— 只留给 check/caps 这个**调试/验证入口**，不在任何节拍上跑（见下）。
 const cntBlock = MOB_CATS.flatMap((cat) => CAP_DIM_SUFFIX.flatMap(([dim, sfx]) => [
   'scoreboard players set $cnt.' + cat + sfx + ' ' + NS + ' 0',
-  'execute in ' + dim + ' as @e[type=#' + NS + ':' + cat + ',nbt=!{PersistenceRequired:true},' + CNT_BOX + '] run scoreboard players add $cnt.' + cat + sfx + ' ' + NS + ' 1',
+  'execute in ' + dim + ' as @e[type=#' + NS + ':' + cat + ',nbt=!{PersistenceRequired:true},' + CNT_BOX + ',limit=' + CNT_SATURATE + '] run scoreboard players add $cnt.' + cat + sfx + ' ' + NS + ' 1',
 ])).join(LF);
 
-// ---- v4.27（P0 性能）：容量计数**拆拍分摊** ----
-// 真机实测（函数级 RCON 计时 + 相位冻结）：上面这 21 条「整图盒式选择器」每条 ≈38ms，而且代价来自**盒子本身**、
-//   与场上实体数无关（当时场上仅 46 只）⇒ 21 条全挤在 circ/snapshot 那一拍 = 每 20 tick 一个 ≈820ms 尖峰：
-//   P50≈2ms / P95≈940ms / avg≈51ms / tps 18.7（追不上 20）。
-// 修法（语义不变）：按「类别 × 维度」摊到 20 拍内，每拍只跑 1~2 条 ⇒ 峰值从 820ms 降到 ≈41ms/拍；
-//   每组仍是 20 拍一轮 = 1 Hz，计数的「新鲜度上限」（1 秒）与修前完全一致，玩家可见行为不变。
-// 相位与 $snap_period **解耦**（固定 20 拍）：冻结快照（$snap_period=20000，多个 verify_* 的前提）时计数照样 1 Hz 刷新。
-//   —— 若跟着 $snap_period 走，冻结后相位只走到 0..19 中的一小段，部分类别会**永不刷新**。
-const CAP_GROUPS = MOB_CATS.flatMap((cat) => CAP_DIM_SUFFIX.map(([dim, sfx]) => ({ cat, dim, sfx })));
+// ---- v4.27 → v4.28（P0 性能）：把容量计数的**总量**降下来 ----
+// 病史（真机实测：函数级 RCON 计时 + 相位冻结 + _work/_caps27_measure.mjs 的 /tick query）：
+//   · v4.26：21 条「整图盒式选择器」全挤在 1 Hz 那一拍 ⇒ 每 20 tick 一个 ≈1.5s 尖峰：
+//     实测 avg≈59~70ms / P50≈4ms / P95≈997~1170ms / P99≈1221~1443ms（追不上 20）。
+//   · v4.27：按「类别 × 维度」摊到 20 拍 ⇒ **峰值**降下来了（P95≈90ms），但**总量没降**：
+//     21 条/秒 × ≈70ms ≈ 1.47s 的盒子扫描/秒 ⇒ avg 仍 ≈51ms ⇒ tps 18.8，还是追不上 20。
+//   代价来自**「60M 宽的盒子」本身**、与实体数无关（同一实例实测，往返中位数 − floor，场上 226 只实体）：
+//     裸 type 选择器 ≈3ms（≈0）· 整图盒子 + type 选择 85.5ms · 整图盒子 + 不限 type 82.1ms
+//     ⇒ 加不加 type/nbt 过滤、场上有多少实体，几乎不影响这条命令的代价。
+// v4.28 修法（语义等价，总量 ≈÷7）：**每个维度只做 1 次整图盒子选择**，把「按类别计数」从**选择器**里
+//   挪到**逐实体派发**：被选中的实体自己检查它属于哪几个类别 tag（#doom.nats:monster / creature / … 共 7 类），
+//   **命中几个就给几个类别 +1**。盒子扫描从 21 次/秒降到 3 次/秒（≈1.47s → ≈0.21s/秒）。
+//   等价性①（多类别实体）：ocelot 同时在 #monster 与 #creature 里 ⇒ 旧实现被两条选择器各数一次；
+//     新实现逐 tag 独立判定、各加一次 ⇒ 逐位相同（这就是「命中几个加几个」，不能只算第一个）。
+//   等价性②（limit=500 饱和）：旧选择器 limit=500 ⇒ 计数 = min(n, 500)。新实现把它做成**逐实体封顶**
+//     （`if score <key> matches ..499` 才 +1）⇒ 同样封顶 500，min(n,500) 逐位相同。
+//   相位仍固定 20 拍、与 $snap_period **解耦**（冻结快照时计数照样 1 Hz 刷新）；三个维度各占一个相位
+//     （1 / 8 / 14）⇒ 每个维度仍是 20 拍一轮 = 1 Hz，「新鲜度上限」（1 秒）与修前完全一致，玩家可见行为不变。
+//   盒子不可省、也不可换 distance（见上）；每个维度的清零与它自己的那次盒子查询必须**同一拍**。
 const CAP_PHASE_PERIOD = 20;
+const CAP_DIMS = [
+  ['minecraft:overworld', '', 1],
+  ['minecraft:the_nether', '.nether', 8],
+  ['minecraft:the_end', '.end', 14],
+];
 // 容量公式（纯算术 21 行，代价可忽略）：check/caps 与 check/caps_formula 共用同一份文本。
 const capFormula = MOB_CATS.map((cat) => [
   'scoreboard players operation $cap.' + cat + ' ' + NS + ' = $snap.chunks ' + NS,
   'scoreboard players operation $cap.' + cat + ' ' + NS + ' *= $eff.max_' + cat + ' ' + NS,
   'scoreboard players operation $cap.' + cat + ' ' + NS + ' /= #289 ' + NS,
 ]).flat().join(LF);
-// 拆拍计数：每组的 set+add 两条必须**同一拍**执行，否则计数会漏（所以两条都带同一个相位门）。
-// 相位 = (组号 + 1) % 20 ⇒ 多出来的第 21 组落在相位 1，相位 0（= 快照那一拍）只跑 1 条。
-const capScanBlock = CAP_GROUPS.map((g, i) => {
-  const ph = (i + 1) % CAP_PHASE_PERIOD;
-  const key = '$cnt.' + g.cat + g.sfx;
+// 逐实体派发（每个维度一份）：命中几个类别 tag 就加几个；每个类别各自封顶 CNT_SATURATE。
+const capDispatchOf = (sfx) => MOB_CATS.map((cat) => {
+  const key = '$cnt.' + cat + sfx;
   return [
-    '# 组 ' + i + '：' + g.cat + ' @ ' + g.dim.replace('minecraft:', '') + ' → 相位 ' + ph,
-    'execute if score $cap_phase ' + NS + ' matches ' + ph + ' run scoreboard players set ' + key + ' ' + NS + ' 0',
-    'execute if score $cap_phase ' + NS + ' matches ' + ph + ' run execute in ' + g.dim + ' as @e[type=#' + NS + ':' + g.cat + ',nbt=!{PersistenceRequired:true},' + CNT_BOX + '] run scoreboard players add ' + key + ' ' + NS + ' 1',
+    '# ' + cat + '：属于 #' + NS + ':' + cat + ' 就 +1（封顶 ' + CNT_SATURATE + '）',
+    'execute if entity @s[type=#' + NS + ':' + cat + '] if score ' + key + ' ' + NS + ' matches ..' + (CNT_SATURATE - 1) + ' run scoreboard players add ' + key + ' ' + NS + ' 1',
   ];
 }).flat().join(LF);
+for (const [dim, sfx] of CAP_DIMS) {
+  const nm = dim.replace('minecraft:', '');
+  F['data/' + NS + '/function/check/cnt_' + nm + '.mcfunction'] = `# ${NS}:check/cnt_${nm} —— 逐实体类别派发（${dim}）
+#
+# 由 check/caps_scan 的那 1 次整图盒子查询调用：execute in ${dim} as @e[…] run function 本函数。
+# 每个被选中的实体执行一次，**逐 tag 独立判定** —— 同时属于多个类别的实体（ocelot 既在 monster 又在 creature）
+# 会给每个命中的类别各 +1，与旧实现（每类别一条选择器）逐位一致。
+# 每个类别各自封顶 ${CNT_SATURATE}：等价于旧选择器 limit=${CNT_SATURATE} 的饱和语义（计数 = min(n, ${CNT_SATURATE})）。
+${capDispatchOf(sfx)}
+`;
+}
+// 拆拍计数：每个维度的「清零 + 那 1 次盒子查询」必须**同一拍**执行，否则计数会漏（所以两者带同一个相位门）。
+const capScanBlock = CAP_DIMS.map(([dim, sfx, ph]) => [
+  '# 维度 ' + dim + '（相位 ' + ph + '）：清零本维度的 7 个键 → 1 次整图盒子选择 → 逐实体按类别 tag 派发',
+  ...MOB_CATS.map((cat) => 'execute if score $cap_phase ' + NS + ' matches ' + ph + ' run scoreboard players set $cnt.' + cat + sfx + ' ' + NS + ' 0'),
+  'execute if score $cap_phase ' + NS + ' matches ' + ph + ' run execute in ' + dim + ' as @e[nbt=!{PersistenceRequired:true},' + CNT_BOX + '] run function ' + NS + ':check/cnt_' + dim.replace('minecraft:', ''),
+]).flat().join(LF);
 
 // ---- 容量：按原版公式刷新（catenate 到快照节拍）----
 F['data/' + NS + '/function/check/caps.mcfunction'] = `# ${NS}:check/caps —— 容量公式 + 21 条全量计数（**调试/验证用的一次性入口，不在任何节拍上跑**）
@@ -147,8 +178,10 @@ F['data/' + NS + '/function/check/caps.mcfunction'] = `# ${NS}:check/caps ——
 # v4.27（P0 性能）：本函数**不再是节拍路径**。它一次性扫 21 条整图盒式选择器（真机 ≈820ms），
 #   占住 1 Hz 那一拍就是 P95≈940ms / tps 18.7 的成因。节拍路径拆成两条：
 #     · circ/snapshot → check/caps_formula（只算容量公式）
-#     · core/tick 每拍 → check/caps_scan（计数按相位拆到 20 拍内，每拍 1~2 条）
+#     · core/tick 每拍 → check/caps_scan（v4.28 起：每维度 1 次整图盒子 + 逐实体按类别 tag 派发，共 3 次/秒）
 #   本函数原样保留为「公式 + 全量计数」，供调试/验证脚本一次性强制刷新（_work/verify_*.mjs 的调用点不变）。
+# v4.28（P0 性能）：节拍路径的 21 条选择器已换成 3 条（见 check/caps_scan）；本函数的 21 条**只剩调试用途**，
+#   不在任何节拍上跑，所以它的代价（真机 ≈1.5s）不影响 tps。等价性以「逐实体派发版」为准。
 ${capFormula}
 
 # 各类别当前计数（按注册表 tag 记数；每快照节拍刷一次）
@@ -176,16 +209,17 @@ F['data/' + NS + '/function/check/caps_formula.mcfunction'] = `# ${NS}:check/cap
 # spawnableChunkCount 由 ${NS}:circ/snapshot 实测（execute if loaded 数出来的），不是估算。
 ${capFormula}
 `;
-F['data/' + NS + '/function/check/caps_scan.mcfunction'] = `# ${NS}:check/caps_scan —— 容量计数（拆拍：每拍只跑当拍那一组）
+F['data/' + NS + '/function/check/caps_scan.mcfunction'] = `# ${NS}:check/caps_scan —— 容量计数（每维度 1 次整图盒子 + 逐实体派发，拆到 3 个相位）
 #
-# v4.27（P0 性能）：21 组「类别 × 维度」= 21 条整图盒式选择器，按相位摊到 20 拍内 ⇒ 每拍 1~2 条。
-#   真机实测（函数级 RCON 计时 + 相位冻结）：每条 ≈38ms，代价来自**盒子本身**、与实体数无关
-#   ⇒ 修前 21 条挤在快照那一拍 = 每 20 tick ≈820ms 尖峰（P50≈2ms / P95≈940ms / avg≈51ms / tps 18.7）。
-#   修后峰值 ≈41ms/拍；每组仍是 20 拍一轮 = 1 Hz ⇒ 计数的「新鲜度上限」（1 秒）与修前一致。
+# v4.28（P0 性能）：盒子扫描从 21 次/秒降到 **3 次/秒**（每维度 1 次），类别计数改由
+#   check/cnt_<维度> 逐实体按类别 tag 派发（命中几个类别就加几个，各封顶 ${CNT_SATURATE}）。
+#   真机实测：单条整图盒子选择 ≈82~86ms 往返（− floor ≈71~75ms），与场上实体数无关 ⇒
+#   修前 21 条/秒 ≈ 1.47s/秒（avg≈51ms / tps 18.8）→ 修后 3 条/秒 ≈ 0.21s/秒。
 # 由 core/tick **每 tick** 调用（不是 1 Hz 整扫）；相位 $cap_phase 由 core/tick 每拍自增回绕（固定 20 拍）。
-#   与 $snap_period **解耦**：冻结快照（$snap_period=20000，多个 verify_* 的前提）时计数照样 1 Hz 刷新。
-# 组号 → 相位：相位 = (组号 + 1) % 20 ⇒ 多出来的第 21 组落在相位 1，相位 0（= 快照那一拍）只跑 1 条。
-# 每组的 set 与 add 必须同一拍（否则计数会漏）；盒子不可省、也不可收窄 —— 不带位置/体积约束的 @e 会跨维度选实体（v4.14g 实测）。
+#   与 $snap_period **解耦**：冻结快照（$snap_period=20000，多个 verify_* 的前提）时计数照样 1 Hz 刷新
+#   （若跟着 $snap_period 走，冻结后相位只走到 0..19 的一小段，部分类别会**永不刷新**）。
+# 每维度的清零与它自己那次盒子查询必须同一拍（否则计数会漏）；盒子不可省、也不可收窄 ——
+#   不带位置/体积约束的 @e 会**跨维度**选实体（v4.14g 实测：execute in <维度> 也拦不住）。
 ${capScanBlock}
 `;
 
