@@ -351,7 +351,7 @@ for (const [biome, data] of Object.entries(rosters)) {
       // v4.14：规则里 persist=true 的物种，召唤 NBT 直接带 PersistenceRequired:1b（原版语义：永不消失）
       const mobNbt = '{Tags:[' + JSON.stringify(NS + '.spawned') + ',' + JSON.stringify(NS + '.cat.' + cat) + ']' + (rl.persist ? ',PersistenceRequired:1b' : '') + '}';
       // ⚠ data merge 是**递归**的：nbt 写进同一个 merge 时，上一条目残留的键会累积到下一只身上
-      //   （真机实测：上一条作者条目的 CustomName/HandItems 会粘到下一只香草生物）⇒ 结构字段 merge、nbt 整体 set。
+      //   （真机实测：上一条作者条目的 CustomName / equipment 会粘到下一只香草生物）⇒ 结构字段 merge、nbt 整体 set。
       rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data merge storage ' + NS + ':sel {type:' + JSON.stringify(r.type) + ',slug:' + JSON.stringify(String(r.type).replace(/^minecraft:/, '')) + ',cat:' + Q + cat + Q + ',min:' + r.min + ',max:' + r.max + rigField(r.type) + '}');
       rows.push('execute if score $rng ' + NS + ' ' + cond + ' run data modify storage ' + NS + ':sel nbt set value ' + mobNbt);
       // v4.23 作者层：按 Y 段覆盖「每次生几只」（rules/counts.json groupByY）—— 在香草 min/max 之后合并，故覆盖它

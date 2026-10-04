@@ -77,7 +77,7 @@
     "weight": 100000,
     "group": [2, 3],
     "when": { "thundering": true, "yMax": 40 },
-    "nbt": "{CustomName:'{\"text\":\"深海雷暴僵尸\",\"color\":\"aqua\"}',HandItems:[{id:\"minecraft:trident\",Count:1b},{}],Health:40f}"
+    "nbt": "{CustomName:'{\"text\":\"深海雷暴僵尸\",\"color\":\"aqua\"}',equipment:{mainhand:{id:\"minecraft:trident\",count:1}},Health:40f}"
   }
 ]
 ```
@@ -91,7 +91,7 @@
 | `weight` | | 默认 `1`。**命中率 ≈ `weight / 1000000`** —— **不是**"与香草条目同池竞争"（v4.28 真机实测；机制与对照表见下面的「⚠ weight 口径」）。要生效请填 **10 万级**：`100000`≈10% · `900000`≈90%；`40` 等于不刷 |
 | `group` | | `[min, max]`，默认 `[1,1]` |
 | `when` | | 条件（全部 AND）：`thundering` `raining` `yMin` `yMax` `lightMax` `lightMin`；留空 = 无条件 |
-| `nbt` | | SNBT，**并入**本包标签之后再 `data merge entity @s`。写了 `Tags` 会覆盖本包标签（不推荐） |
+| `nbt` | | SNBT，**并入**本包标签之后再 `data merge entity @s`。写了 `Tags` 会覆盖本包标签（不推荐）。装备字段 1.21.5+ 已改名（`HandItems`→`equipment`、掉落率→实体级 `drop_chances`），旧写法**静默丢弃** ⇒ 见 §7.5 坑 5 |
 | `groupByY` | | 该条目的组大小按 Y 段覆盖（同 §4 的写法） |
 
 **语义（等价性）**：生成物把条件写进 `#wsum` 的累加——条件成立时 `#wsum += weight`，命中区间紧接香草区间之后，
@@ -268,7 +268,8 @@ function doom.nats:author/set_group_by_y with storage doom.nats:author_in
 3. **`data remove storage <id>` 必须带 path**；`execute if data storage <id>{…}` **非法**（都真机报过错）。
 4. **宏替换进 SNBT 的字符串要自己加引号**：`type:$(mob)` 会变成 `type:minecraft:zombie`（非法 SNBT）⇒ 写 `type:"$(mob)"`。
 5. **1.21.5+ 的装备 NBT 是 `equipment:{mainhand:{…},head:{…}}`**：老的 `HandItems`/`ArmorItems` 会被**静默忽略**
-   （本轮实测：写 `HandItems` 既不报错也不生效）。
+   （本轮实测：写 `HandItems` 既不报错也不生效）。装备掉落率是**实体级**的 `drop_chances:{mainhand:…,head:…}`（与 `equipment` 平级；
+   放进 `equipment` 里同样被静默丢弃），槽位名 `mainhand`/`offhand`/`head`/`chest`/`legs`/`feet`/`body`。玩家向说明见 `docs/wiki/示例库.md` 第八节。
 6. 运行时刻条目的 `biome` 判定在**候选点**求值（与构建期"表按群系展开"同义）⇒ 条目只能加到该群系**已有的**类别里。
 
 ---
