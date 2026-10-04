@@ -45,7 +45,7 @@ body:
     id: checksum
     attributes:
       label: 校验值核对结果
-      description: 跑过 `sha256sum -c doom.nats-v4.25.zip.sha256`（或 PowerShell 的 Get-FileHash）吗？结果是什么
+      description: 跑过 `sha256sum -c dist/SHA256SUMS.txt` 吗（Windows 用 `Get-FileHash` 对着 `dist/SHA256SUMS.txt` 逐行核）？结果是什么
       placeholder: OK / 不一致 / 没跑
     validations:
       required: true

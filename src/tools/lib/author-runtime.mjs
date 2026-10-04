@@ -187,7 +187,9 @@ export function buildLayer(cfg) {
   );
 
   F[FUNC + 'add_entry.mcfunction'] = H('add_entry [MACRO] —— 追加一条"条件刷怪条目"',
-    '# 用法：data modify storage ' + IN + ' entry set value {id:"x",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:40,when:{thundering:1b},nbt:"{CustomName:\'{\\"text\\":\\"X\\"}\'}"}',
+    '# 用法：data modify storage ' + IN + ' entry set value {id:"x",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:100000,when:{thundering:1b},nbt:"{CustomName:\'{\\"text\\":\\"X\\"}\'}"}',
+    '# ⚠ weight 的真实口径：条件成立时每次尝试被选中概率 ≈ weight/1000000 —— 要真刷出来就填 10 万级',
+    '#   （填 40 ⇒ 0.004%，等于永远不刷；100000 ⇒ 10%）。机制与对照表见 docs/「规则字段参考」。',
     '#       function ' + NS + ':' + dir + '/add_entry',
     '# 整条条目按原样追加（与 rules/entries.json 同构）⇒ 缺的字段由判定层补默认值。',
     'execute unless data storage ' + storage + ' entries run data modify storage ' + storage + ' entries set value []',
@@ -217,13 +219,14 @@ export function buildLayer(cfg) {
   const help = [
     'tellraw @s [{"text":"=== ' + NS + ' ' + title + '（改 storage 即刻生效，不用重生成包）===","color":"aqua"}]',
     'tellraw @s [{"text":"[1] 直接改 storage：","color":"yellow"},{"text":"data modify storage ' + storage + ' entityRules.\\"minecraft:zombie\\".belowAny set value [\\"#minecraft:leaves\\"]","color":"gray"}]',
-    'tellraw @s [{"text":"[2] 条目：","color":"yellow"},{"text":"data modify storage ' + IN + ' entry set value {id:\\"x\\",mob:\\"minecraft:zombie\\",biome:\\"#minecraft:is_overworld\\",category:\\"monster\\",weight:40,when:{thundering:1b}} + function ' + NS + ':' + dir + '/add_entry","color":"gray"}]',
+    'tellraw @s [{"text":"[2] 条目：","color":"yellow"},{"text":"data modify storage ' + IN + ' entry set value {id:\\"x\\",mob:\\"minecraft:zombie\\",biome:\\"#minecraft:is_overworld\\",category:\\"monster\\",weight:100000,when:{thundering:1b}} + function ' + NS + ':' + dir + '/add_entry","color":"gray"}]',
     'tellraw @s [{"text":"[3] 额外落位面：","color":"yellow"},{"text":"{type:\\"minecraft:zombie\\",tag:\\"#minecraft:leaves\\"} + ' + NS + ':' + dir + '/add_below_tag","color":"gray"}]',
     'tellraw @s [{"text":"[4] 组大小随 Y：","color":"yellow"},{"text":"{type:\\"minecraft:zombie\\",yMax:0,min:4,max:6} + ' + NS + ':' + dir + '/set_group_by_y","color":"gray"}]',
     'tellraw @s [{"text":"[5] 容量随 Y：","color":"yellow"},{"text":"{category:\\"monster\\",yMax:0,max:200,localMax:140} + ' + NS + ':' + dir + '/set_cap_y","color":"gray"}]',
     'tellraw @s [{"text":"[6] 看/导出/重置：","color":"yellow"},{"text":"function ' + NS + ':' + dir + '/show · export · reset","color":"gray"}]',
     'tellraw @s [{"text":"字段（entityRules）：belowAny(≤8) yMin yMax lightMin lightMax weather(thunder|rain|clear) biomeIn(≤4) biomeNot(≤4) place light persist","color":"white"}]',
     'tellraw @s [{"text":"字段（entries）：id mob biome category weight min max nbt when{thundering raining yMin yMax lightMin lightMax}","color":"white"}]',
+    'tellraw @s [{"text":"⚠ weight：条件成立时每次尝试被选中概率 ≈ weight/1000000 —— 要真刷出来就填 10 万级（40 ⇒ 0.004%，等于永远不刷；100000 ⇒ 10%）。多条目同时成立按声明顺序吃区间。","color":"gold"}]',
     'tellraw @s [{"text":"上限：条目 ≤8 · Y 段 ≤8 · 落位面标签 ≤8 · 群系白/黑名单各 ≤4。未列出的构建期字段（coins/cluster/deep…）请在 rules/ 里改。","color":"dark_gray"}]',
   ];
   if (exp) {
@@ -255,7 +258,7 @@ export function buildLayer(cfg) {
     'execute if score ' + S + '.demo ' + NS + ' matches 1 run function ' + NS + ':' + dir + '/set_group_by_y with storage ' + IN,
     'execute if score ' + S + '.demo ' + NS + ' matches 1 run data merge storage ' + IN + ' {category:"monster",yMin:0,yMax:63,max:120,localMax:70}',
     'execute if score ' + S + '.demo ' + NS + ' matches 1 run function ' + NS + ':' + dir + '/set_cap_y with storage ' + IN,
-    'execute if score ' + S + '.demo ' + NS + ' matches 1 run data modify storage ' + IN + ' entry set value {id:"demo_zombie",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:20}',
+    'execute if score ' + S + '.demo ' + NS + ' matches 1 run data modify storage ' + IN + ' entry set value {id:"demo_zombie",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:100000}',
     'execute if score ' + S + '.demo ' + NS + ' matches 1 run function ' + NS + ':' + dir + '/add_entry with storage ' + IN,
     'execute if score ' + S + '.demo ' + NS + ' matches 1 run function ' + NS + ':' + dir + '/show',
     ...(exp ? [

@@ -5,6 +5,6 @@ execute if score $auth.demo doom.nats matches 1 run data merge storage doom.nats
 execute if score $auth.demo doom.nats matches 1 run function doom.nats:author/set_group_by_y with storage doom.nats:author_in
 execute if score $auth.demo doom.nats matches 1 run data merge storage doom.nats:author_in {category:"monster",yMin:0,yMax:63,max:120,localMax:70}
 execute if score $auth.demo doom.nats matches 1 run function doom.nats:author/set_cap_y with storage doom.nats:author_in
-execute if score $auth.demo doom.nats matches 1 run data modify storage doom.nats:author_in entry set value {id:"demo_zombie",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:20}
+execute if score $auth.demo doom.nats matches 1 run data modify storage doom.nats:author_in entry set value {id:"demo_zombie",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:100000}
 execute if score $auth.demo doom.nats matches 1 run function doom.nats:author/add_entry with storage doom.nats:author_in
 execute if score $auth.demo doom.nats matches 1 run function doom.nats:author/show

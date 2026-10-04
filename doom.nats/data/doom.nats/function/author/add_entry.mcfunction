@@ -1,5 +1,7 @@
 # doom.nats:author/add_entry [MACRO] —— 追加一条"条件刷怪条目"
-# 用法：data modify storage doom.nats:author_in entry set value {id:"x",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:40,when:{thundering:1b},nbt:"{CustomName:'{\"text\":\"X\"}'}"}
+# 用法：data modify storage doom.nats:author_in entry set value {id:"x",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:100000,when:{thundering:1b},nbt:"{CustomName:'{\"text\":\"X\"}'}"}
+# ⚠ weight 的真实口径：条件成立时每次尝试被选中概率 ≈ weight/1000000 —— 要真刷出来就填 10 万级
+#   （填 40 ⇒ 0.004%，等于永远不刷；100000 ⇒ 10%）。机制与对照表见 docs/「规则字段参考」。
 #       function doom.nats:author/add_entry
 # 整条条目按原样追加（与 rules/entries.json 同构）⇒ 缺的字段由判定层补默认值。
 execute unless data storage doom.nats:author entries run data modify storage doom.nats:author entries set value []

@@ -11,7 +11,63 @@
 
 ---
 
-## v4.28 · 正式发布（Latest）— 2026-10-04
+## v4.29 · 正式发布（Latest）— 2026-10-04
+
+> 这一版是**同一件事的两个面**：把被真实 `weight` 口径带错的**示例与预设**一起修掉 —— ① in-game 帮助与用法注释里的 `weight:40`（照它写**永远不刷**）② 实验性预设 `blood_moon` / `storm_season` / `deep_dark` 里那三条按同一口径**几乎永不出现**的自定义怪。另按事实改正两条"文档说的东西不存在"。生成器逻辑一行未动，只动数值与措辞。
+
+### 1 · 修复：in-game 帮助里的 `weight` 示例（照它写永远不刷）
+
+- **病灶**：作者层运行时刻的帮助与用法注释里，示例条目写的是 `weight:40` —— `/function doom.nats:author/help` 的 `[2] 条目`、`author/add_entry` 的用法注释、`author/demo_run` 的演示条目（`weight:20`）。按 `weight` 的真实口径「**条件成立时每次尝试被选中概率 ≈ `weight / 1000000`**」，`40` ⇒ **0.004%**、`20` ⇒ 0.002% —— 玩家照抄这个示例写出来的条目**几乎永远不会刷**。
+- **改法**（只改生成器里的数值与措辞，不动逻辑；文件 `src/tools/lib/author-runtime.mjs`）：
+  - `add_entry` 用法注释：`weight:40` → `weight:100000`，并补两行白话口径（≈ `weight/1000000`，要真刷出来就填 10 万级）
+  - `help` 的 `[2] 条目` 示例：`weight:40` → `weight:100000`
+  - `demo_run` 演示条目：`weight:20` → `weight:100000`
+  - `help` 新增一条 gold 提示行：`⚠ weight：条件成立时每次尝试被选中概率 ≈ weight/1000000 —— 要真刷出来就填 10 万级（40 ⇒ 0.004%，等于永远不刷；100000 ⇒ 10%）。多条目同时成立按声明顺序吃区间。`
+- **机制**（为什么 `40` 不刷）：命中区间 `#off..#hi` 是按"香草权重和 + weight"这种**小数量级**算出来的，但拿去比较的是**还没取模**的 `$rng`（`random value 0..999999`）；`$rng %= #wsum` 发生在这次比较**之后** ⇒ 只有 0..999999 里**长度 = `weight`** 的那段骰值能命中。真机对照：`40` ⇒ 0.004%（≈永远不刷）· `90` ⇒ 0.009%（90 秒 0 只）· `100000` ⇒ 10% · `900000` ⇒ ≈90%（180 秒烈焰人 22 → 32 只）。
+- **文档侧**：`weight` 口径的**全仓校正**已在 `c3238d8` 完成（`docs/wiki/规则字段参考.md` 的「⚠ `weight` 的真实口径」、`docs/wiki/示例库.md`、`docs/wiki/FAQ.md`、`docs/wiki/已知限制.md`、`src/rules/README.md`）；本节补的是**生成器里那份被漏掉的帮助文本** —— 它由生成器写进产物，改文档改不到它。
+
+**真机 A/B 证据**（隔离实例 game 25598 / RCON 25608，真客户端 mineflayer 1.21.6 当 `@s`；`/reload` **0 加载错误**，`Failed to load function` 0 条）：
+
+| 产物 | `/function doom.nats:author/help` 的回执 |
+|---|---|
+| 改前（`doom.nats-v4.28.zip`） | `[2] 条目：…weight:40,when:{thundering:1b}}…` —— 且**没有** weight 口径提示行 |
+| 改后（`doom.nats-v4.29.zip`） | `[2] 条目：…weight:100000,when:{thundering:1b}}…` + gold 行 `⚠ weight：条件成立时…≈ weight/1000000…（40 ⇒ 0.004%，等于永远不刷；100000 ⇒ 10%）` |
+
+### 2 · 修复：实验性预设里同样错误的 `weight`（三条：`30/25/30` ⇒ `120000/100000/120000`）
+
+- **同类缺陷，后果更直接**：`src/tools/gen_exp.mjs` 里三个内置预设各自的条目 —— `blood_moon` 的"血月行者"、`storm_season` 的"风暴猎手"、`deep_dark` 的"深暗潜行者" —— 写的是 `weight: 30 / 25 / 30`。按同一口径（≈ `weight/1000000`）命中率只有 **0.003% / 0.0025% / 0.003%** ⇒ 玩家 `/function doom.nats:exp/preset` 套用预设之后，**那三只自定义怪几乎永不出现**。预设是给人"一键套用"的，比文档示例更该修。
+- **取值理由**：按 **×4000** 把原值整体抬进十万级，**保留作者原有的强弱比**（blood_moon 30 : storm_season 25 = 120000 : 100000）⇒ **`blood_moon` 120000（12%/次尝试）· `storm_season` 100000（10%）· `deep_dark` 120000（12%）**。没有另造新比例：原作者这三条本就只差 5（≈无区分），抬高只是把"看不见"变成"看得见"，不改变预设之间的相对强弱。
+**真机 A/B 证据**（隔离实例 game 25602 / RCON 25612，复用带 `minecart_improvements` 旗标的世界；`/reload` **0 加载错误**，`datapack list` 里 `[minecart_improvements (feature)]` 与 `[file/doom.nats (world)]` 都在）：
+
+| 产物 | `data merge storage doom.nats:exp_in {name:"blood_moon"}` → `function doom.nats:exp/preset` → `data get storage doom.nats:exp entries[0]` |
+|---|---|
+| 改前（`doom.nats-v4x-experimental-v4.28.zip`） | `entries[0].id` = `"blood_moon_walker"` · **`entries[0].weight` = `30`** |
+| 改后（`doom.nats-v4x-experimental-v4.29.zip`） | `entries[0].id` = `"blood_moon_walker"` · **`entries[0].weight` = `120000`** |
+
+### 3 · 产物与仓库同步
+
+- 12 个生成器（10 默认 + 2 实验性）全部 exit 0；`node src/tools/check_static.mjs` ⇒ **exit 0 / 0 error / 2 warning**（两条 warning 是既有的 `check/fail`、`debug/light_fail`「含宏行但没有任何 `with` 调用」）。
+- **产物差异逐条核对**（把两个版本的 zip 各自解包、逐文件比 sha256）：默认变体 **694 → 694 项、0 增 0 删、正好 3 个文件内容不同**（`data/doom.nats/function/author/{add_entry,help,demo_run}.mcfunction`）；实验性变体 **771 → 771 项、0 增 0 删、正好 9 个文件内容不同**（上面那 3 个 + `exp/{add_entry,help,demo_run}.mcfunction` + `exp/preset/{blood_moon,storm_season,deep_dark}.mcfunction`）。生成器产物仍是默认 **693** / 实验性 **770** 文件，加上手写的 `mcdoc/` 一枚 ⇒ zip 默认 **694** 项 / 实验性 **771** 项。
+- `dist/` 重打并重算校验（**v4.25 与 v4.28 的四枚 zip 一律保留不删**）：
+  - `doom.nats-v4.29.zip` · sha256 `883ff3eb2761079f67f14b7fc33bdf378564bb8e52149257e85c9c72d598bc38` · 569804 B · **694** 项 —— 加了预设改动后**再打一次，sha256 逐字节未变**（`exp/*` 不进默认变体，std 完全不受影响）
+  - `doom.nats-v4x-experimental-v4.29.zip` · sha256 `29ec530c2dfdeed7c79c6719ba60bd2f2081f4c16fe2462f49802b6428096af6` · 654270 B · **771** 项
+  - `dist/SHA256SUMS.txt` 只列这两枚（2 行，`<sha256>` + 两个空格 + 文件名 + LF；另用 `Get-FileHash` 独立复核一致）。
+- **仓库顶层的 `doom.nats/`（可直接点开看的包本体）同步到 v4.29**：与 `dist/doom.nats-v4.29.zip` **逐项一致**（**694/694**，0 缺 0 多 0 内容不同）；实验性 zip 与 `pack/doom.nats-experimental/` + 手写 `mcdoc/` 同样 **771/771** 逐字节一致。
+
+### 4 · 文档：四处"让你跑一个不存在的文件"按事实改正
+
+`dist/` 里**只有** `dist/SHA256SUMS.txt`（每行 `<sha256>` + 两个空格 + 文件名，每次发版重算），**没有** `doom.nats-*.zip.sha256` 这种按 zip 命名的校验文件。同类口径早先在 README 已改正过，本轮把剩下的漏网处一并扫掉：
+
+| 文件 | 原文（✗ 那个文件不存在） | 改后（✓ 指向真实存在的校验值） |
+|---|---|---|
+| `docs/wiki/安装与升级.md` | `sha256sum -c doom.nats-v4.29.zip.sha256` | `sha256sum -c dist/SHA256SUMS.txt` + Windows 一行命令 |
+| `docs/25-兼容与版本.md` | `sha256sum -c doom.nats-v4.29.zip.sha256`（Windows：直接 `Get-FileHash .\doom.nats-v4.29.zip`） | 同上两条命令 |
+| `docs/wiki/版本与验收.md` | "两个变体的 zip…**各带 `.sha256` 校验文件**" | "校验值统一在 `dist/SHA256SUMS.txt`（每次发版重算，只列当前发布物的两枚）" |
+| `.github/ISSUE_TEMPLATE/bug_report.yml` | `sha256sum -c doom.nats-v4.25.zip.sha256`（Issue 表单还在问 v4.25 的老命令） | `sha256sum -c dist/SHA256SUMS.txt`（Windows 用 `Get-FileHash` 逐行核） |
+
+- 全仓 `git grep '\.sha256'` 复查：除本节（在描述"改前"）与历史节外**已无残留**。历史条目不动。
+
+## v4.28 · 正式发布 — 2026-10-04
 
 > 这一版四件事：**容量计数减总量 ≈ 7×**（P0 性能）· **就绪提示恢复**（宏缺参，整函数曾被静默放弃）· **`debug/*` 同类缺参 4 处补齐** · **打包漏拷的 `mcdoc/` 补回**（v4.25 的 zip 里有，v4.26–v4.28 漏了）。
 > 本机数字口径：隔离实例 **25574 / RCON 25584** · view-distance 10 · **Mem Reduct 常驻**（下面的性能数字是在它常驻下取得的）。

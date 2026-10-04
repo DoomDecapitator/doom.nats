@@ -53,7 +53,7 @@ const BUILTIN = {
     },
     entries: [{
       id: 'blood_moon_walker', mob: 'minecraft:zombie', biome: '#minecraft:is_overworld', category: 'monster',
-      weight: 30, min: 2, max: 3, when: { yMax: 63 },
+      weight: 120000, min: 2, max: 3, when: { yMax: 63 },
       nbt: '{CustomName:\'{"text":"血月行者","color":"red"}\',active_effects:[{id:"minecraft:strength",amplifier:1b,duration:-1,show_particles:0b,show_icon:1b}]}',
       on_spawn: true,
     }],
@@ -64,7 +64,7 @@ const BUILTIN = {
     counts: { groupByY: {}, capByY: { monster: [{ yMin: LO, yMax: HI, max: 200, localMax: 140 }] } },
     entries: [{
       id: 'storm_hunter', mob: 'minecraft:creeper', biome: '#minecraft:is_overworld', category: 'monster',
-      weight: 25, min: 1, max: 2, when: { thundering: true },
+      weight: 100000, min: 1, max: 2, when: { thundering: true },
       nbt: '{powered:1b,CustomName:\'{"text":"风暴猎手","color":"yellow"}\'}',
       on_spawn: true,
     }],
@@ -75,7 +75,7 @@ const BUILTIN = {
     counts: { groupByY: { 'minecraft:skeleton': [{ yMin: LO, yMax: 0, min: 2, max: 4 }] }, capByY: {} },
     entries: [{
       id: 'deep_dark_stalker', mob: 'minecraft:skeleton', biome: '#minecraft:is_overworld', category: 'monster',
-      weight: 30, min: 1, max: 2, when: { yMax: 0 },
+      weight: 120000, min: 1, max: 2, when: { yMax: 0 },
       nbt: '{CustomName:\'{"text":"深暗潜行者","color":"dark_purple"}\',active_effects:[{id:"minecraft:darkness",amplifier:0b,duration:-1,show_particles:0b,show_icon:1b}]}',
       on_spawn: true,
     }],
