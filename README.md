@@ -89,13 +89,15 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 # 让僵尸也能刷在树叶上（原版树叶不算能站的地方）
 /data modify storage doom.nats:author entityRules."minecraft:zombie".belowAny set value ["#minecraft:leaves"]
 
-# 雷暴时，深海多出一种僵尸（权重 40，跟原有物种一起抽）
-/data modify storage doom.nats:author entries append value {id:"storm",biome:"#minecraft:is_deep_ocean",category:"monster",mob:"minecraft:zombie",weight:40,when:{thundering:true}}
+# 雷暴时，深海多出一种僵尸（权重 10 万 ⇒ 约 10% 的尝试会选到它）
+/data modify storage doom.nats:author entries append value {id:"storm",biome:"#minecraft:is_deep_ocean",category:"monster",mob:"minecraft:zombie",weight:100000,when:{thundering:true}}
 ```
 
 > ⚠ **字段名分两层，别写串**：条目里的群系是 `biome`（**单数**，一个群系 id 或 `#标签`；要多个群系就加多条），一次几只写 `min` / `max`。
 > `biomes`（数组）/ `group` / `place` / `light` / `tag` / `cluster` / `coins` / `ySea` 这些是**构建期** `rules/*.json`（路径 C）的写法 —— 写进 storage **不会报错，但也不会生效**。
 > 清单与对照表：[`docs/24-玩家能改动的一切.md`](docs/24-玩家能改动的一切.md)。
+
+> ⚠ **`weight` 不是"和原有物种同池按比例分"，实测命中率 ≈ `weight / 1000000`** —— 要它真的刷出来就填 **10 万级**（`100000`≈10% · `900000`≈90%，实测 180 秒烈焰人 22→32 只）；写 `40` 这种小数字**等于不刷**。完整对照表见 [`docs/wiki/规则字段参考.md`](docs/wiki/规则字段参考.md)。
 
 ### 实验性变体 `v4x`：超出原版的能力
 

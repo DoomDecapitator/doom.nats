@@ -45,14 +45,14 @@
 **附近有狼才刷羊**
 
 ```
-/data modify storage doom.nats:author entries append value {id:"wolf_sheep",biome:"#minecraft:is_forest",category:"creature",mob:"minecraft:sheep",weight:10,when:{near:{type:"minecraft:wolf",radius:24,min:1}}}
+/data modify storage doom.nats:author entries append value {id:"wolf_sheep",biome:"#minecraft:is_forest",category:"creature",mob:"minecraft:sheep",weight:100000,when:{near:{type:"minecraft:wolf",radius:24,min:1}}}
 ```
 
 **雷暴的深海，僵尸出场放闪电与雷鸣**
 > `on_spawn:1b` 只是打开钩子；演出本身要写成函数文件 `data/doom.nats/function/exp/on_spawn/thunder_king.mcfunction`，里面放 `particle minecraft:flash ~ ~1 ~ 0 0 0 0 1` 与 `playsound minecraft:entity.lightning_bolt.thunder hostile @a ~ ~ ~ 1 1`。
 
 ```
-/data modify storage doom.nats:author entries append value {id:"thunder_king",biome:"#minecraft:is_deep_ocean",category:"monster",mob:"minecraft:zombie",weight:60,when:{thundering:true},on_spawn:1b}
+/data modify storage doom.nats:author entries append value {id:"thunder_king",biome:"#minecraft:is_deep_ocean",category:"monster",mob:"minecraft:zombie",weight:50000,when:{thundering:true},on_spawn:1b}
 ```
 
 ## 五、注意

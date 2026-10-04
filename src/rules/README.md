@@ -74,7 +74,7 @@
     "biomes": ["#minecraft:is_deep_ocean"],
     "category": "monster",
     "mob": "minecraft:zombie",
-    "weight": 40,
+    "weight": 100000,
     "group": [2, 3],
     "when": { "thundering": true, "yMax": 40 },
     "nbt": "{CustomName:'{\"text\":\"深海雷暴僵尸\",\"color\":\"aqua\"}',HandItems:[{id:\"minecraft:trident\",Count:1b},{}],Health:40f}"
@@ -88,14 +88,21 @@
 | `mob` | ✅ | 实体 id |
 | `category` | ✅ | `monster` / `creature` / `ambient` / `water_creature` / `water_ambient` / `underground_water_creature` / `axolotls` |
 | `biomes` | ✅ | 群系 id 或 `#标签`（标签由 `node tools/export_biome_tags.mjs` 展开成具体群系） |
-| `weight` | | 默认 `1`。**与香草条目同池竞争**：池和只在条件成立时变大 |
+| `weight` | | 默认 `1`。**命中率 ≈ `weight / 1000000`** —— **不是**"与香草条目同池竞争"（v4.28 真机实测；机制与对照表见下面的「⚠ weight 口径」）。要生效请填 **10 万级**：`100000`≈10% · `900000`≈90%；`40` 等于不刷 |
 | `group` | | `[min, max]`，默认 `[1,1]` |
 | `when` | | 条件（全部 AND）：`thundering` `raining` `yMin` `yMax` `lightMax` `lightMin`；留空 = 无条件 |
 | `nbt` | | SNBT，**并入**本包标签之后再 `data merge entity @s`。写了 `Tags` 会覆盖本包标签（不推荐） |
 | `groupByY` | | 该条目的组大小按 Y 段覆盖（同 §4 的写法） |
 
 **语义（等价性）**：生成物把条件写进 `#wsum` 的累加——条件成立时 `#wsum += weight`，命中区间紧接香草区间之后，
-且"偏移量 `#off` 只在条件成立时前进"。这与**先把候选表按条件过滤、再按权重掷**逐点等价（不会出现空档）。
+且"偏移量 `#off` 只在条件成立时前进"。**"条件过滤"这一步**与"先把候选表按条件过滤、再按权重掷"逐点等价（不会出现空档）。
+
+> ⚠ **weight 口径（v4.28 真机实测：与上面那句"同池"意图不符）**：命中区间 `#off..#hi` 是按"香草权重和 + weight"这种
+> **小数量级**算的（各群系/类别从个位数到 600 上下不等），但拿去比较的 `$rng` 是**还没取模**的 `random value 0..999999`；
+> 取模 `$rng %= #wsum` 发生在这次比较**之后**（`gen_mobs.mjs` 把作者层块插在 `set #wsum` 与 `%=` 之间）⇒
+> **实际命中率 ≈ `weight / 1000000`**，与香草权重和无关（香草那一半的比例仍是正确的）。
+> 实测对照：`weight=90` ⇒ 90 秒 **0 只**；`weight=900000` ⇒ 180 秒烈焰人 **22 → 32** 只（≈90%）。
+> 构建期条目与运行时刻条目**走同一条链**，口径一致。**要生效请填 10 万级。**
 
 **限制（诚实清单）**：条目只能加到该群系**已有的**类别里（`mob/biome/<群系>/<类别>` 必须已存在）。
 要给一个"原本没有任何 monster 的群系"加怪物，得改 roster / worldgen 覆盖（`tools/apply_worldgen.mjs`）。
@@ -163,7 +170,7 @@ DOOM_RULES=$PWD/rules/examples/full node tools/gen_mobs.mjs
 | 用例 | 文件 | 效果 |
 |---|---|---|
 | ① 僵尸刷在树叶上 | `entity-rules.json` | 僵尸的下方可站立集合并入 `#minecraft:leaves` |
-| ② 雷暴 + 深海刷出带 NBT 的生物 | `entries.json` | 深海 `monster` 池在雷暴且 y≤40 时多出一条 40 权重的"深海雷暴僵尸"（三叉戟 + 自定义名 + 40 血） |
+| ② 雷暴 + 深海刷出带 NBT 的生物 | `entries.json` | 深海 `monster` 池在雷暴且 y≤40 时多出一条 **10 万权重**（≈10%）的"深海雷暴僵尸"（三叉戟 + 自定义名 + 40 血） |
 | ③ 发光鱿鱼在草地上生成 | `entity-rules.json` | 去掉 `y ≤ seaLevel-33` 窗口、落位改陆生、光照改 `dark` |
 | ④ 刷怪数量跟 Y 轴完全定义 | `counts.json` | 僵尸组大小 y≤0 → 4~6 / 1~63 → 2~3 / ≥64 → 1；怪物容量 y≤0 → 全局 200·每玩家 140，否则 70·70 |
 
@@ -191,7 +198,7 @@ DOOM_RULES=$PWD/rules/examples/full node tools/gen_group.mjs
 # 逐实体补丁（= entity-rules.json 的形状，键还是实体 id）
 data modify storage doom.nats:author entityRules."minecraft:zombie".belowAny set value ["#minecraft:leaves"]
 # 条件条目（= entries.json 的一条）
-data modify storage doom.nats:author_in entry set value {id:"royal",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:40,when:{thundering:1b},nbt:"{CustomName:'{\"text\":\"皇家僵尸\",\"color\":\"gold\"}'}"}
+data modify storage doom.nats:author_in entry set value {id:"royal",mob:"minecraft:zombie",biome:"#minecraft:is_overworld",category:"monster",weight:100000,when:{thundering:1b},nbt:"{CustomName:'{\"text\":\"皇家僵尸\",\"color\":\"gold\"}'}"}
 function doom.nats:author/add_entry with storage doom.nats:author_in
 # 数量随 Y（= counts.json 的一段）
 data merge storage doom.nats:author_in {type:"minecraft:zombie",yMax:0,min:4,max:6}
@@ -248,6 +255,9 @@ function doom.nats:author/set_group_by_y with storage doom.nats:author_in
 | 构建期 A/B 不回归 | `verify_author_rules.mjs --expect default` **5 PASS / 0 FAIL** · `--expect author` **6 PASS / 0 FAIL** |
 | 加载期 | 两个变体 `/reload` 均 **0 个 Failed to load function** |
 | 静态门 | `node tools/check_static.mjs` ⇒ **0 error / 2 warning**（两个变体各跑一遍生成器 `--check` + lint） |
+
+> ⚠ §7.4 那些 `verify_*` 数字都是**固定 `$rng`** 探针（手挑落进作者窗口的骰值）跑出来的，只验"路由 / 条件门 / NBT 落地"，
+> **不覆盖 `weight` 命中率** —— 全绿**不代表** `weight` 按"同池竞争"生效（见 §3 末尾的 weight 口径）。
 
 ### 7.5 坑（运行时刻这一层特有的，都真机踩过）
 

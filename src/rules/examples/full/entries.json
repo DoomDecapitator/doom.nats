@@ -6,7 +6,7 @@
     "biomes": ["#minecraft:is_deep_ocean"],
     "category": "monster",
     "mob": "minecraft:zombie",
-    "weight": 120,
+    "weight": 100000,
     "group": [1, 2],
     "place": "any",
     "when": { "thundering": true, "yMax": 62 },

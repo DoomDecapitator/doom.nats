@@ -110,6 +110,38 @@ v4.25 顺带"修"了一个没人报过、也没人觉得是 bug 的 bug：原版
 运行时刻能改它的**落位面与光照**（见 [[示例库]] 的落位面一节）；但原版还有一道**深度门**（y ≤ 海平面-33）属于规则级开关，运行时刻去不掉——想在陆地上真刷出来，要在构建期把 entity-rules.json 的 "ySea": null 写进去再重新生成。
 原版当然不是 bug——只是这些"不允许"现在都是你能改的规则。😄
 
+## 什么都没刷？先查 `$snap_period` 与 `$cap.*`
+
+本包自带一套**冻结快照**的测试配方（`$snap_period=20000`，验收脚本会用它）。世界若被上一次会话留在冻结状态：
+
+```
+$snap.chunks = 0   ⇒   $cap.monster = 0   ⇒   每次尝试都 reason=5（全局容量满）
+```
+
+表现就是**完全不刷怪，而 tick 循环与装载日志全都正常** —— 最容易误判成"包坏了 / 怪过不了门"。解冻（= 恢复默认值）：
+
+```
+/scoreboard players get $snap_period doom.nats     # 不是 20 就是被冻住了
+/scoreboard players set $snap_period doom.nats 20
+/function doom.nats:circ/snapshot
+```
+
+解冻后应看到 `$snap.chunks=289`、`$cap.monster=70`。再跑 `/function doom.nats:debug/reject_report`：若 `5`（全局容量）占绝对多数，就是这一条。
+
+## 加了条目还是不刷 / 刷出来的不是我想的那个物种？
+
+两个最常见的坑：
+
+1. **`weight` 的真实口径是 `weight / 1000000`** —— 写 `40` 等于不刷，要填 **10 万级**（见 [[规则字段参考]] 的「⚠ `weight` 的真实口径」）。
+2. **条目路径的"残留"**：运行时刻**条目**不装载被选物种的原版 `place`/`light`/`rule`/`tall`，这几个 `$sel.*` 会沿用**上一次香草抽取**留下的值：
+
+```
+/data get storage doom.nats:sel        # 看 rule / tall / place / light 是不是你期望的
+```
+
+`entityRules` 只能钉 `place`/`light` 两项；`rule`/`tall` **没有**对应的 author 字段（只能构建期改 `rules/`）。
+换群系 / 换维度后，残留可能从"惰性"变成"否决"：例如溺尸的 `rule=11`（要求脚下是水）会把你的陆地怪**无声拒掉**，归因里只看到 `reason=9`。
+
 ## 我能改什么、不能改什么？
 
 - 能改的：见 [[规则字段参考]] 与 [[示例库]]
