@@ -40,8 +40,10 @@ function doom.nats:circ/apply
 function doom.nats:check/sealevel
 # v4.14d：容量计数必须在**玩家所在维度**里做（原版 SpawnState 是 per-level 的；
 #   core/tick 的执行上下文在世界出生点 ⇒ 不加这一层就会拿主世界的生物数去卡下界的额度）
-execute at @a[gamemode=!spectator,limit=1] run function doom.nats:check/caps
-execute unless entity @a[gamemode=!spectator] run function doom.nats:check/caps
+# v4.28：这里只算**容量公式**（纯算术）；整图盒式选择器在 core/tick → check/caps_scan
+#   （每维度 1 次、共 3 次/秒，类别计数靠 check/cnt_<维度> 逐实体派发）。
+execute at @a[gamemode=!spectator,limit=1] run function doom.nats:check/caps_formula
+execute unless entity @a[gamemode=!spectator] run function doom.nats:check/caps_formula
 execute at @a[gamemode=!spectator,limit=1] run function doom.nats:biome/detect
 # 玩家层（蝙蝠规则要低于地表，用玩家位置近似）与月相亮度（八分制 0..8，史莱姆规则要用）
 execute store result score $snap.py doom.nats run data get entity @a[gamemode=!spectator,limit=1] Pos[1]

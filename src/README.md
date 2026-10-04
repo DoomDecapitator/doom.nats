@@ -17,7 +17,7 @@
 
 | 位置 | 是什么 | 给谁 |
 |---|---|---|
-| [`dist/`](../dist) | **成品**：`doom.nats-v4.25.zip`（默认变体）+ `doom.nats-v4x-experimental-v4.25.zip`（实验性变体），校验值见 `dist/SHA256SUMS.txt` | 只想装进存档玩的玩家 —— **你多半只要这个** |
+| [`dist/`](../dist) | **成品**：`doom.nats-v4.28.zip`（默认变体）+ `doom.nats-v4x-experimental-v4.28.zip`（实验性变体），校验值见 `dist/SHA256SUMS.txt` | 只想装进存档玩的玩家 —— **你多半只要这个** |
 | `src/`（本目录） | **源码**：生成器 + 规则层 + 生成输入。**不能直接丢进存档**，要先跑生成器变成 `pack/` | 想改包的人、想知道"它到底怎么算的"的人 |
 
 ## 三步构建
@@ -102,11 +102,12 @@ node src/tools/check_static.mjs          # 默认 + 实验性两个变体；只�
 
 ## 已知差异（诚实清单）
 
-- 你在克隆里重新生成出的 `pack/doom.nats` 与 `dist/doom.nats-v4.25.zip` **不是逐个文件相同**：
-  zip 里多了 9 个"生成器已不再产出"的历史文件（`check/cap_y/*` 7 个 + `check/coin.mcfunction`），
-  以及一份手写的编辑器提示文件 `mcdoc/doom.nats/config.mcdoc`（见 [`../docs/21-玩家可改清单.md`](../docs/21-玩家可改清单.md)，没有生成器负责它）。
-  默认配置下这三者都不会被调用，**对玩法没有影响**；重新生成不会带上它们。
-- `dist/` 的 zip 的 sha256 见 [`../README.md`](../README.md)；本目录保证的是"能从源码生成出来"，不是"与 zip 逐字节相同"。
+- 你在克隆里重新生成出的 `pack/doom.nats` 与 `dist/doom.nats-v4.28.zip` **逐文件相同**（693/693；实验性变体 770/770）——
+  生成器 `--check` 是逐字节比对，所以「从源码生成出来的」与「下载到的 zip」是同一份东西。
+- 仓库顶层的 [`doom.nats/`](../doom.nats)（可直接点开看的包本体）自 v4.28 起就是这 693 个文件的副本，与 zip 逐项一致。
+- v4.25 的 zip 里曾多一份手写的编辑器提示文件 `mcdoc/doom.nats/config.mcdoc`（没有生成器负责它）：**v4.28 起成品 zip 不带它**，
+  仓库 `doom.nats/` 也随之对齐 ⇒ 要用编辑器提示请从 v4.25 的 zip 或仓库历史里取（见 [`../docs/21-玩家可改清单.md`](../docs/21-玩家可改清单.md)）。
+- 两个 zip 的 sha256 见 [`dist/SHA256SUMS.txt`](../dist/SHA256SUMS.txt)。
 
 ## 参与开发
 

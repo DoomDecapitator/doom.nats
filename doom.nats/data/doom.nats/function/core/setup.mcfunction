@@ -34,4 +34,6 @@ function doom.nats:author/load
 
 # 生存直用：装载即接管原版自然生成（不想让本包动 gamerule，就先执行一次 doom.nats:mode/manual）
 execute unless score $mode.manual doom.nats matches 1 run function doom.nats:mode/survival
-function doom.log:info {message:"doom.nats v4 就绪（自然生成复刻）"}
+# ⚠ doom.log:info 是宏入口：code 与 message **两个键都必须写**，缺一个 ⇒ 整个函数体被静默放弃
+#   （引擎行为，本项目已钉；编号段见 doom.log 的编码约定 —— E1xx = 配置/加载期）
+function doom.log:info {code:"E101", message:"doom.nats v4 就绪（自然生成复刻）"}

@@ -1,5 +1,5 @@
 # doom.nats:debug/mobs —— 查看生物注册表规模与按类别的实体标签（走 doom.log 的 [dump]）
-function doom.log:info {message:"doom.nats 生物注册表：条目 47 条"}
+function doom.log:info {code:"E913", message:"doom.nats 生物注册表：条目 47 条"}
 function doom.log:dump {key:"mobs.monster", message:"可用 @e[type=#doom.nats:monster] 筛选"}
 function doom.log:dump {key:"mobs.creature", message:"可用 @e[type=#doom.nats:creature] 筛选"}
 function doom.log:dump {key:"mobs.ambient", message:"可用 @e[type=#doom.nats:ambient] 筛选"}

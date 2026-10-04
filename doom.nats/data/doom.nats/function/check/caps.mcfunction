@@ -1,7 +1,15 @@
-# doom.nats:check/caps —— 复刻 SpawnState.canSpawnForCategoryGlobal
+# doom.nats:check/caps —— 容量公式 + 21 条全量计数（**调试/验证用的一次性入口，不在任何节拍上跑**）
 #
 #   cap = maxInstancesPerChunk × spawnableChunkCount / 289   （整数除法，源码逐字）
 # spawnableChunkCount 由 doom.nats:circ/snapshot 实测（execute if loaded 数出来的），不是估算。
+#
+# v4.27（P0 性能）：本函数**不再是节拍路径**。它一次性扫 21 条整图盒式选择器（真机 ≈820ms），
+#   占住 1 Hz 那一拍就是 P95≈940ms / tps 18.7 的成因。节拍路径拆成两条：
+#     · circ/snapshot → check/caps_formula（只算容量公式）
+#     · core/tick 每拍 → check/caps_scan（v4.28 起：每维度 1 次整图盒子 + 逐实体按类别 tag 派发，共 3 次/秒）
+#   本函数原样保留为「公式 + 全量计数」，供调试/验证脚本一次性强制刷新（_work/verify_*.mjs 的调用点不变）。
+# v4.28（P0 性能）：节拍路径的 21 条选择器已换成 3 条（见 check/caps_scan）；本函数的 21 条**只剩调试用途**，
+#   不在任何节拍上跑，所以它的代价（真机 ≈1.5s）不影响 tps。等价性以「逐实体派发版」为准。
 scoreboard players operation $cap.monster doom.nats = $snap.chunks doom.nats
 scoreboard players operation $cap.monster doom.nats *= $eff.max_monster doom.nats
 scoreboard players operation $cap.monster doom.nats /= #289 doom.nats

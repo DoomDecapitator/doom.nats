@@ -8,7 +8,7 @@
 #   5=全局容量已满 · 6=附近玩家本地容量全满 · 7=刷怪密度（spawn cost）超限 · 8=选不到物种 · 9=该生物自身的规则不满足
 #   10=世界出生点 24 格内（v4.17：$cfg.spawn24=1 且作者声明了 spawnX/Y/Z 时才可能出现）
 #   11=世界边界外（v4.20：$cfg.border_size>0 且候选点在声明边界外时才可能出现，见 check/border）
-function doom.log:info {message:"doom.nats 生成失败归因（自上次清零；打印后清零）"}
+function doom.log:info {code:"E914", message:"doom.nats 生成失败归因（自上次清零；打印后清零）"}
 # 先把计数器建出来（add 0 不改变已有值）：从未出现过的分数在 tellraw 里会渲染成空字符串
 scoreboard players add $spawned doom.nats 0
 scoreboard players add $rej.0 doom.nats 0
