@@ -1,0 +1,21 @@
+{
+  "condition": "minecraft:any_of",
+  "terms": [
+    {
+      "condition": "minecraft:location_check",
+      "predicate": {
+        "light": {
+          "light": {
+            "min": 9
+          }
+        }
+      }
+    },
+    {
+      "condition": "minecraft:location_check",
+      "predicate": {
+        "can_see_sky": true
+      }
+    }
+  ]
+}

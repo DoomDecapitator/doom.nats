@@ -25,7 +25,8 @@
 | **1.21.6** | 80 | `doom.nats-v4.29-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` | 🟡 推定（同区间） |
 | **1.21.7 / 1.21.8** | 81 | `doom.nats-v4.29-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` | ✅ `pass=14 fail=0 total=14`（1.21.8 实测） |
 | **1.21.9 / 1.21.10** | 88.0 | `doom.nats-v4.29-mc1.21.9-1.21.10.zip` | `[88,0]` – `[88,0]` | ✅ `pass=14 fail=0 total=14` |
-| **1.21.11 – 26.3** | 94.1 – 121.0 | `doom.nats-v4.29-mc1.21.11-26.3.zip` | `[94,1]` – `121` | ✅ `pass=14 fail=0 total=14`（26.3 实测） |
+| **1.21.11 – 26.2** | 94.1 – 107.0 | `doom.nats-v4.29-mc1.21.11-26.2.zip` | `[94,1]` – `[107,0]` | ✅ `pass=14 fail=0 total=14`（5 版实测） |
+| **26.3** | 121.0 | `doom.nats-v4.29-mc26.3.zip` | `[121,0]` – `[121,0]` | ✅ `pass=14 fail=0 total=14` |
 
 > **基线不变**：`dist/doom.nats-v4.29.zip`（原 v4.29 默认变体，面向 1.21.6）**逐字节保留**，
 > 其 sha256 与上一提交完全一致（`883ff3eb…bc38`）—— 老玩家升级不受影响。
@@ -40,6 +41,26 @@
 | 3 | **gamerule 改名**（snake_case）：`doMobSpawning` → `spawn_mobs` | **1.21.11** 起 | `mode/survival`、`mode/off` 两处换新名（旧名在该版本 `Incorrect argument for command`，整函数加载失败） |
 | 4 | **predicate schema 变更**：`condition` → `type`；`light` 内层拍平；`time` 取值 `daytime` → `day` | 26.3 | 68 个 predicate 逐字段改写 |
 | 5 | **`pack.mcmeta` 新规则** | 1.21.9 起 | 新变体显式声明 `min_format`/`max_format`；并**收紧到实测边界**（见 §3） |
+
+### 3.1 · ★ 勘误：`1.21.11 – 26.3` 不是**一个**区间（原资产已下架）
+
+- **病灶**：§1 原表把 **1.21.11 – 26.3** 合并成一份 `doom.nats-v4.29-mc1.21.11-26.3.zip` ✗ ——
+  它横跨了**两个不同的破坏边界**（gamerule 改名 = 1.21.11 · predicate schema = 26.3），
+  ⇒ 中段 **1.21.11 / 26.1 / 26.1.1 / 26.1.2 / 26.2** 实际**无人覆盖** ✗。
+- **真机证据**（把该资产原样装进这 5 个版本）：`/reload` 后 **8 类加载错误合计 732 条**
+  （`Failed to load function` 244 · `Whilst parsing` 488），套件 `pass=13 fail=0 total=13`
+  —— ★ 注意 `fail=0` **看上去是全绿** ✗：实为**含断言的函数整批没加载**，靠「`total` == 预期 14」才判出失败 ✓。
+- **根因**（逐行定位）：该变体内 68 个 predicate 用的是**新式** `{"type":"minecraft:location_check", …}`，
+  而 1.21.11–26.2 **只接受旧式** `{"condition": …}` ⇒ 68 个 predicate 全部注册失败 ⇒ 244 个引用它们的函数连带失败。
+- **修复**：拆成两份**区间如实**的包 ——
+  - `doom.nats-v4.29-mc1.21.11-26.2.zip`（新变体：旧式 `condition` + 新式 `spawn_mobs` + `iron_chain`，`[94,1]`–`[107,0]`）
+  - `doom.nats-v4.29-mc26.3.zip`（原 `-mc1.21.11` 变体，语义明确为**仅 26.3**，新式 `type`，`[121,0]`–`[121,0]`）
+- **定界实验（最硬的证据）**：26.3 变体装到 1.21.10 上**确实失败**（742 条错误、13/13）
+  ⇒ 证明两个边界**既无重叠也无缺口**，不是「两边都能凑合跑」✓。
+- **复验**：新变体在 **1.21.11 / 26.1 / 26.1.1 / 26.1.2 / 26.2** 五台实测 —— 均 `pass=14 fail=0 total=14`、
+  8 类错误全 0，且五台产物 **sha256 逐位一致** ✓。
+- **发布面处置**：GitHub Release 上的旧资产 `doom.nats-v4.29-mc1.21.11-26.3.zip`（**已被下载 1 次**）
+  标注区间错误、留着会让人装坏 ⇒ **已下架**，改以上面两份替换 ✓。
 
 ### 3 · 修复：两处 `pack.mcmeta`「自称宽于实际能力」
 
@@ -70,10 +91,13 @@
 158628810082f9d97c3afd29ddec8ae2f87f8519a342368bfa3bb8b1303bbb60  doom.nats-v4.29-mc1.21.5.zip
 7d90b832a6bbd8aa2fbddb6bf04faeb747acc3c33625a5ba4d67e6df14eff038  doom.nats-v4.29-mc1.21.6-1.21.8.zip
 511410de0c45bf9d6496ab8f60a4bff2907fe06d17f60b35a0c12c5ce6f896bd  doom.nats-v4.29-mc1.21.9-1.21.10.zip
-ebc2d80707243c9dfd68ef7ab19cfa30f91772b9014aec4e3a01956a02427273  doom.nats-v4.29-mc1.21.11-26.3.zip
+0e4f03b4ededc93ad8797e72c3806c1cace1b4309a9476c0dc4ca1166b00bc2e  doom.nats-v4.29-mc1.21.11-26.2.zip
+9fea4c81e1236fe2c9c939a7571976da7788702750949838f7abfbb5b61e1b44  doom.nats-v4.29-mc26.3.zip
 a65873bf49bb1b135b67fe533a883cf8b0fafeca0289be9455eaf32a2c15bd71  doom.log-multi.zip
 4ab6836a8dfd19372b4a2d6f7f716f73b76489bb85a504728fe27f0fea42f1bb  doom.nats-selftest.zip
 ```
+
+> ~~`ebc2d807…7273  doom.nats-v4.29-mc1.21.11-26.3.zip`~~ → **已下架**（区间标注错误，见 §3.1）。
 
 完整清单见 `dist/SHA256SUMS.txt`。
 

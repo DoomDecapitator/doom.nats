@@ -9,7 +9,7 @@
 <!-- <p align="center"><img src="docs/assets/首屏效果.png" width="720" alt="doom.nats 在存档里跑起来的样子"></p> -->
 
 > **一句话**：用**纯数据包**复刻 Minecraft 原版的自然刷怪（NaturalSpawner 那一整套）—— 容量、区块计数、光照与逐实体规则、结构覆盖、消失层全都在，而且**规则归你改**。
-> **下哪个**：先看你的 MC 版本 —— **1.21.5** → `dist/doom.nats-v4.29-mc1.21.5.zip` · **1.21.6–1.21.8** → `dist/doom.nats-v4.29-mc1.21.6-1.21.8.zip` · **1.21.9–1.21.10** → `dist/doom.nats-v4.29-mc1.21.9-1.21.10.zip` · **1.21.11–26.3** → `dist/doom.nats-v4.29-mc1.21.11-26.3.zip`（完整对照表见下面「MC 版本 → 用哪份包」）。只有想要 `near` / `on_spawn` / 预设 / 自定义外观，才下 `dist/doom.nats-v4x-experimental-v4.29.zip` —— 它**需要世界开启对应实验性玩法**，否则装不上。（其中**自定义外观（AJ 桥接）未随本版成品发布**：源码在 `src/tools/gen_exp_aj.mjs`，要自备非空 `rules/rigs.json` 并 `DOOM_EXP=1` 重生成，详见 [`docs/18-配置手册.md`](docs/18-配置手册.md) 附录。）
+> **下哪个**：先看你的 MC 版本 —— **1.21.5** → `dist/doom.nats-v4.29-mc1.21.5.zip` · **1.21.6–1.21.8** → `dist/doom.nats-v4.29-mc1.21.6-1.21.8.zip` · **1.21.9–1.21.10** → `dist/doom.nats-v4.29-mc1.21.9-1.21.10.zip` · **1.21.11–26.2** → `dist/doom.nats-v4.29-mc1.21.11-26.2.zip` · **26.3** → `dist/doom.nats-v4.29-mc26.3.zip`（完整对照表见下面「MC 版本 → 用哪份包」）。只有想要 `near` / `on_spawn` / 预设 / 自定义外观，才下 `dist/doom.nats-v4x-experimental-v4.29.zip` —— 它**需要世界开启对应实验性玩法**，否则装不上。（其中**自定义外观（AJ 桥接）未随本版成品发布**：源码在 `src/tools/gen_exp_aj.mjs`，要自备非空 `rules/rigs.json` 并 `DOOM_EXP=1` 重生成，详见 [`docs/18-配置手册.md`](docs/18-配置手册.md) 附录。）
 > **怎么装**：解压 zip → 得到 `doom.nats/` 文件夹 → 整个丢进 `saves/<你的存档>/datapacks/`（服务器：`world/datapacks/`）→ 进游戏 `/reload`。
 > **怎么验**：下载后先对一下校验值 —— 见下面「校验下载的文件」。
 > **改规则**看 [`docs/24-玩家能改动的一切.md`](docs/24-玩家能改动的一切.md) 与 [示例库](docs/wiki/示例库.md)；版本/变体对照看 [`docs/25-兼容与版本.md`](docs/25-兼容与版本.md)。
@@ -72,7 +72,8 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 | Minecraft **1.21.5** | `dist/doom.nats-v4.29-mc1.21.5.zip` | 不用 |
 | Minecraft **1.21.6 / 1.21.7 / 1.21.8** | `dist/doom.nats-v4.29-mc1.21.6-1.21.8.zip` | 不用 |
 | Minecraft **1.21.9 / 1.21.10** | `dist/doom.nats-v4.29-mc1.21.9-1.21.10.zip` | 不用 |
-| Minecraft **1.21.11 – 26.3** | `dist/doom.nats-v4.29-mc1.21.11-26.3.zip` | 不用 |
+| Minecraft **1.21.11 – 26.2** | `dist/doom.nats-v4.29-mc1.21.11-26.2.zip` | 不用 |
+| Minecraft **26.3** | `dist/doom.nats-v4.29-mc26.3.zip` | 不用 |
 | **1.21.6**（本版基线，`pack_format` 80） | `dist/doom.nats-v4.29.zip`（= 默认变体） | 默认变体：不用 · 实验性变体：**要**（创建世界时开「矿车改进」实验性玩法） |
 | 其它版本 | **不支持**（区间外） | — |
 | 单人存档 / 服务器 | 都行；服务器用 `world/datapacks/` | — |
@@ -81,8 +82,13 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 
 > **一份主包 + 按版本各一份 zip**：`dist/` 里的 `-mc<版本区间>` 后缀即对应区间；
 > 仓库内 `ports/` 保存每个区间的**包本体源码树**（`ports/doom.nats-<区间>/`），便于逐文件核对。
-> 全部 4 份共用同一套函数逻辑，**唯一差异是 `pack.mcmeta` 与 3 处版本相关改写**
+> 全部 5 份共用同一套函数逻辑，**唯一差异是 `pack.mcmeta` 与 3 处版本相关改写**
 > （原版 ID `chain`→`iron_chain`、gamerule `doMobSpawning`→`spawn_mobs`、predicate 的 `condition`→`type` 与 `time` 字段）。
+>
+> ⚠️ **勘误（2026-10-05）**：本表曾把 **1.21.11 – 26.3** 写成一个区间，那**是错的** ✗ —— 1.21.11–26.2 与 26.3
+> 之间横着 **predicate 注册表 schema 变更**（`condition` → `type`），两个边界**既无重叠也无缺口**，
+> 不能合并成一份包。已拆成 `-mc1.21.11-26.2` 与 `-mc26.3` 两份，原 `-mc1.21.11-26.3.zip` **已下架**
+> （它在 1.21.11–26.2 上会产生 **732 条加载错误**，实际仅 26.3 可用）。
 
 | MC 版本 | data pack version | 用哪份 | `min_format` / `max_format` |
 |---|---|---|---|
@@ -90,9 +96,10 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 | **1.21.6** | 80 | `doom.nats-v4.29-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` |
 | **1.21.7 / 1.21.8** | 81 | `doom.nats-v4.29-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` |
 | **1.21.9 / 1.21.10** | 88.0 | `doom.nats-v4.29-mc1.21.9-1.21.10.zip` | `[88,0]` – `[88,0]` |
-| **1.21.11 – 26.3** | 94.1 – 121.0 | `doom.nats-v4.29-mc1.21.11-26.3.zip` | `[94,1]` – `121` |
+| **1.21.11 – 26.2** | 94.1 – 107.0 | `doom.nats-v4.29-mc1.21.11-26.2.zip` | `[94,1]` – `[107,0]` |
+| **26.3** | 121.0 | `doom.nats-v4.29-mc26.3.zip` | `[121,0]` – `[121,0]` |
 
-> ⚠️ **别混装**：4 份包**同一命名空间**，`datapacks/` 里只放**一份**。
+> ⚠️ **别混装**：5 份包**同一命名空间**，`datapacks/` 里只放**一份**。
 > ⚠️ **区间如实标注**：每份包的 `min_format`/`max_format` 恰为其实测边界 —— 装到区间外的版本，包里用到的原版 ID / gamerule 可能已改名，会出现函数加载失败。
 
 ### 配套：`doom.log` 与自断言套件

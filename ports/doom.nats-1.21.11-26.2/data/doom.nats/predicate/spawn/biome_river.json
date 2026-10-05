@@ -1,0 +1,6 @@
+{
+  "condition": "minecraft:location_check",
+  "predicate": {
+    "biomes": "#minecraft:reduce_water_ambient_spawns"
+  }
+}
