@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:location_check",
+  "predicate": {
+    "biomes": "#minecraft:more_frequent_drowned_spawns"
+  }
+}

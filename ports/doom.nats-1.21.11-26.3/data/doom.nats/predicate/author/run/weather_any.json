@@ -1,0 +1,17 @@
+{
+  "note": "恒真：任何天气都通过（= 没有天气门）",
+  "type": "minecraft:any_of",
+  "terms": [
+    {
+      "type": "minecraft:weather_check",
+      "raining": true
+    },
+    {
+      "type": "minecraft:inverted",
+      "term": {
+        "type": "minecraft:weather_check",
+        "raining": true
+      }
+    }
+  ]
+}

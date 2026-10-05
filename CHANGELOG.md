@@ -11,6 +11,83 @@
 
 ---
 
+## v4.29-multiversion · 多版本支持（1.21.5 → 26.3）— 2026-10-05
+
+> 这一版是**纯移植版**：函数逻辑一行未动，只让同一只包**能在 1.21.5 到 26.3 的 12 个版本上正确加载并跑通**，
+> 并以 4 份**区间如实**的包分别交付。跨版本的差异集中在 4 处硬破坏（详见下「移植矩阵」）。
+> 全部结论来自**真机验收**（Fabric 服务端 + `/reload` + 包内自断言套件），不是静态推断。
+
+### 1 · 多版本支持表
+
+| MC 版本 | data pack version | 交付包（`dist/`） | `min_format` / `max_format` | 真机验收 |
+|---|---|---|---|---|
+| **1.21.5** | 71 | `doom.nats-v4.29-mc1.21.5.zip` | `[71,0]` – `[71,0]` | ✅ `pass=14 fail=0 total=14` |
+| **1.21.6** | 80 | `doom.nats-v4.29-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` | 🟡 推定（同区间） |
+| **1.21.7 / 1.21.8** | 81 | `doom.nats-v4.29-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` | ✅ `pass=14 fail=0 total=14`（1.21.8 实测） |
+| **1.21.9 / 1.21.10** | 88.0 | `doom.nats-v4.29-mc1.21.9-1.21.10.zip` | `[88,0]` – `[88,0]` | ✅ `pass=14 fail=0 total=14` |
+| **1.21.11 – 26.3** | 94.1 – 121.0 | `doom.nats-v4.29-mc1.21.11-26.3.zip` | `[94,1]` – `121` | ✅ `pass=14 fail=0 total=14`（26.3 实测） |
+
+> **基线不变**：`dist/doom.nats-v4.29.zip`（原 v4.29 默认变体，面向 1.21.6）**逐字节保留**，
+> 其 sha256 与上一提交完全一致（`883ff3eb…bc38`）—— 老玩家升级不受影响。
+> **配套**：`dist/doom.log-multi.zip`（日志通道，全区间）与 `dist/doom.nats-selftest.zip`（自断言套件，全区间）。
+
+### 2 · 硬破坏修复（跨 12 个版本踩到 4 类）
+
+| # | 破坏 | 影响版本 | 改了什么 |
+|---|---|---|---|
+| 1 | **原版 ID 改名**：`minecraft:chain` → `minecraft:iron_chain` | 1.21.9 起 | 窄判定标签里换用新 ID（1.21.5–1.21.8 变体仍用 `chain`） |
+| 2 | **实体 ID 后加入**：`minecraft:happy_ghast` | 1.21.6 起存在 | `legacy`（只供 1.21.5）**移除**该项；1.21.6+ 变体保留 |
+| 3 | **gamerule 改名**（snake_case）：`doMobSpawning` → `spawn_mobs` | **1.21.11** 起 | `mode/survival`、`mode/off` 两处换新名（旧名在该版本 `Incorrect argument for command`，整函数加载失败） |
+| 4 | **predicate schema 变更**：`condition` → `type`；`light` 内层拍平；`time` 取值 `daytime` → `day` | 26.3 | 68 个 predicate 逐字段改写 |
+| 5 | **`pack.mcmeta` 新规则** | 1.21.9 起 | 新变体显式声明 `min_format`/`max_format`；并**收紧到实测边界**（见 §3） |
+
+### 3 · 修复：两处 `pack.mcmeta`「自称宽于实际能力」
+
+- **病灶**（原值）：
+  - `doom.nats-multi-1.21.9`：`min_format [88,0]` / **`max_format 94`** —— 而该变体**只覆盖 1.21.9–1.21.10**（data 88.0）。
+  - `doom.nats-multi-legacy`：`min_format [48,0]` / **`max_format 81`** / `supported_formats{48,81}` —— 而它**只覆盖 1.21.5**（data 71）。
+- **真机证据**（1.21.11，`pack_data = 94.1`）：把未修改的 `1.21.9` 变体原样装进去 ⇒ 包被接受，随后
+  `Failed to load function doom.nats:mode/survival` 与 `mode/off` 两条 `Incorrect argument for command … gamerule`
+  ⇒ **自称区间「触碰」了它实际跑不了的版本**。
+- **`max_format` 粒度语义（真机 + 字节码双重判定）**：整数写法等于 `PackFormat(v, 0)`（minor 默认 0），
+  比较先 major 后 minor ⇒ `(94,0) < (94,1)`。**另需注意**：实测该区间在**专用服务器上不是加载闸门**
+  （`max_format` 取 87/88/93/94 全部被强制启用）⇒ 收紧的**实际意义是「元数据如实 + 客户端数据包选择 UI 不误示」**。
+- **改法**：`1.21.9` → `[88,0]`–`[88,0]`；`legacy` → `[71,0]`–`[71,0]` 并**删除 `supported_formats`**（窄区间无需，且须与 min/max 逐值一致）。
+- **改后复验**：1.21.5 `pass=14 fail=0 total=14`（0 加载错误）· 1.21.10 `pass=14 fail=0 total=14`（0 加载错误）。
+
+### 4 · 真机验收证据
+
+- **判定三件套**（缺一不可）：`pass/fail` + `total == 预期(14)` + **8 类加载错误全 0**
+  （`Failed to load function` / `Whilst parsing` / `Macro without` / `No variables in macro` / `Invalid NBT path` /
+  `Incorrect argument for command` / `Failed to load datapacks, can't proceed` / `Registry loading errors`）。
+- **判定以汇总行为准**：`[SELFTEST] RESULT pass=14 fail=0 total=14`（**不以「日志无 ERROR」为准** —— 实测真实失败行不含 ERROR 关键字）。
+- **四台实测**：1.21.5 ✅ · 1.21.8 ✅ · 1.21.10 ✅ · 26.3 ✅（均 14/14、0 错误）。
+  本轮 mcmeta 收紧后**重跑** 1.21.5 与 1.21.10 各一次，仍 14/14。
+
+### 5 · 产物指纹（sha256）
+
+```
+158628810082f9d97c3afd29ddec8ae2f87f8519a342368bfa3bb8b1303bbb60  doom.nats-v4.29-mc1.21.5.zip
+7d90b832a6bbd8aa2fbddb6bf04faeb747acc3c33625a5ba4d67e6df14eff038  doom.nats-v4.29-mc1.21.6-1.21.8.zip
+511410de0c45bf9d6496ab8f60a4bff2907fe06d17f60b35a0c12c5ce6f896bd  doom.nats-v4.29-mc1.21.9-1.21.10.zip
+ebc2d80707243c9dfd68ef7ab19cfa30f91772b9014aec4e3a01956a02427273  doom.nats-v4.29-mc1.21.11-26.3.zip
+a65873bf49bb1b135b67fe533a883cf8b0fafeca0289be9455eaf32a2c15bd71  doom.log-multi.zip
+4ab6836a8dfd19372b4a2d6f7f716f73b76489bb85a504728fe27f0fea42f1bb  doom.nats-selftest.zip
+```
+
+完整清单见 `dist/SHA256SUMS.txt`。
+
+### 6 · 仓库结构变更
+
+- 新增 **`ports/`**：每个版本区间的**包本体源码树**（`ports/doom.nats-<区间>/`、`ports/doom.log/`、`ports/doom.nats-selftest/`），
+  供逐文件核对；`dist/` 的 zip 即由这些树打包（zip 顶层层级与既有成品一致）。
+- 顶层 `doom.nats/` **保持为默认变体（1.21.6 基线）**，与 `dist/doom.nats-v4.29.zip` 逐字节对应。
+
+> **未实测/存疑**：`1.21.6`、`1.21.7`、`1.21.9`、`1.21.11`、`26.1`、`26.1.1`、`26.1.2`、`26.2` 未单独起服，
+> 它们与已测版本同处一个变体区间且共享全部版本相关改动 ⇒ **推定可用**（🟡）。
+
+---
+
 ## v4.29 · 正式发布（Latest）— 2026-10-04
 
 > 这一版是**同一件事的两个面**：把被真实 `weight` 口径带错的**示例与预设**一起修掉 —— ① in-game 帮助与用法注释里的 `weight:40`（照它写**永远不刷**）② 实验性预设 `blood_moon` / `storm_season` / `deep_dark` 里那三条按同一口径**几乎永不出现**的自定义怪。另按事实改正两条"文档说的东西不存在"。生成器逻辑一行未动，只动数值与措辞。

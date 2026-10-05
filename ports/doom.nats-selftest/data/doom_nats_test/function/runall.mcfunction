@@ -1,0 +1,18 @@
+# doom.nats 自断言套件 —— 依次跑完全部用例并汇总
+# 用法：/function doom_nats_test:runall
+function doom_nats_test:_begin
+function doom_nats_test:test_log_link
+function doom_nats_test:test_state
+function doom_nats_test:test_env
+function doom_nats_test:test_entity_tags
+function doom_nats_test:test_block_tags
+function doom_nats_test:test_chain_id
+function doom_nats_test:test_predicates
+function doom_nats_test:test_caps
+function doom_nats_test:test_dryrun
+function doom_nats_test:test_checkall
+function doom_nats_test:test_gamerule
+function doom_nats_test:test_despawn
+function doom_nats_test:test_band
+function doom_nats_test:test_mobs_registry
+function doom_nats_test:_report_call

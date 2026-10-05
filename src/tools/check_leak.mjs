@@ -1,4 +1,4 @@
-﻿// tools/check_leak.mjs —— 泄漏守门 + 仓库顶层结构守门。
+// tools/check_leak.mjs —— 泄漏守门 + 仓库顶层结构守门。
 //
 //   node tools/check_leak.mjs                     # 扫仓库根（默认 <本文件>/../..）
 //   DOOM_GIT=<git 的完整路径> node tools/check_leak.mjs     # 本机 git 不在 PATH 时
@@ -35,7 +35,9 @@ const SELF = ['tools/check_leak.mjs', 'doom.nats/tools/check_leak.mjs', 'src/too
 
 // 顶层白名单（两份 profile 分开写：玩家向仓库不许出现本机开发布局那套目录）
 // 玩家向仓库：2026-09-29 起多一个 src/ —— 用户要求"仓库还是要展示源码的"（生成器 + 规则层 + 生成器输入）
-const ALLOW_PUB = ['README.md', 'LICENSE', 'CHANGELOG.md', '.gitignore', '.gitattributes', 'dist', 'docs', 'rules', '.github', 'src', 'doom.nats'];
+// 2026-10-05 起多一个 ports/ —— 多版本移植：每个 MC 版本区间的包本体源码树（1.21.5 – 26.3），
+//   与 dist/ 里带 -mc<区间> 后缀的 zip 一一对应（zip 即由 ports/ 打包）。
+const ALLOW_PUB = ['README.md', 'LICENSE', 'CHANGELOG.md', '.gitignore', '.gitattributes', 'dist', 'docs', 'rules', '.github', 'src', 'doom.nats', 'ports'];
 // 本机开发布局：**不含 src**（源码在那儿本来就以 doom.nats/ 的形式在顶层；那里加 src 只会放宽那道门）
 const ALLOW_DEV = ['README.md', 'LICENSE', 'CHANGELOG.md', '.gitignore', '.gitattributes', 'dist', 'docs', 'rules', '.github',
   'doom.nats', 'tests', 'harness', '.vscode', 'AGENTS.md', '_work', 'tools', 'pack', 'reports'];

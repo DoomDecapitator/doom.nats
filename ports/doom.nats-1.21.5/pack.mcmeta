@@ -1,0 +1,14 @@
+{
+  "pack": {
+    "pack_format": 80,
+    "min_format": [
+      71,
+      0
+    ],
+    "max_format": [
+      71,
+      0
+    ],
+    "description": "§bDoom's Artificial Natspawns §7[v4 · 1.21.5 · 自然生成复刻（数据包驱动）]"
+  }
+}

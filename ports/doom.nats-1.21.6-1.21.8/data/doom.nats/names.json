@@ -1,0 +1,66 @@
+{
+  "note": "生物名称清单（按类别分组）；生成端可用 #doom.nats:<category> 实体标签筛选，也可在注册表条目里加 name 字段做谓词匹配",
+  "byCategory": {
+    "ambient": [
+      "minecraft:bat"
+    ],
+    "axolotls": [
+      "minecraft:axolotl"
+    ],
+    "creature": [
+      "minecraft:armadillo",
+      "minecraft:camel",
+      "minecraft:chicken",
+      "minecraft:cow",
+      "minecraft:donkey",
+      "minecraft:fox",
+      "minecraft:frog",
+      "minecraft:goat",
+      "minecraft:horse",
+      "minecraft:llama",
+      "minecraft:mooshroom",
+      "minecraft:panda",
+      "minecraft:parrot",
+      "minecraft:pig",
+      "minecraft:polar_bear",
+      "minecraft:rabbit",
+      "minecraft:sheep",
+      "minecraft:strider",
+      "minecraft:turtle",
+      "minecraft:wolf"
+    ],
+    "monster": [
+      "minecraft:bogged",
+      "minecraft:creeper",
+      "minecraft:drowned",
+      "minecraft:enderman",
+      "minecraft:ghast",
+      "minecraft:hoglin",
+      "minecraft:husk",
+      "minecraft:magma_cube",
+      "minecraft:ocelot",
+      "minecraft:piglin",
+      "minecraft:skeleton",
+      "minecraft:slime",
+      "minecraft:spider",
+      "minecraft:stray",
+      "minecraft:witch",
+      "minecraft:zombie",
+      "minecraft:zombie_villager",
+      "minecraft:zombified_piglin"
+    ],
+    "underground_water_creature": [
+      "minecraft:glow_squid"
+    ],
+    "water_ambient": [
+      "minecraft:cod",
+      "minecraft:pufferfish",
+      "minecraft:salmon",
+      "minecraft:tropical_fish"
+    ],
+    "water_creature": [
+      "minecraft:dolphin",
+      "minecraft:squid"
+    ]
+  }
+}
