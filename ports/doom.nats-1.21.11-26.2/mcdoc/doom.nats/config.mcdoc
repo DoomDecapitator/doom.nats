@@ -94,6 +94,10 @@ struct Config {
 	difficulty?: int,
 	/// 区域难度系数 percent；-1 = 按 difficulty 自动
 	special?: int,
+	/// 刷怪数量总开关（百分比）：100 = 原样，50 = 各类上限减半，200 = 翻倍；有效范围 1..1000
+	/// 只缩【容量上限】（maxInstancesPerChunk），不动节拍（速度另有 density / batch / period）
+	/// 一键档位：/function doom.nats:scale/{sparse,normal,dense,horde,extreme}
+	qty?: int,
 	/// 取点高度带
 	band?: Band,
 }

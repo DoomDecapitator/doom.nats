@@ -133,6 +133,8 @@ function doom.log:info {code:"E101", message:"${NS} v4 就绪（自然生成复�
     //   ⇒ 默认关闭；作者声明 spawnX/spawnY/spawnZ 并把 spawn24 置 1 才生效（门槛见 cfg/apply）
     spawn24: 0, spawnX: 0, spawnY: 0, spawnZ: 0,
     period: 5, batch: 6, maxBatch: 40, density: 0, dice: 0, creatureGate: 400, persist: 0, peaceful: 0, difficulty: 2, special: -1,
+    // v4.27：数量总开关（百分比，100 = 原样）。只缩放各类容量上限，不动节拍（速度另有 density/batch/period）
+    qty: 100,
     // v4.19：band.fallback=1 ⇒ 模式 0 扫不到地面时按原版整列均匀取 y（[floorY, 玩家层+2]），见 pos/band
     band: { mode: 0, yMin: 60, yMax: 70, jitter: 3, fallback: 1 },
   }));
@@ -152,7 +154,7 @@ function doom.log:info {code:"E101", message:"${NS} v4 就绪（自然生成复�
   for (const [name, path] of [
     ['period', 'period'], ['batch', 'batch'], ['maxBatch', 'maxBatch'], ['density', 'density'],
     ['dice', 'dice'], ['creature_gate', 'creatureGate'], ['persist', 'persist'], ['peaceful', 'peaceful'],
-    ['difficulty', 'difficulty'], ['special', 'special'],
+    ['difficulty', 'difficulty'], ['special', 'special'], ['qty', 'qty'],
     ['no_despawn', 'noDespawnDistance'], ['player24', 'playerExclusion'],
     ['spawn24', 'spawn24'], ['spawn_x', 'spawnX'], ['spawn_y', 'spawnY'], ['spawn_z', 'spawnZ'],
     ['band_mode', 'band.mode'], ['band_ymin', 'band.yMin'], ['band_ymax', 'band.yMax'], ['band_jitter', 'band.jitter'],
@@ -195,6 +197,8 @@ function doom.log:info {code:"E101", message:"${NS} v4 就绪（自然生成复�
   rows.push('scoreboard players set #10 ' + NS + ' 10');
   rows.push('scoreboard players operation $cfg.special_x10 ' + NS + ' = $cfg.special ' + NS);
   rows.push('scoreboard players operation $cfg.special_x10 ' + NS + ' *= #10 ' + NS);
+  rows.push('# v4.27：数量总开关的百分号基数（cfg/qty 用它做除法）');
+  rows.push('scoreboard players set #100 ' + NS + ' 100');
   rows.push('');
   rows.push('# --- 取点高度带（pos/band 读 $band.*，并在取点时把 storage doom.nats:band 同步给宏用）');
   // v4.19：原来这一段被复制了两遍（v4.14 合并时的残留），去重
@@ -239,6 +243,53 @@ function doom.log:info {code:"E101", message:"${NS} v4 就绪（自然生成复�
     rows.push(over('floor' + i, 'floorY.' + key));
   }
   F['data/' + NS + '/function/cfg/apply.mcfunction'] = rows.join(LF) + LF;
+
+
+  // v4.27：数量总开关 —— 把 7 类容量上限按 $cfg.qty 百分比缩放（由 circ/apply 条件调用）
+  {
+    const q = [
+      '# ' + NS + ':cfg/qty —— 数量总开关的缩放实现（由 circ/apply 在 $cfg.qty ≠ 100 时调用）',
+      '#',
+      '# 语义：$cfg.qty = 百分比（100 = 原样，50 = 减半，200 = 翻倍）。有效范围 1..1000。',
+      '# 只缩【容量上限】，不动节拍 —— 「最多几只」和「刷多快」是两件事（速度另有 density/batch/period）。',
+      '# 调用位置：circ/apply 在「默认值写完、情形覆盖之前」调它 ⇒ 天气/维度照样能往上盖。',
+      '# 下限保护：结果至少 1，否则 0 会让该类永远不刷（静默失效）。',
+      '',
+    ];
+    for (const cat of ['monster', 'creature', 'ambient', 'water_creature', 'water_ambient', 'underground_water_creature', 'axolotls']) {
+      q.push('scoreboard players operation $eff.max_' + cat + ' ' + NS + ' *= $cfg.qty ' + NS);
+      q.push('scoreboard players operation $eff.max_' + cat + ' ' + NS + ' /= #100 ' + NS);
+      q.push('execute if score $eff.max_' + cat + ' ' + NS + ' matches ..0 run scoreboard players set $eff.max_' + cat + ' ' + NS + ' 1');
+    }
+    F['data/' + NS + '/function/cfg/qty.mcfunction'] = q.join(LF) + LF;
+  }
+
+  // v4.27：数量档位 —— 玩家一条命令就能改刷怪规模（写进 config 层 ⇒ 跨 reload 保留）
+  //   为什么叫 scale 而不是 preset：实验性变体已占用 doom.nats:exp/preset（玩法预设包：血月/雷暴季/深渊），
+  //   两者概念不同（一个是「整套玩法」，一个是「刷怪数量档位」）⇒ 分开命名，避免读者混淆。
+  for (const [id, qty, period, note] of [
+    ['sparse', 50, 0, '稀疏：上限减半'],
+    ['normal', 100, 0, '正常：回到原版规模'],
+    ['dense', 150, 0, '密集：上限一倍半'],
+    ['horde', 250, 4, '尸潮：上限两倍半 + 节拍加快'],
+    ['extreme', 400, 3, '极端：上限四倍 + 节拍最快（吃性能，谨慎）'],
+  ]) {
+    const body = [
+      '# ' + NS + ':scale/' + id + ' —— ' + note,
+      '# 写进 config 层（跨 /reload 保留）；想恢复原样就跑 scale/normal。',
+      '',
+    ];
+    if (qty === 100 && period === 0) {
+      body.push('data remove storage ' + NS + ':config qty');
+    } else {
+      body.push('data modify storage ' + NS + ':config qty set value ' + qty);
+    }
+    if (period === 0) body.push('data remove storage ' + NS + ':config period');
+    else body.push('data modify storage ' + NS + ':config period set value ' + period);
+    body.push('function ' + NS + ':cfg/apply');
+    body.push('tellraw @a [{"text":"[nats] ","color":"aqua"},{"text":"已切换刷怪规模：' + note + '","color":"white"},{"text":"（想自己细调：/data merge storage ' + NS + ':config {qty:80} 然后 /function ' + NS + ':cfg/apply）","color":"gray"}]');
+    F['data/' + NS + '/function/scale/' + id + '.mcfunction'] = body.join(LF) + LF;
+  }
 }
 
 // ---------------------------------------------------------------- 密度控制（v4.6）

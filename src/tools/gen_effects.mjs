@@ -41,6 +41,11 @@ const F = {};
   rows.push('execute unless score $eff.max_creature ' + NS + ' matches 1.. run scoreboard players set $eff.max_creature ' + NS + ' ' + DEFAULTS.max_creature);
   rows.push('execute unless score $eff.max_ambient ' + NS + ' matches 1.. run scoreboard players set $eff.max_ambient ' + NS + ' ' + DEFAULTS.max_ambient);
   rows.push('execute unless score $eff.light ' + NS + ' matches 0.. run scoreboard players set $eff.light ' + NS + ' ' + DEFAULTS.lightRule);
+  rows.push('');  // v4.27：数量总开关 —— 在【默认值之后、情形覆盖之前】按百分比缩放各类容量上限。
+  //   为什么插在这个位置：缩放要能被后面的天气/维度覆盖盖掉（雨夜 90、雷暴 100 是绝对值，不参与缩放）。
+  //   只缩容量、不动 period —— 「最多几只」和「刷多快」是两件事，速度另有 density/batch/period。
+  rows.push('# ---- 数量总开关（$cfg.qty，百分比，100 = 原样）');
+  rows.push('execute if score $cfg.qty ' + NS + ' matches 1.. unless score $cfg.qty ' + NS + ' matches 100 run function ' + NS + ':cfg/qty');
   rows.push('');
   for (const c of CIRC) {
     rows.push('# ---- ' + c.id + '：' + (c.note || ''));

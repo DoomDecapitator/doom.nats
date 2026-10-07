@@ -26,6 +26,8 @@ execute store result score $cfg.difficulty doom.nats run data get storage doom.n
 execute if data storage doom.nats:config difficulty run execute store result score $cfg.difficulty doom.nats run data get storage doom.nats:config difficulty
 execute store result score $cfg.special doom.nats run data get storage doom.nats:cfg_defaults special
 execute if data storage doom.nats:config special run execute store result score $cfg.special doom.nats run data get storage doom.nats:config special
+execute store result score $cfg.qty doom.nats run data get storage doom.nats:cfg_defaults qty
+execute if data storage doom.nats:config qty run execute store result score $cfg.qty doom.nats run data get storage doom.nats:config qty
 execute store result score $cfg.no_despawn doom.nats run data get storage doom.nats:cfg_defaults noDespawnDistance
 execute if data storage doom.nats:config noDespawnDistance run execute store result score $cfg.no_despawn doom.nats run data get storage doom.nats:config noDespawnDistance
 execute store result score $cfg.player24 doom.nats run data get storage doom.nats:cfg_defaults playerExclusion
@@ -87,6 +89,8 @@ execute if score $cfg.auto doom.nats matches 1 if score $cfg.difficulty doom.nat
 scoreboard players set #10 doom.nats 10
 scoreboard players operation $cfg.special_x10 doom.nats = $cfg.special doom.nats
 scoreboard players operation $cfg.special_x10 doom.nats *= #10 doom.nats
+# v4.27：数量总开关的百分号基数（cfg/qty 用它做除法）
+scoreboard players set #100 doom.nats 100
 
 # --- 取点高度带（pos/band 读 $band.*，并在取点时把 storage doom.nats:band 同步给宏用）
 scoreboard players operation $band.mode doom.nats = $cfg.band_mode doom.nats

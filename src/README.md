@@ -17,7 +17,7 @@
 
 | 位置 | 是什么 | 给谁 |
 |---|---|---|
-| [`dist/`](../dist) | **成品**：`doom.nats-v4.29.zip`（默认变体）+ `doom.nats-v4x-experimental-v4.29.zip`（实验性变体），校验值见 `dist/SHA256SUMS.txt` | 只想装进存档玩的玩家 —— **你多半只要这个** |
+| [`dist/`](../dist) | **成品**：`doom.nats-v4.30.0.zip`（默认变体）+ `doom.nats-v4x-experimental-v4.30.0.zip`（实验性变体），校验值见 `dist/SHA256SUMS.txt` | 只想装进存档玩的玩家 —— **你多半只要这个** |
 | `src/`（本目录） | **源码**：生成器 + 规则层 + 生成输入。**不能直接丢进存档**，要先跑生成器变成 `pack/` | 想改包的人、想知道"它到底怎么算的"的人 |
 
 ## 三步构建
@@ -102,10 +102,21 @@ node src/tools/check_static.mjs          # 默认 + 实验性两个变体；只�
 
 ## 已知差异（诚实清单）
 
-- 你在克隆里重新生成出的 `pack/doom.nats`（**693** 文件）与 `dist/doom.nats-v4.29.zip`（**694** 项）**只差一份手写文件**：
-  zip 里多一份**手写的**编辑器提示 `mcdoc/doom.nats/config.mcdoc`（见 [`../docs/21-玩家可改清单.md`](../docs/21-玩家可改清单.md)；
-  **没有生成器负责它**，由打包脚本补进去）。生成器产物本身仍是 693 / 实验性 770。
-- 仓库顶层的 [`doom.nats/`](../doom.nats)（可直接点开看的包本体）与 zip **逐项一致**（**694/694**，0 缺 0 多 0 内容不同；实验性变体 **771/771**）。
+`mcdoc/doom.nats/config.mcdoc` 这份编辑器提示**没有生成器负责它**，是手写文件（见
+[`../docs/21-玩家可改清单.md`](../docs/21-玩家可改清单.md)）。生成器只写自己负责的文件、不删别的，
+所以在原地重新生成时它会保留。如果换一个空目录生成，出来的包会少这一份。
+
+各处的文件数：
+
+| 位置 | 文件数 |
+|---|---|
+| `pack/doom.nats`（生成器产物）| 700 |
+| `pack/doom.nats-experimental`（实验性）| 777 |
+| `dist/doom.nats-v4.30.0.zip` | 700 |
+| `dist/doom.nats-v4x-experimental-v4.30.0.zip` | 777 |
+| 仓库顶层的 [`doom.nats/`](../doom.nats) | 700 |
+
+仓库顶层的 `doom.nats/` 与 zip **逐项一致**（0 缺 0 多 0 内容不同），与 `ports/doom.nats-1.21.6-1.21.8` 也一致。
 - 两个 zip 的 sha256 见 [`dist/SHA256SUMS.txt`](../dist/SHA256SUMS.txt)。
 
 ## 参与开发

@@ -9,13 +9,13 @@
 <!-- <p align="center"><img src="docs/assets/首屏效果.png" width="720" alt="doom.nats 在存档里跑起来的样子"></p> -->
 
 > **一句话**：用**纯数据包**复刻 Minecraft 原版的自然刷怪（NaturalSpawner 那一整套）—— 容量、区块计数、光照与逐实体规则、结构覆盖、消失层全都在，而且**规则归你改**。
-> **下哪个**：先看你的 MC 版本 —— **1.21.5** → `dist/doom.nats-v4.29-mc1.21.5.zip` · **1.21.6–1.21.8** → `dist/doom.nats-v4.29-mc1.21.6-1.21.8.zip` · **1.21.9–1.21.10** → `dist/doom.nats-v4.29-mc1.21.9-1.21.10.zip` · **1.21.11–26.2** → `dist/doom.nats-v4.29-mc1.21.11-26.2.zip` · **26.3** → `dist/doom.nats-v4.29-mc26.3.zip`（完整对照表见下面「MC 版本 → 用哪份包」）。只有想要 `near` / `on_spawn` / 预设 / 自定义外观，才下 `dist/doom.nats-v4x-experimental-v4.29.zip` —— 它**需要世界开启对应实验性玩法**，否则装不上。（其中**自定义外观（AJ 桥接）未随本版成品发布**：源码在 `src/tools/gen_exp_aj.mjs`，要自备非空 `rules/rigs.json` 并 `DOOM_EXP=1` 重生成，详见 [`docs/18-配置手册.md`](docs/18-配置手册.md) 附录。）
+> **下哪个**：先看你的 MC 版本 —— **1.21.5** → `dist/doom.nats-v4.30.0-mc1.21.5.zip` · **1.21.6–1.21.8** → `dist/doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` · **1.21.9–1.21.10** → `dist/doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` · **1.21.11–26.2** → `dist/doom.nats-v4.30.0-mc1.21.11-26.2.zip` · **26.3** → `dist/doom.nats-v4.30.0-mc26.3.zip`（完整对照表见下面「MC 版本 → 用哪份包」）。只有想要 `near` / `on_spawn` / 预设 / 自定义外观，才下 `dist/doom.nats-v4x-experimental-v4.30.0.zip` —— 它**需要世界开启对应实验性玩法**，否则装不上。（其中**自定义外观（AJ 桥接）未随本版成品发布**：源码在 `src/tools/gen_exp_aj.mjs`，要自备非空 `rules/rigs.json` 并 `DOOM_EXP=1` 重生成，详见 [`docs/18-配置手册.md`](docs/18-配置手册.md) 附录。）
 > **怎么装**：解压 zip → 得到 `doom.nats/` 文件夹 → 整个丢进 `saves/<你的存档>/datapacks/`（服务器：`world/datapacks/`）→ 进游戏 `/reload`。
 > **怎么验**：下载后先对一下校验值 —— 见下面「校验下载的文件」。
 > **改规则**看 [`docs/24-玩家能改动的一切.md`](docs/24-玩家能改动的一切.md) 与 [示例库](docs/wiki/示例库.md)；版本/变体对照看 [`docs/25-兼容与版本.md`](docs/25-兼容与版本.md)。
 
-> ## 当前状态：**v4.29 正式发布（Latest）**
-> v4.29 已设为 **Latest**（2026-10-04 发布）—— 本版是 **Minecraft 1.21.6 的稳定版**；超出原版的实验性能力（`near` / `on_spawn` / 预设）在 `v4x` 变体里，装它要开对应实验性玩法（**自定义外观（AJ 桥接）源码在、未随本版成品发布**）。
+> ## 当前状态：**v4.30.0 正式发布（Latest）**
+> v4.30.0 已设为 **Latest**（2026-10-07 发布）。支持 **Minecraft 1.21.5 到 26.3**，按版本区间分五份交付，见下面的对照表。超出原版的实验性能力（`near` / `on_spawn` / 预设）在 `v4x` 变体里，装它要开对应实验性玩法（**自定义外观（AJ 桥接）源码在、未随本版成品发布**）。
 > 已跑过完整的真机验收（数字见 [CHANGELOG](CHANGELOG.md)；逐轮报告 `reports/` **不在本仓库**）；**已知偏差仍逐条留档**。
 > **可以装进存档玩，但请先备份存档。**
 
@@ -24,14 +24,14 @@
 
 - **数据包本体（mcfunction 源码，可直接点开看）**：[`doom.nats/`](doom.nats/data/doom.nats/function) —— 里面就是这只包实际装入游戏的每个函数文件；成品 zip 在 `dist/`，JavaScript 生成器在 `src/`。
 - **生成器源码（JavaScript）**：[`src/`](src/) —— JavaScript 生成器 + 规则层 + 生成输入；不想读代码的话，直接下 `dist/` 的 zip 即可。
-- **成品（玩家下载）**：[`dist/`](dist/) —— `doom.nats-v4.29.zip`（默认）与 `doom.nats-v4x-experimental-v4.29.zip`（实验性）。
+- **成品（玩家下载）**：[`dist/`](dist/) —— `doom.nats-v4.30.0.zip`（默认）与 `doom.nats-v4x-experimental-v4.30.0.zip`（实验性）。
 - **同一份源码**就是本仓库顶层的 [`src/`](src/)（生成器 `tools/` + 规则层 `rules/` + 生成输入 `_work/generated/`）；[Releases](https://github.com/DoomDecapitator/doom.nats/releases) 页上 GitHub 自动生成的 **Source code (zip)** 是那个 tag 的整仓快照（含 `src/`）。真机测试台与验收报告是作者本机的东西，不随本仓库分发。
 
 ## 30 秒：下载 → 装 → 看它是否跑起来
 
 | 步 | 做什么 |
 |---|---|
-| ① | 下载 [`dist/doom.nats-v4.29.zip`](dist)（默认变体），校验值见 `dist/SHA256SUMS.txt` |
+| ① | 下载 [`dist/doom.nats-v4.30.0.zip`](dist)（默认变体），校验值见 `dist/SHA256SUMS.txt` |
 | ② | 解压，把 `doom.nats/` 整个放进 `<存档>/datapacks/`；服务器放 `world/datapacks/` |
 | ③ | 进世界 `/reload`，然后 `/function doom.nats:debug/env` 看环境快照 |
 
@@ -60,8 +60,8 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 
 | 下载这个 | 它是什么 | 适合谁 |
 |---|---|---|
-| **`dist/doom.nats-v4.29.zip`**（默认变体） | 用**纯数据包**复刻 Minecraft 原版的自然生成：全局/本地容量、区块可生成计数、光照与逐实体规则、结构 `spawn_overrides`（要塞/前哨站/沼泽小屋/海底神殿/远古城市/试炼密室）、`finalizeSpawn` 组数据层（婴儿率、共享变体、蜘蛛组效果…）、消失层（128 格硬消失、32 格掷骰）、情形引擎（昼夜/天气/月相/维度/多人） | 绝大多数人：要"原版刷怪的手感"，同时规则随便改 |
-| `dist/doom.nats-v4x-experimental-v4.29.zip`（实验性变体） | 默认变体的全部内容 **+ 超出原版的能力**：`near`（附近有什么才刷）、`on_spawn`（出生演出）、预设包（血月、雷暴季、深渊） | 想玩花样、且**愿意在创建世界时开启对应实验性玩法**的人 |
+| **`dist/doom.nats-v4.30.0.zip`**（默认变体） | 用**纯数据包**复刻 Minecraft 原版的自然生成：全局/本地容量、区块可生成计数、光照与逐实体规则、结构 `spawn_overrides`（要塞/前哨站/沼泽小屋/海底神殿/远古城市/试炼密室）、`finalizeSpawn` 组数据层（婴儿率、共享变体、蜘蛛组效果…）、消失层（128 格硬消失、32 格掷骰）、情形引擎（昼夜/天气/月相/维度/多人） | 绝大多数人：要"原版刷怪的手感"，同时规则随便改 |
+| `dist/doom.nats-v4x-experimental-v4.30.0.zip`（实验性变体） | 默认变体的全部内容 **+ 超出原版的能力**：`near`（附近有什么才刷）、`on_spawn`（出生演出）、预设包（血月、雷暴季、深渊） | 想玩花样、且**愿意在创建世界时开启对应实验性玩法**的人 |
 
 两个变体**别同时装**（同一命名空间，只能有一个生效）。
 
@@ -69,12 +69,12 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 
 | 你的环境 | 用哪个 | 要开实验性玩法吗 |
 |---|---|---|
-| Minecraft **1.21.5** | `dist/doom.nats-v4.29-mc1.21.5.zip` | 不用 |
-| Minecraft **1.21.6 / 1.21.7 / 1.21.8** | `dist/doom.nats-v4.29-mc1.21.6-1.21.8.zip` | 不用 |
-| Minecraft **1.21.9 / 1.21.10** | `dist/doom.nats-v4.29-mc1.21.9-1.21.10.zip` | 不用 |
-| Minecraft **1.21.11 – 26.2** | `dist/doom.nats-v4.29-mc1.21.11-26.2.zip` | 不用 |
-| Minecraft **26.3** | `dist/doom.nats-v4.29-mc26.3.zip` | 不用 |
-| **1.21.6**（本版基线，`pack_format` 80） | `dist/doom.nats-v4.29.zip`（= 默认变体） | 默认变体：不用 · 实验性变体：**要**（创建世界时开「矿车改进」实验性玩法） |
+| Minecraft **1.21.5** | `dist/doom.nats-v4.30.0-mc1.21.5.zip` | 不用 |
+| Minecraft **1.21.6 / 1.21.7 / 1.21.8** | `dist/doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` | 不用 |
+| Minecraft **1.21.9 / 1.21.10** | `dist/doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` | 不用 |
+| Minecraft **1.21.11 – 26.2** | `dist/doom.nats-v4.30.0-mc1.21.11-26.2.zip` | 不用 |
+| Minecraft **26.3** | `dist/doom.nats-v4.30.0-mc26.3.zip` | 不用 |
+| **1.21.6**（本版基线，`pack_format` 80） | `dist/doom.nats-v4.30.0.zip`（= 默认变体） | 默认变体：不用 · 实验性变体：**要**（创建世界时开「矿车改进」实验性玩法） |
 | 其它版本 | **不支持**（区间外） | — |
 | 单人存档 / 服务器 | 都行；服务器用 `world/datapacks/` | — |
 
@@ -92,12 +92,12 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 
 | MC 版本 | data pack version | 用哪份 | `min_format` / `max_format` |
 |---|---|---|---|
-| **1.21.5** | 71 | `doom.nats-v4.29-mc1.21.5.zip` | `[71,0]` – `[71,0]` |
-| **1.21.6** | 80 | `doom.nats-v4.29-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` |
-| **1.21.7 / 1.21.8** | 81 | `doom.nats-v4.29-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` |
-| **1.21.9 / 1.21.10** | 88.0 | `doom.nats-v4.29-mc1.21.9-1.21.10.zip` | `[88,0]` – `[88,0]` |
-| **1.21.11 – 26.2** | 94.1 – 107.0 | `doom.nats-v4.29-mc1.21.11-26.2.zip` | `[94,1]` – `[107,0]` |
-| **26.3** | 121.0 | `doom.nats-v4.29-mc26.3.zip` | `[121,0]` – `[121,0]` |
+| **1.21.5** | 71 | `doom.nats-v4.30.0-mc1.21.5.zip` | `[71,0]` – `[71,0]` |
+| **1.21.6** | 80 | `doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` |
+| **1.21.7 / 1.21.8** | 81 | `doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` |
+| **1.21.9 / 1.21.10** | 88.0 | `doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` | `[88,0]` – `[88,0]` |
+| **1.21.11 – 26.2** | 94.1 – 107.0 | `doom.nats-v4.30.0-mc1.21.11-26.2.zip` | `[94,1]` – `[107,0]` |
+| **26.3** | 121.0 | `doom.nats-v4.30.0-mc26.3.zip` | `[121,0]` – `[121,0]` |
 
 > ⚠️ **别混装**：5 份包**同一命名空间**，`datapacks/` 里只放**一份**。
 > ⚠️ **区间如实标注**：每份包的 `min_format`/`max_format` 恰为其实测边界 —— 装到区间外的版本，包里用到的原版 ID / gamerule 可能已改名，会出现函数加载失败。
@@ -110,6 +110,30 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 | `dist/doom.nats-selftest.zip` | 自断言套件：`/function doom_nats_test:runall` 跑完打印 `[SELFTEST] RESULT pass=N fail=N total=N` | 全区间 |
 
 完整的版本矩阵、`pack_format` 对照、升级/降级与"为什么实验性变体要借一个原生旗标"见 [`docs/25-兼容与版本.md`](docs/25-兼容与版本.md)。
+
+## 调刷怪数量（五档一键切换）
+
+不想改规则，只想让怪多点或少点，用这五个命令。它们写进配置层，`/reload` 之后还在。
+
+| 命令 | 效果 |
+|---|---|
+| `/function doom.nats:scale/sparse` | 上限减半 |
+| `/function doom.nats:scale/normal` | 回到原版 |
+| `/function doom.nats:scale/dense` | 一倍半 |
+| `/function doom.nats:scale/horde` | 两倍半，同时加快刷怪节奏 |
+| `/function doom.nats:scale/extreme` | 四倍 |
+
+切换后聊天栏会提示当前是哪一档。想自己填数字就用 `qty`：
+
+```
+/data modify storage doom.nats:config qty set value 150
+/function doom.nats:cfg/apply
+```
+
+`qty` 是百分比，`100` 表示原样，有效范围 `1` 到 `1000`。它只缩放**容量上限**，
+改的是"最多几只"。想改"刷多快"用 `density` / `batch` / `period`，见 `docs/21-玩家可改清单.md`。
+
+注意：调小档位后，场上已有的怪不会立刻消失，会按消失层的节奏慢慢减到新上限。
 
 ## 我能改什么（三条路）
 

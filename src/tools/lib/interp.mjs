@@ -64,6 +64,19 @@ const parseCoord = (s, base) => {
 };
 const parseFloatArg = (s) => { const m = /^(-?[\d.]+)([bslfdBSLFD])?$/.exec(String(s)); return m ? Number(m[1]) : NaN; };
 
+// v4.27：data merge 用的深合并 —— 与 CompoundTag.merge 同语义（子对象递归合，其余覆盖）
+// 依据：反汇编 named.jar 的 net/minecraft/nbt/CompoundTag.merge —— 值 instanceof CompoundTag 时递归。
+const deepMerge = (dst, src) => {
+  for (const k of Object.keys(src)) {
+    const sv = src[k], dv = dst[k];
+    if (sv && typeof sv === 'object' && !Array.isArray(sv) && !(sv instanceof Num)
+        && dv && typeof dv === 'object' && !Array.isArray(dv) && !(dv instanceof Num)) {
+      deepMerge(dv, sv);
+    } else { dst[k] = sv; }
+  }
+  return dst;
+};
+
 export class Interp {
   constructor({ packDir, world, seed = 12345, budget = 4000000, extraDirs = [], messages = null }) {
     // 在测包的命名空间：从包结构探测（v3 的 doom.nats 也适用）
@@ -304,7 +317,8 @@ export class Interp {
     let i = 0;
     const type = a[i++].replace(/^minecraft:/, '');
     const pos = { x: ctx.pos.x, y: ctx.pos.y, z: ctx.pos.z };
-    if (a[i] !== undefined && !a[i].startsWith('{')) {
+    // v4.27：`execute summon <type> run …` 既没坐标也没 NBT ⇒ 'run' 不能被当坐标解析（会 NaN）
+    if (a[i] !== undefined && a[i] !== 'run' && !a[i].startsWith('{')) {
       pos.x = parseCoord(a[i], ctx.pos.x).v; pos.y = parseCoord(a[i + 1], ctx.pos.y).v; pos.z = parseCoord(a[i + 2], ctx.pos.z).v; i += 3;
     }
     let nbt = {};
@@ -371,6 +385,25 @@ export class Interp {
     cur[ks[ks.length - 1]] = v;
   }
   execData(a, ctx) {
+    // v4.27：merge（原版 CompoundTag.merge 深合并）—— 此前只放行 modify/get，导致 cfg/setup 的
+    //   `data merge storage doom.nats:cfg_defaults {…}` 静默不写 ⇒ 所有 $cfg.* 读出来都是 0（靠兜底遮住）。
+    if (a[0] === 'merge') {
+      const [, src, tgt] = a;
+      const snbt = a.slice(3).join(' ');
+      let value;
+      try { value = parse(snbt); } catch (e) { this.errors.push('data merge SNBT parse: ' + e.message); return { result: 0, success: false }; }
+      if (src === 'storage') {
+        const id = tgt; if (!this.storage[id]) this.storage[id] = {};
+        deepMerge(this.storage[id], value);
+        return { result: 1, success: true };
+      }
+      if (src === 'entity') {
+        const es = this.select(tgt, ctx); const e = es[0]; if (!e) return { result: 0, success: false };
+        deepMerge(e.nbt, value);
+        return { result: 1, success: true };
+      }
+      this.warnings.push('data merge target ' + src); return { result: 0, success: false };
+    }
     if (a[0] !== 'modify' && a[0] !== 'get') return { result: 0, success: true };
     if (a[0] === 'get') {
       const [, src, tgt, p] = a;
@@ -421,6 +454,25 @@ export class Interp {
     for (;;) {
       if (i >= a.length) { this.errors.push('execute without run'); return { result: 0, success: false }; }
       const sub = a[i];
+      // v4.27：补 execute summon —— v4.15 起包里有 165 处 `$execute summon $(type) run function …`，
+      //   此前解释器只认 13 个子命令、没有 summon ⇒ 无头仿真里从来没真正生成过生物
+      //   （spawned 恒 0，被 cap-formula 之类的断言遮住）。
+      //   原版语义（SummonCommand.createEntity(..., true)）：先建实体、再把它作为 @s 交给 run。
+      if (sub === 'summon') {
+        const before = this.world.entities.length;
+        const r0 = this.execSummon(a.slice(i + 1), cur);
+        const created = this.world.entities[this.world.entities.length - 1];
+        if (!r0.success || this.world.entities.length === before || !created) return r0;
+        // 参数长度：类型 + 可选坐标 + 可选 NBT
+        let k = i + 2;
+        if (a[k] !== undefined && a[k] !== 'run' && !a[k].startsWith('{') && !a[k].startsWith('#')) k += 3;
+        if (a[k] && a[k].startsWith('{')) k += 1;
+        if (a[k] === 'run') {
+          const rr = this.dispatch(a.slice(k + 1), { ...cur, entity: created }, depth);
+          return { result: rr.result, success: rr.success };
+        }
+        return r0;
+      }
       if (sub === 'run') return this.dispatch(a.slice(i + 1), cur, depth);
       switch (sub) {
         case 'as': { const es = this.select(a[i + 1], cur); if (!es.length) return { result: 0, success: false }; cur = { ...cur, entity: es[0] }; i += 2; break; }
@@ -563,7 +615,28 @@ export class Interp {
     }
     if (k === 'loaded') { return { ok: true, used: 4 }; }
     if (k === 'dimension') { return { ok: String(a[1]) === ctx.dimension, used: 2 }; }
-    if (k === 'function') { const r = this.run(a[1], ctx, 1); return { ok: r.success, used: 2 }; }
+    // v4.27：补 data 条件 —— 此前没有这个分支，`execute if data storage <id> <path>` 一律落到底部
+//   返回 false ⇒ 整个「作者覆盖层」（config 里写了的键）在无头测试里从不生效，靠兜底遮住。
+//   三种写法：`if data storage <id> <path>` · `if data storage <id>`（整体非空）· `if data entity <sel> <path>`
+if (k === 'data') {
+  if (a[1] === 'storage') {
+    const id = a[2]; const p = a[3];
+    const bag = this.storage[id];
+    if (bag === undefined || bag === null) return { ok: false, used: p ? 4 : 3 };
+    if (!p) { const empty = (bag && typeof bag === 'object') ? Object.keys(bag).length === 0 : false; return { ok: !empty, used: 3 }; }
+    const v = this.getPath(bag, p);
+    return { ok: v !== undefined, used: 4 };
+  }
+  if (a[1] === 'entity') {
+    const es = this.select(a[2], ctx); const e = es[0];
+    if (!e) return { ok: false, used: 4 };
+    const v = this.getPath(e.nbt, a[3]);
+    return { ok: v !== undefined, used: 4 };
+  }
+  if (a[1] === 'block') { return { ok: true, used: 4 }; }   // 世界里恒有方块
+  return { ok: false, used: 3 };
+}
+if (k === 'function') { const r = this.run(a[1], ctx, 1); return { ok: r.success, used: 2 }; }
     this.warnings.push(`condition ${k}`);
     return { ok: false, used: 1 };
   }
@@ -678,9 +751,30 @@ export class Interp {
 
   matchArgs(e, args, ctx, playersOnly) {
     if (args.type) {
-      const t = args.type.replace(/^minecraft:/, '');
-      const neg = t.startsWith('!');
-      const ok = (neg ? e.type !== t.slice(1) : e.type === t);
+      // v4.27：支持 `type=#<tag>` 实体类型标签 —— 包的容量计数全部走标签写法
+      //   （`@e[type=#doom.nats:monster,…]` 共 21 处）。此前只做精确匹配 ⇒ 那些选择器永远选不到
+      //   ⇒ $cnt.* 恒 0 ⇒ 容量门形同不存在（真机之外测不出来，文档里悬了很久的疑案）。
+      const raw = String(args.type);
+      const neg = raw.startsWith('!');
+      const spec = (neg ? raw.slice(1) : raw).replace(/^minecraft:/, '');
+      let ok;
+      if (spec.startsWith('#')) {
+        const bag = this.entityTypeTags?.get(spec.slice(1));
+        const mine = e.type.includes(':') ? e.type : 'minecraft:' + e.type;
+        // 标签里可能嵌套标签（#a 引用 #b）；展开一层足够覆盖本包用法
+        let inBag = bag ? bag.has(mine) : false;
+        if (!inBag && bag) {
+          for (const it of bag) {
+            if (!String(it).startsWith('#')) continue;
+            const sub = this.entityTypeTags?.get(String(it).slice(1));
+            if (sub && sub.has(mine)) { inBag = true; break; }
+          }
+        }
+        ok = inBag;
+      } else {
+        ok = e.type === spec;
+      }
+      if (neg) ok = !ok;
       if (!ok) return false;
     }
     if (args.tag !== undefined) {

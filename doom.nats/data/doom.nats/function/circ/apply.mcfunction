@@ -22,6 +22,9 @@ execute unless score $eff.max_creature doom.nats matches 1.. run scoreboard play
 execute unless score $eff.max_ambient doom.nats matches 1.. run scoreboard players set $eff.max_ambient doom.nats 15
 execute unless score $eff.light doom.nats matches 0.. run scoreboard players set $eff.light doom.nats 7
 
+# ---- 数量总开关（$cfg.qty，百分比，100 = 原样）
+execute if score $cfg.qty doom.nats matches 1.. unless score $cfg.qty doom.nats matches 100 run function doom.nats:cfg/qty
+
 # ---- rainy_night：雨夜：节拍加快、怪物上限提高
 execute if score $circ.rainy_night doom.nats matches 1 run scoreboard players set $eff.period doom.nats 3
 execute if score $circ.rainy_night doom.nats matches 1 run scoreboard players set $eff.max_monster doom.nats 90

@@ -11,6 +11,111 @@
 
 ---
 
+## v4.30.0 · 数量档位（scale）— 2026-10-07
+
+> 这一版加了一组**数量旋钮**：不改规则、不改物种，只调"最多刷几只"。
+> 一条命令就能把刷怪规模调成一半、一倍半、两倍半或四倍，跨 `/reload` 保留。
+
+### 1 · 新增：数量总开关 `qty`
+
+| 项 | 值 |
+|---|---|
+| 配置项 | `qty`（写进 `doom.nats:config`）|
+| 含义 | 百分比。`100` = 原样，`50` = 各类上限减半，`200` = 翻倍 |
+| 有效范围 | `1` 到 `1000` |
+| 影响 | 只缩放**容量上限**（各类 `maxInstancesPerChunk`）|
+| 不影响 | 刷怪节奏。速度另有 `density` / `batch` / `period` 三个旋钮 |
+
+写法和其它配置项一样：
+
+```
+/data modify storage doom.nats:config qty set value 150
+/function doom.nats:cfg/apply
+```
+
+### 2 · 新增：五档一键切换
+
+不想算百分比就用这五个函数。它们把值写进配置层，`/reload` 之后还在。
+
+| 命令 | `qty` | 效果 |
+|---|---|---|
+| `/function doom.nats:scale/sparse` | 50 | 上限减半 |
+| `/function doom.nats:scale/normal` | 100 | 回到原版 |
+| `/function doom.nats:scale/dense` | 150 | 一倍半 |
+| `/function doom.nats:scale/horde` | 250 | 两倍半，同时加快刷怪节奏 |
+| `/function doom.nats:scale/extreme` | 400 | 四倍 |
+
+切换后聊天栏会出提示，说明当前是哪一档。想回到原版就跑 `scale/normal`。
+
+### 3 · 补齐：容量计数（v4.28 的性能改造）
+
+上一版的 `ports/` 用了一份**缺容量计数**的生成器快照，产物因此少了 5 个函数文件，
+和已经发布的 `dist/` 里的包对不上。这一版补齐：
+
+- `check/caps_formula` —— 容量公式（`maxInstancesPerChunk × spawnableChunkCount / 289`）
+- `check/caps_scan` —— 容量计数，每维度每拍一次整图盒子查询
+- `check/cnt_overworld` / `cnt_the_nether` / `cnt_the_end` —— 逐实体按类别分派
+
+性能数字：盒子查询从每秒 21 次降到 3 次。真机实测单条盒子选择约 71 到 75 毫秒，
+改造前放大约 1.47 秒/秒，改造后约 0.21 秒/秒。
+
+### 4 · 文档修正：`mcdoc` 补 `qty`
+
+`mcdoc/doom.nats/config.mcdoc` 是给编辑器看的配置类型声明。上一版加 `qty` 时漏了它，这一版补上。
+实验性变体的包里也第一次带上这份文件（此前只有默认变体有）。
+
+### 5 · 规则层文档修正：`weight` 的口径
+
+`src/rules/README.md` 里对 `weight` 的说明是错的。原先写
+「与香草条目同池竞争」，实测**不是**这样。
+
+实际口径：命中率约等于 `weight / 1000000`。想让自建条目真的刷出来，
+要填**十万量级**。填 `40` 这种小数字等于不刷。
+
+示例同步改过：`src/rules/examples/full/entries.json` 里的权重从 `120` 改成 `100000`。
+
+### 6 · 真机验收
+
+全部结论来自真机：Fabric 服务端 + `/reload` + 包内自断言套件。
+判定口径是 `pass/fail` 加 `total == 14`，再加 8 类加载错误全 0。
+
+| MC 版本 | 加载错误 | 自检 |
+|---|---|---|
+| 1.21.5 | 0 | `pass=14 fail=0 total=14` |
+| 1.21.6 | 0 | `pass=14 fail=0 total=14` |
+| 1.21.7 | 0 | `pass=14 fail=0 total=14` |
+| 1.21.8 | 0 | `pass=14 fail=0 total=14` |
+| 1.21.9 | 0 | `pass=14 fail=0 total=14` |
+| 1.21.10 | 0 | `pass=14 fail=0 total=14` |
+| 1.21.11 | 0 | `pass=14 fail=0 total=14` |
+| 26.1 | 0 | `pass=14 fail=0 total=14` |
+| 26.1.1 | 0 | `pass=14 fail=0 total=14` |
+| 26.1.2 | 0 | `pass=14 fail=0 total=14` |
+| 26.2 | 0 | `pass=14 fail=0 total=14` |
+| 26.3 | 0 | `pass=14 fail=0 total=14` |
+
+### 7 · 四道门
+
+| 门 | 结果 |
+|---|---|
+| 静态门（默认 + 实验性）| 0 error / 2 warning |
+| 加载期 0 失败 | 12 个版本全 0 |
+| 真机断言 | 12 个版本全 `pass=14 fail=0 total=14` |
+| zip 与包体逐字节一致 | 7 个 zip 全部通过 |
+| sha256 对齐 | 本地、`SHA256SUMS.txt`、Release 附件三方一致 |
+
+### 8 · 交付物
+
+| 文件 | 适用版本 |
+|---|---|
+| `doom.nats-v4.30.0.zip` | 1.21.6（基线）|
+| `doom.nats-v4.30.0-mc1.21.5.zip` | 1.21.5 |
+| `doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` | 1.21.6 到 1.21.8 |
+| `doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` | 1.21.9 到 1.21.10 |
+| `doom.nats-v4.30.0-mc1.21.11-26.2.zip` | 1.21.11 到 26.2 |
+| `doom.nats-v4.30.0-mc26.3.zip` | 26.3 |
+| `doom.nats-v4x-experimental-v4.30.0.zip` | 实验性变体 |
+
 ## v4.29-multiversion · 多版本支持（1.21.5 → 26.3）— 2026-10-05
 
 > 这一版是**纯移植版**：函数逻辑一行未动，只让同一只包**能在 1.21.5 到 26.3 的 12 个版本上正确加载并跑通**，

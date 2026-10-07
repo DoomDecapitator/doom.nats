@@ -8,8 +8,8 @@
 
 | 下载这个 | 它是什么 | 适合谁 |
 |---|---|---|
-| **[doom.nats-v4.29.zip](https://github.com/DoomDecapitator/doom.nats/releases/download/v4.29/doom.nats-v4.29.zip)** | 默认变体：逐条复刻原版自然生成 | **绝大多数人**（推荐） |
-| [doom.nats-v4x-experimental-v4.29.zip](https://github.com/DoomDecapitator/doom.nats/releases/download/v4.29/doom.nats-v4x-experimental-v4.29.zip) | 默认变体的全部内容 + 超出原版的能力（附近有谁才刷、出生特效、预设包） | 想玩花样，且**愿意在建世界时开启对应实验性玩法**的人 |
+| **[doom.nats-v4.30.0.zip](https://github.com/DoomDecapitator/doom.nats/releases/download/v4.30.0/doom.nats-v4.30.0.zip)** | 默认变体：逐条复刻原版自然生成 | **绝大多数人**（推荐） |
+| [doom.nats-v4x-experimental-v4.30.0.zip](https://github.com/DoomDecapitator/doom.nats/releases/download/v4.30.0/doom.nats-v4x-experimental-v4.30.0.zip) | 默认变体的全部内容 + 超出原版的能力（附近有谁才刷、出生特效、预设包） | 想玩花样，且**愿意在建世界时开启对应实验性玩法**的人 |
 | [全部下载 / 校验值](https://github.com/DoomDecapitator/doom.nats/releases) | 两个 zip 的 sha256 附件 | 想确认下载完整的人 |
 
 > 实验性变体带**引擎门**：世界没开对应实验性玩法就**装不上**（不是警告）。详见 [[实验性变体-v4x]]。
@@ -18,7 +18,7 @@
 
 ## 三步装上
 
-1. 解压 `doom.nats-v4.29.zip` → 得到 `doom.nats/` 文件夹
+1. 解压 `doom.nats-v4.30.0.zip` → 得到 `doom.nats/` 文件夹
 2. 把整个 `doom.nats/` 丢进 `<存档>/datapacks/`（服务器：`world/datapacks/`）
 3. 进游戏 `/reload`
 

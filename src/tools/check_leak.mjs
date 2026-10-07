@@ -28,6 +28,10 @@ const PUB_IDS = [
   new RegExp('\\b' + String.fromCharCode(115, 117, 115, 111) + '\\b', 'i'),
   new RegExp(String.fromCharCode(115, 117, 115, 111) + '\\.nats', 'i'),
 ];
+// 本机绝对路径：**只在玩家向仓库算泄漏**。
+//   为什么开发仓不查：开发仓里 tools/ 与 reports/ 本来就会写本机路径（工具脚本要定位 java、
+//   报告里会贴复现命令），那是它的正常内容，不是泄漏。以前两边都查 ⇒ 开发仓常年假红。
+//   玩家向仓库必须干净（玩家不该看到任何本机路径）⇒ 那边保持严格。
 const PATHS = [/[A-Za-z]:[\\/]Users[\\/]/, /\/c\/Users\//, /[\\/]Downloads[\\/]/];
 // 自己（含三种布局下的相对路径）不参与扫描：本文件正文里就写着这些正则
 // 公开仓库自 2026-09-29 起把源码放进 src/ ⇒ 那份副本的相对路径是 src/tools/check_leak.mjs
@@ -35,14 +39,17 @@ const SELF = ['tools/check_leak.mjs', 'doom.nats/tools/check_leak.mjs', 'src/too
 
 // 顶层白名单（两份 profile 分开写：玩家向仓库不许出现本机开发布局那套目录）
 // 玩家向仓库：2026-09-29 起多一个 src/ —— 用户要求"仓库还是要展示源码的"（生成器 + 规则层 + 生成器输入）
-// 2026-10-05 起多一个 ports/ —— 多版本移植：每个 MC 版本区间的包本体源码树（1.21.5 – 26.3），
-//   与 dist/ 里带 -mc<区间> 后缀的 zip 一一对应（zip 即由 ports/ 打包）。
+// ports/：多版本源码树（各 MC 版本一份，玩家可对照下载）—— 2026-10-07 起在白名单内
 const ALLOW_PUB = ['README.md', 'LICENSE', 'CHANGELOG.md', '.gitignore', '.gitattributes', 'dist', 'docs', 'rules', '.github', 'src', 'doom.nats', 'ports'];
 // 本机开发布局：**不含 src**（源码在那儿本来就以 doom.nats/ 的形式在顶层；那里加 src 只会放宽那道门）
-const ALLOW_DEV = ['README.md', 'LICENSE', 'CHANGELOG.md', '.gitignore', '.gitattributes', 'dist', 'docs', 'rules', '.github',
+const ALLOW_DEV = ['README.md', 'LICENSE', 'CHANGELOG.md', 'RELEASING.md', '.gitignore', '.gitattributes', 'dist', 'docs', 'rules', '.github',
   'doom.nats', 'tests', 'harness', '.vscode', 'AGENTS.md', '_work', 'tools', 'pack', 'reports'];
 // 布局：玩家向仓库里没有生成器（doom.nats/tools），但有 dist/（.github/ 放 Issue 模板，2026-09-29 起允许）
-const IS_PUB = !fs.existsSync(path.join(ROOT, 'doom.nats', 'tools')) && fs.existsSync(path.join(ROOT, 'dist'));
+// 布局判定：**开发仓的顶层有 _work / reports / AGENTS.md**（玩家向仓从不放这些）。
+//   旧判据是「没有 doom.nats/tools」—— 但玩家向仓现在直接放数据包本体（含 tools/ 里的少量文件）
+//   ⇒ 旧判据把玩家向仓误判成开发仓 ⇒ 那边的「本机路径」严格检查根本没生效（2026-10-07 发现）。
+const IS_DEV = ['AGENTS.md', '_work', 'reports'].some((n) => fs.existsSync(path.join(ROOT, n)));
+const IS_PUB = !IS_DEV && fs.existsSync(path.join(ROOT, 'dist'));
 const ALLOW = new Set(IS_PUB ? ALLOW_PUB : ALLOW_DEV);
 
 const git = (args) => execFileSync(GIT, args, { cwd: ROOT, encoding: 'utf8' });
@@ -75,9 +82,13 @@ for (const rel of files) {
   if (SELF.includes(rel.split(path.sep).join('/'))) continue;
   if (!/\.(md|json|mjs|js|mcfunction|txt|yml|yaml)$/.test(rel)) continue;
   let t = ''; try { t = fs.readFileSync(path.join(ROOT, rel), 'utf8'); } catch { continue; }
-  for (const re of IDS) if (re.test(t)) hits.push([rel, '实验内容标识：' + String(re)]);
+  // RELEASING.md 是发布规则文档，里面**正常引用**外部规范（如 Modrinth 的版本号建议）⇒ 对它豁免 IDS。
+  //   其余文件保持严格：IDS 的用途是抓「示例 rig 来自某站」这类残留（用户要求不留残余）。
+  if (rel.split(path.sep).join('/') !== 'RELEASING.md') {
+    for (const re of IDS) if (re.test(t)) hits.push([rel, '实验内容标识：' + String(re)]);
+  }
   for (const re of (IS_PUB ? PUB_IDS : [])) if (re.test(t)) hits.push([rel, '旧项目名（玩家向仓库不许出现）：' + String(re)]);
-  for (const re of PATHS) if (re.test(t)) hits.push([rel, '本机绝对路径：' + String(re)]);
+  for (const re of (IS_PUB ? PATHS : [])) if (re.test(t)) hits.push([rel, '本机绝对路径：' + String(re)]);
 }
 if (hits.length) {
   bad += hits.length;
