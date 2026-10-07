@@ -1,119 +1,51 @@
-# doom.nats — 原版自然生成复刻（数据包）
+# doom.nats
+
+用数据包复刻 Minecraft 原版的自然刷怪。容量、区块计数、光照与逐实体规则、结构覆盖、消失层都在，规则可以改。
 
 [![最新版本](https://img.shields.io/github/v/release/DoomDecapitator/doom.nats?include_prereleases&label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/DoomDecapitator/doom.nats/releases)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.6-3C8527)](docs/25-兼容与版本.md)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.5%20%E2%80%93%2026.3-3C8527)](docs/25-兼容与版本.md)
 [![许可](https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF-All%20Rights%20Reserved%20%C2%B7%20Beta-c0392b)](docs/26-致谢与许可.md)
 
-<!-- 首屏效果图位（还没放图）：按 docs/图-首屏效果位.md 的说明截一张，存成 docs/assets/首屏效果.png，
-     然后把下面这行的注释去掉即可。在那之前不要留半张破图。 -->
-<!-- <p align="center"><img src="docs/assets/首屏效果.png" width="720" alt="doom.nats 在存档里跑起来的样子"></p> -->
+Minecraft 1.21.5 到 26.3 都能用，按版本区间分五份。
 
-> **一句话**：用**纯数据包**复刻 Minecraft 原版的自然刷怪（NaturalSpawner 那一整套）—— 容量、区块计数、光照与逐实体规则、结构覆盖、消失层全都在，而且**规则归你改**。
-> **下哪个**：先看你的 MC 版本 —— **1.21.5** → `dist/doom.nats-v4.30.0-mc1.21.5.zip` · **1.21.6–1.21.8** → `dist/doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` · **1.21.9–1.21.10** → `dist/doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` · **1.21.11–26.2** → `dist/doom.nats-v4.30.0-mc1.21.11-26.2.zip` · **26.3** → `dist/doom.nats-v4.30.0-mc26.3.zip`（完整对照表见下面「MC 版本 → 用哪份包」）。只有想要 `near` / `on_spawn` / 预设 / 自定义外观，才下 `dist/doom.nats-v4x-experimental-v4.30.0.zip` —— 它**需要世界开启对应实验性玩法**，否则装不上。（其中**自定义外观（AJ 桥接）未随本版成品发布**：源码在 `src/tools/gen_exp_aj.mjs`，要自备非空 `rules/rigs.json` 并 `DOOM_EXP=1` 重生成，详见 [`docs/18-配置手册.md`](docs/18-配置手册.md) 附录。）
-> **怎么装**：解压 zip → 得到 `doom.nats/` 文件夹 → 整个丢进 `saves/<你的存档>/datapacks/`（服务器：`world/datapacks/`）→ 进游戏 `/reload`。
-> **怎么验**：下载后先对一下校验值 —— 见下面「校验下载的文件」。
-> **改规则**看 [`docs/24-玩家能改动的一切.md`](docs/24-玩家能改动的一切.md) 与 [示例库](docs/wiki/示例库.md)；版本/变体对照看 [`docs/25-兼容与版本.md`](docs/25-兼容与版本.md)。
+## 下载哪个
 
-> ## 当前状态：**v4.30.0 正式发布（Latest）**
-> v4.30.0 已设为 **Latest**（2026-10-07 发布）。支持 **Minecraft 1.21.5 到 26.3**，按版本区间分五份交付，见下面的对照表。超出原版的实验性能力（`near` / `on_spawn` / 预设）在 `v4x` 变体里，装它要开对应实验性玩法（**自定义外观（AJ 桥接）源码在、未随本版成品发布**）。
-> 已跑过完整的真机验收（数字见 [CHANGELOG](CHANGELOG.md)；逐轮报告 `reports/` **不在本仓库**）；**已知偏差仍逐条留档**。
-> **可以装进存档玩，但请先备份存档。**
+先看你的 MC 版本。
 
-
-### 源码在哪（直接点开就能看）
-
-- **数据包本体（mcfunction 源码，可直接点开看）**：[`doom.nats/`](doom.nats/data/doom.nats/function) —— 里面就是这只包实际装入游戏的每个函数文件；成品 zip 在 `dist/`，JavaScript 生成器在 `src/`。
-- **生成器源码（JavaScript）**：[`src/`](src/) —— JavaScript 生成器 + 规则层 + 生成输入；不想读代码的话，直接下 `dist/` 的 zip 即可。
-- **成品（玩家下载）**：[`dist/`](dist/) —— `doom.nats-v4.30.0.zip`（默认）与 `doom.nats-v4x-experimental-v4.30.0.zip`（实验性）。
-- **同一份源码**就是本仓库顶层的 [`src/`](src/)（生成器 `tools/` + 规则层 `rules/` + 生成输入 `_work/generated/`）；[Releases](https://github.com/DoomDecapitator/doom.nats/releases) 页上 GitHub 自动生成的 **Source code (zip)** 是那个 tag 的整仓快照（含 `src/`）。真机测试台与验收报告是作者本机的东西，不随本仓库分发。
-
-## 30 秒：下载 → 装 → 看它是否跑起来
-
-| 步 | 做什么 |
+| 你的版本 | 下这个 |
 |---|---|
-| ① | 下载 [`dist/doom.nats-v4.30.0.zip`](dist)（默认变体），校验值见 `dist/SHA256SUMS.txt` |
-| ② | 解压，把 `doom.nats/` 整个放进 `<存档>/datapacks/`；服务器放 `world/datapacks/` |
-| ③ | 进世界 `/reload`，然后 `/function doom.nats:debug/env` 看环境快照 |
+| 1.21.5 | `dist/doom.nats-v4.30.0-mc1.21.5.zip` |
+| 1.21.6 / 1.21.7 / 1.21.8 | `dist/doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` |
+| 1.21.9 / 1.21.10 | `dist/doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` |
+| 1.21.11 到 26.2 | `dist/doom.nats-v4.30.0-mc1.21.11-26.2.zip` |
+| 26.3 | `dist/doom.nats-v4.30.0-mc26.3.zip` |
 
-装好会在聊天栏（和服务器日志）看到一句就绪提示；没看到就去 `logs/latest.log` 找加载报错。
+配套的文件建议一起装，不分版本：
 
-**怎么自证它真的在工作**（比"看到就绪提示"硬）：装好后跑 `/function doom.nats:debug/all`，看两行 ——
-`$spawned.total` **持续增长**，且 `$cnt.monster` **稳定停在上限**（默认变体 70；实测装机后 30 秒内从 48 爬到 70）。
+| 文件 | 作用 |
+|---|---|
+| `dist/doom.log-multi.zip` | 日志通道。不装的话，包出错时看不到原因 |
+| `dist/doom.nats-selftest.zip` | 自断言套件。跑一句命令就知道包有没有正常工作 |
 
-**要卸载**：删掉 `datapacks/doom.nats/` → `/reload` → `/function doom.nats:mode/auto` 把 `doMobSpawning` 还回原版。
+还有一个实验性变体 `dist/doom.nats-v4x-experimental-v4.30.0.zip`，多出 `near`（附近有什么才刷）、`on_spawn`（出生特效）和几个预设。装它必须在创建世界时开启对应实验性玩法，否则包会被拒绝加载。详见[实验性变体](docs/wiki/实验性变体-v4x.md)。
 
-## 校验下载的文件（一行）
+多份包只能装一份。它们共用同一个命名空间，装两份会互相覆盖。
 
-`dist/SHA256SUMS.txt` 里是**当前发布物**的 sha256（每次发版重新生成）。在**仓库根目录**跑：
+## 安装
 
-```
-Linux / macOS / Git Bash:   sha256sum -c dist/SHA256SUMS.txt
-Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $h,$f = $_ -split '\s+'; "$f => " + $(if ((Get-FileHash "dist/$f" -Algorithm SHA256).Hash.ToLower() -eq $h) {'OK'} else {'MISMATCH'}) }
-```
+1. 下载对应版本的 zip，解压出一个 `doom.nats/` 文件夹
+2. 整个文件夹放进 `<存档>/datapacks/`。服务器放 `world/datapacks/`
+3. 进游戏跑 `/reload`
 
-全部输出 `OK` 就是完整下载；出现 `MISMATCH` 就别用，重新下。
+装好会在聊天栏看到一句就绪提示。没看到就去 `logs/latest.log` 找加载报错。
 
-> ⚠️ 旧版 README 曾在表格里**写死过两个哈希值** —— 那是**过期值**（对应更早的构建）。校验一律以 `dist/SHA256SUMS.txt` 为准（实测与 zip 一致）。
+想确认它真的在跑，跑 `/function doom.nats:debug/all`，看两个数：`$spawned.total` 一直在涨，`$cnt.monster` 停在上限附近（默认 70）。装机后 30 秒内应该能从 48 爬到 70。
 
+卸载就是删掉 `datapacks/doom.nats/`，`/reload`，再跑 `/function doom.nats:mode/auto` 把原版刷怪还回去。
 
-## 我该下载哪个（变体对照）
+## 调刷怪数量
 
-| 下载这个 | 它是什么 | 适合谁 |
-|---|---|---|
-| **`dist/doom.nats-v4.30.0.zip`**（默认变体） | 用**纯数据包**复刻 Minecraft 原版的自然生成：全局/本地容量、区块可生成计数、光照与逐实体规则、结构 `spawn_overrides`（要塞/前哨站/沼泽小屋/海底神殿/远古城市/试炼密室）、`finalizeSpawn` 组数据层（婴儿率、共享变体、蜘蛛组效果…）、消失层（128 格硬消失、32 格掷骰）、情形引擎（昼夜/天气/月相/维度/多人） | 绝大多数人：要"原版刷怪的手感"，同时规则随便改 |
-| `dist/doom.nats-v4x-experimental-v4.30.0.zip`（实验性变体） | 默认变体的全部内容 **+ 超出原版的能力**：`near`（附近有什么才刷）、`on_spawn`（出生演出）、预设包（血月、雷暴季、深渊） | 想玩花样、且**愿意在创建世界时开启对应实验性玩法**的人 |
-
-两个变体**别同时装**（同一命名空间，只能有一个生效）。
-
-## 兼容与版本（速查）
-
-| 你的环境 | 用哪个 | 要开实验性玩法吗 |
-|---|---|---|
-| Minecraft **1.21.5** | `dist/doom.nats-v4.30.0-mc1.21.5.zip` | 不用 |
-| Minecraft **1.21.6 / 1.21.7 / 1.21.8** | `dist/doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` | 不用 |
-| Minecraft **1.21.9 / 1.21.10** | `dist/doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` | 不用 |
-| Minecraft **1.21.11 – 26.2** | `dist/doom.nats-v4.30.0-mc1.21.11-26.2.zip` | 不用 |
-| Minecraft **26.3** | `dist/doom.nats-v4.30.0-mc26.3.zip` | 不用 |
-| **1.21.6**（本版基线，`pack_format` 80） | `dist/doom.nats-v4.30.0.zip`（= 默认变体） | 默认变体：不用 · 实验性变体：**要**（创建世界时开「矿车改进」实验性玩法） |
-| 其它版本 | **不支持**（区间外） | — |
-| 单人存档 / 服务器 | 都行；服务器用 `world/datapacks/` | — |
-
-### MC 版本 → 用哪份包（多版本映射表）
-
-> **一份主包 + 按版本各一份 zip**：`dist/` 里的 `-mc<版本区间>` 后缀即对应区间；
-> 仓库内 `ports/` 保存每个区间的**包本体源码树**（`ports/doom.nats-<区间>/`），便于逐文件核对。
-> 全部 5 份共用同一套函数逻辑，**唯一差异是 `pack.mcmeta` 与 3 处版本相关改写**
-> （原版 ID `chain`→`iron_chain`、gamerule `doMobSpawning`→`spawn_mobs`、predicate 的 `condition`→`type` 与 `time` 字段）。
->
-> ⚠️ **勘误（2026-10-05）**：本表曾把 **1.21.11 – 26.3** 写成一个区间，那**是错的** ✗ —— 1.21.11–26.2 与 26.3
-> 之间横着 **predicate 注册表 schema 变更**（`condition` → `type`），两个边界**既无重叠也无缺口**，
-> 不能合并成一份包。已拆成 `-mc1.21.11-26.2` 与 `-mc26.3` 两份，原 `-mc1.21.11-26.3.zip` **已下架**
-> （它在 1.21.11–26.2 上会产生 **732 条加载错误**，实际仅 26.3 可用）。
-
-| MC 版本 | data pack version | 用哪份 | `min_format` / `max_format` |
-|---|---|---|---|
-| **1.21.5** | 71 | `doom.nats-v4.30.0-mc1.21.5.zip` | `[71,0]` – `[71,0]` |
-| **1.21.6** | 80 | `doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` |
-| **1.21.7 / 1.21.8** | 81 | `doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` | `[80,0]` – `81` |
-| **1.21.9 / 1.21.10** | 88.0 | `doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` | `[88,0]` – `[88,0]` |
-| **1.21.11 – 26.2** | 94.1 – 107.0 | `doom.nats-v4.30.0-mc1.21.11-26.2.zip` | `[94,1]` – `[107,0]` |
-| **26.3** | 121.0 | `doom.nats-v4.30.0-mc26.3.zip` | `[121,0]` – `[121,0]` |
-
-> ⚠️ **别混装**：5 份包**同一命名空间**，`datapacks/` 里只放**一份**。
-> ⚠️ **区间如实标注**：每份包的 `min_format`/`max_format` 恰为其实测边界 —— 装到区间外的版本，包里用到的原版 ID / gamerule 可能已改名，会出现函数加载失败。
-
-### 配套：`doom.log` 与自断言套件
-
-| 文件 | 是什么 | 适用版本 |
-|---|---|---|
-| `dist/doom.log-multi.zip` | **Doom Error (E1)** 运行时报错通道（`doom.nats` 的日志依赖，**强烈建议一起装**） | **全区间**（1.21.5 – 26.3） |
-| `dist/doom.nats-selftest.zip` | 自断言套件：`/function doom_nats_test:runall` 跑完打印 `[SELFTEST] RESULT pass=N fail=N total=N` | 全区间 |
-
-完整的版本矩阵、`pack_format` 对照、升级/降级与"为什么实验性变体要借一个原生旗标"见 [`docs/25-兼容与版本.md`](docs/25-兼容与版本.md)。
-
-## 调刷怪数量（五档一键切换）
-
-不想改规则，只想让怪多点或少点，用这五个命令。它们写进配置层，`/reload` 之后还在。
+想让怪多点或少点，不用改规则，跑这五条之一：
 
 | 命令 | 效果 |
 |---|---|
@@ -123,85 +55,133 @@ Windows PowerShell:         Get-Content dist/SHA256SUMS.txt | ForEach-Object { $
 | `/function doom.nats:scale/horde` | 两倍半，同时加快刷怪节奏 |
 | `/function doom.nats:scale/extreme` | 四倍 |
 
-切换后聊天栏会提示当前是哪一档。想自己填数字就用 `qty`：
+切换后聊天栏会提示当前档位，`/reload` 之后还保留。
+
+想自己填数字：
 
 ```
 /data modify storage doom.nats:config qty set value 150
 /function doom.nats:cfg/apply
 ```
 
-`qty` 是百分比，`100` 表示原样，有效范围 `1` 到 `1000`。它只缩放**容量上限**，
-改的是"最多几只"。想改"刷多快"用 `density` / `batch` / `period`，见 `docs/21-玩家可改清单.md`。
+`qty` 是百分比，`100` 是原样，范围 `1` 到 `1000`。它只改容量上限，也就是“最多几只”。想改“刷多快”用 `density`、`batch`、`period`，见[玩家可改清单](docs/21-玩家可改清单.md)。
 
-注意：调小档位后，场上已有的怪不会立刻消失，会按消失层的节奏慢慢减到新上限。
+调小档位后，场上已有的怪不会立刻消失，会按消失层的节奏慢慢减到新上限。
 
-## 我能改什么（三条路）
+## 改规则
 
-| 改法 | 生效时机 | 入口 |
+三条路，按生效时机选。
+
+| 改法 | 什么时候生效 | 入口 |
 |---|---|---|
-| **A · 在游戏里改**（推荐） | 改完**下一拍**就生效，不用重启、不用重装 | 存储 `doom.nats:author`：`/function doom.nats:author/show` 看现状、`author/reset` 一键回原版 |
-| **B · 运行时刻旋钮** | 立刻 | 计分板开关（密度、批次、调试报告…），清单见 [`docs/21-玩家可改清单.md`](docs/21-玩家可改清单.md) |
-| **C · 构建期规则**（要重新生成包） | 重新生成 + 换包 | 本仓库 `src/rules/*.json`：字段表见 [`src/rules/README.md`](src/rules/README.md) |
+| 在游戏里改（推荐） | 下一拍 | `/data modify storage doom.nats:author ...`。`/function doom.nats:author/show` 看现状，`author/reset` 一键回原版 |
+| 改运行时刻旋钮 | 立刻 | 计分板开关。清单见[玩家可改清单](docs/21-玩家可改清单.md) |
+| 改构建期规则 | 要重新生成包 | `src/rules/*.json`。字段表见 [src/rules/README.md](src/rules/README.md) |
 
-两条例子（复制就能用，全部示例见 [示例库](docs/wiki/示例库.md)）：
+两条能直接复制的例子：
 
 ```
-# 让僵尸也能刷在树叶上（原版树叶不算能站的地方）
+# 让僵尸也能刷在树叶上
 /data modify storage doom.nats:author entityRules."minecraft:zombie".belowAny set value ["#minecraft:leaves"]
 
-# 雷暴时，深海多出一种僵尸（权重 10 万 ⇒ 约 10% 的尝试会选到它）
+# 雷暴时深海多出一种僵尸
 /data modify storage doom.nats:author entries append value {id:"storm",biome:"#minecraft:is_deep_ocean",category:"monster",mob:"minecraft:zombie",weight:100000,when:{thundering:true}}
 ```
 
-> ⚠ **字段名分两层，别写串**：条目里的群系是 `biome`（**单数**，一个群系 id 或 `#标签`；要多个群系就加多条），一次几只写 `min` / `max`。
-> `biomes`（数组）/ `group` / `place` / `light` / `tag` / `cluster` / `coins` / `ySea` 这些是**构建期** `rules/*.json`（路径 C）的写法 —— 写进 storage **不会报错，但也不会生效**。
-> 清单与对照表：[`docs/24-玩家能改动的一切.md`](docs/24-玩家能改动的一切.md)。
+全部示例在[示例库](docs/wiki/示例库.md)。
 
-> ⚠ **`weight` 不是"和原有物种同池按比例分"，实测命中率 ≈ `weight / 1000000`** —— 要它真的刷出来就填 **10 万级**（`100000`≈10% · `900000`≈90%，实测 180 秒烈焰人 22→32 只）；写 `40` 这种小数字**等于不刷**。完整对照表见 [`docs/wiki/规则字段参考.md`](docs/wiki/规则字段参考.md)。
+有两个地方容易写错。
 
-### 实验性变体 `v4x`：超出原版的能力
+第一，字段名分两层。游戏里改的条目，群系字段叫 `biome`，是单数，填一个群系 id 或 `#标签`；要多个群系就写多条。一次刷几只写 `min` 和 `max`。而 `biomes`（数组）、`group`、`place`、`light`、`tag`、`cluster`、`coins`、`ySea` 这些是构建期 `rules/*.json` 的写法，写进 storage 不会报错，但也不会生效。
 
-`near`（附近有什么才刷，例如"狼群附近才出羊"）、`on_spawn`（出生特效：粒子/音效/播报/额外 NBT）、预设包（血月、雷暴季、深渊）属于**非原版**能力，只在**实验性变体**里，并且带**引擎门**：世界必须在创建时开启对应实验性玩法，否则包会被拒绝加载（详见 [`docs/wiki/实验性变体-v4x.md`](docs/wiki/实验性变体-v4x.md)）。
+第二，`weight` 不是“和原有物种按比例分池”。实测命中率大约是 `weight / 1000000`。要它真刷出来就填十万量级：`100000` 约 10%，`900000` 约 90%（实测 180 秒里烈焰人从 22 只涨到 32 只）。填 `40` 这种小数字等于不刷。对照表见[规则字段参考](docs/wiki/规则字段参考.md)。
 
-### 明确做不到的（免得你白试）
+## 校验下载
 
-全新的模型/贴图/AI/寻路（数据包管不了客户端资源与实体行为）；给"原本没有这一类别的群系"加怪（那要改世界生成）；让生物之间产生因果关系（例如"蜘蛛吃虫"，那是行为层的事）。
+`dist/SHA256SUMS.txt` 里是当前所有发布物的 sha256。在仓库根目录跑：
 
-## 文档在哪
+```
+sha256sum -c dist/SHA256SUMS.txt
+```
+
+Windows PowerShell：
+
+```powershell
+Get-Content dist/SHA256SUMS.txt | ForEach-Object {
+  $h, $f = $_ -split '\s+'
+  "$f => " + $(if ((Get-FileHash "dist/$f" -Algorithm SHA256).Hash.ToLower() -eq $h) {'OK'} else {'MISMATCH'})
+}
+```
+
+全部输出 `OK` 就是完整下载，出现 `MISMATCH` 就重新下。
+
+## 版本对照
+
+| MC 版本 | data pack version | 包 | `min_format` / `max_format` |
+|---|---|---|---|
+| 1.21.5 | 71 | `doom.nats-v4.30.0-mc1.21.5.zip` | `[71,0]` 到 `[71,0]` |
+| 1.21.6 | 80 | `doom.nats-v4.30.0-mc1.21.6-1.21.8.zip` | `[80,0]` 到 `81` |
+| 1.21.7 / 1.21.8 | 81 | 同上 | `[80,0]` 到 `81` |
+| 1.21.9 / 1.21.10 | 88.0 | `doom.nats-v4.30.0-mc1.21.9-1.21.10.zip` | `[88,0]` 到 `[88,0]` |
+| 1.21.11 到 26.2 | 94.1 到 107.0 | `doom.nats-v4.30.0-mc1.21.11-26.2.zip` | `[94,1]` 到 `[107,0]` |
+| 26.3 | 121.0 | `doom.nats-v4.30.0-mc26.3.zip` | `[121,0]` 到 `[121,0]` |
+
+五份包共用同一套函数逻辑，差别只有 `pack.mcmeta` 和几处版本相关改写（`chain` 改名成 `iron_chain`、gamerule `doMobSpawning` 改名成 `spawn_mobs`、predicate 的 `condition` 改成 `type`）。`ports/` 里存着每份包的源码树，可以逐文件核对。
+
+区间是实测边界，不要装到区间外。装错了会因为原版 ID 或 gamerule 已改名而加载失败。
+
+> 2026-10-05 勘误：本表曾把 1.21.11 到 26.3 写成同一个区间，那是错的。1.21.11–26.2 和 26.3 之间隔着 predicate 注册表 schema 变更，不能合并。原来的 `-mc1.21.11-26.3.zip` 已下架，它标错了适用区间。
+
+## 做不到的
+
+全新的模型、贴图、AI、寻路（数据包管不了客户端资源和实体行为）；给本来没有这类生物的群系加怪（要改世界生成）；让生物之间产生因果关系，比如“蜘蛛吃虫”（那是行为层的事）。
+
+## 源码在哪
+
+| 目录 | 里面是什么 |
+|---|---|
+| [`doom.nats/`](doom.nats/data/doom.nats/function) | 数据包本体，能直接点开看每个函数文件 |
+| [`src/`](src/) | JavaScript 生成器、规则层、生成输入 |
+| [`dist/`](dist/) | 成品 zip |
+
+只想玩就下 `dist/` 里的 zip。想自己改包，照 [src/README.md](src/README.md) 的三步走：跑生成器、`check_static`、装包打包。
+
+真机测试台、逐轮验收报告、CI 是作者本机的东西，不随仓库分发。验收口径和每个版本的真机数字都在那里。
+
+## 文档
 
 | 想看什么 | 去哪 |
 |---|---|
-| 安装/升级/卸载全过程 | [`docs/wiki/安装与升级.md`](docs/wiki/安装与升级.md) · [`docs/16-生存直用手册.md`](docs/16-生存直用手册.md) |
-| 在游戏里改规则（示例库 + 字段参考） | [`docs/wiki/示例库.md`](docs/wiki/示例库.md) · [`docs/wiki/规则字段参考.md`](docs/wiki/规则字段参考.md) |
-| 全清单（能改的一切） | [`docs/24-玩家能改动的一切.md`](docs/24-玩家能改动的一切.md) |
-| 逐实体与原版的差异核对 | [`docs/17-逐实体刷怪规则核对.md`](docs/17-逐实体刷怪规则核对.md) |
-| 版本 / 变体 / 兼容 | [`docs/25-兼容与版本.md`](docs/25-兼容与版本.md) · [CHANGELOG](CHANGELOG.md) |
-| 许可、致谢、第三方边界 | [`docs/26-致谢与许可.md`](docs/26-致谢与许可.md) |
-| 全部文档索引 | [`docs/README.md`](docs/README.md) |
+| 安装、升级、卸载 | [docs/wiki/安装与升级.md](docs/wiki/安装与升级.md)、[docs/16-生存直用手册.md](docs/16-生存直用手册.md) |
+| 在游戏里改规则 | [docs/wiki/示例库.md](docs/wiki/示例库.md)、[docs/wiki/规则字段参考.md](docs/wiki/规则字段参考.md) |
+| 能改的一切 | [docs/24-玩家能改动的一切.md](docs/24-玩家能改动的一切.md) |
+| 逐实体与原版的差异 | [docs/17-逐实体刷怪规则核对.md](docs/17-逐实体刷怪规则核对.md) |
+| 版本与兼容 | [docs/25-兼容与版本.md](docs/25-兼容与版本.md)、[CHANGELOG](CHANGELOG.md) |
+| 许可与致谢 | [docs/26-致谢与许可.md](docs/26-致谢与许可.md) |
+| 全部文档 | [docs/README.md](docs/README.md) |
 
-> Wiki（图文版）：<https://github.com/DoomDecapitator/doom.nats/wiki> —— 若打不开，`docs/wiki/` 里就是那 9 页的 Markdown 源，内容完全一致。
-
-## 许可（一句话）
-
-**All Rights Reserved · Beta** —— 自用/游玩/原样转发可以；**二次发布修改版或商用请先取得许可**。本包不含 Minecraft/Mojang 资产，也不含反编译产物；随包发布的只有数据包本体。全文与致谢见 [`docs/26-致谢与许可.md`](docs/26-致谢与许可.md) 与 [LICENSE](LICENSE)。
+Wiki 图文版在 <https://github.com/DoomDecapitator/doom.nats/wiki>。打不开的话，`docs/wiki/` 里就是那 9 页的 Markdown 源。
 
 ## 仓库结构
 
 ```
 README.md  LICENSE  CHANGELOG.md   说明 / 许可 / 变更日志
-dist/                              唯一下载物：两个变体的 zip + 各自 sha256
-src/                               源码：生成器 tools/ + 规则层 rules/ + 生成输入 _work/generated/
-docs/                              玩家向文档 + docs/wiki/（Wiki 的 9 页 Markdown 源）
-.github/ISSUE_TEMPLATE/            报 bug / 提功能的固定表单（要求版本 + 日志 + 截图）
+dist/                              唯一下载物：各个 zip 和 SHA256SUMS.txt
+ports/                             每个 MC 版本区间的包源码树
+doom.nats/                         数据包本体副本，可以直接浏览
+src/                               源码：生成器 tools/ + 规则层 rules/ + 生成输入
+docs/                              玩家向文档，docs/wiki/ 是 Wiki 的 Markdown 源
+.github/ISSUE_TEMPLATE/            报 bug 和提功能的表单
 ```
 
-另有两个隐藏文件：`.gitignore`（本地产物不进仓库）与 `.gitattributes`（产物按字节比对，不做 EOL 转换）。
+`.gitignore` 挡掉本地产物，`.gitattributes` 让产物按字节比对、不做行尾转换。
 
-想自己改包就照 [`src/README.md`](src/README.md) 的「三步构建」（跑生成器 → `check_static` → 装包/打包）走。
+## 报问题
 
-**怎么报问题**：走 [Issues](https://github.com/DoomDecapitator/doom.nats/issues/new/choose) 的表单 —— 会问你要版本、变体、`logs/latest.log` 片段和截图；按表单填，定位快很多。
+走 [Issues](https://github.com/DoomDecapitator/doom.nats/issues/new/choose) 的表单。会问你版本、变体、`logs/latest.log` 片段和截图。按表单填能快很多。
 
-真机测试台 `tests/`、逐轮验收报告、CI 是作者本机的东西
-（作者本机的测试台与验收报告，不随仓库分发） —— 验收口径与每个版本的真机数字都在那里。
+## 许可
 
-> **源码在哪**：生成器是 JavaScript，就在**本仓库顶层** [`src/`](src/) —— 生成器 `tools/` + 规则层 `rules/` + 生成输入 `_work/generated/`。玩家不需要读它，只想要成品就下 `dist/` 的 zip；真机测试台与验收报告不随本仓库分发。
+All Rights Reserved · Beta。自用、游玩、原样转发可以；二次发布修改版或商用请先取得许可。
+
+本包不含 Minecraft 和 Mojang 的资产，也不含反编译产物，随包发布的只有数据包本体。全文见 [docs/26-致谢与许可.md](docs/26-致谢与许可.md)。
