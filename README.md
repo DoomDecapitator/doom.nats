@@ -96,6 +96,112 @@ Minecraft 1.21.5 到 26.3 都能用，按版本区间分五份。
 
 第二，`weight` 不是“和原有物种按比例分池”。实测命中率大约是 `weight / 1000000`。要它真刷出来就填十万量级：`100000` 约 10%，`900000` 约 90%（实测 180 秒里烈焰人从 22 只涨到 32 只）。填 `40` 这种小数字等于不刷。对照表见[规则字段参考](docs/wiki/规则字段参考.md)。
 
+## 能调的旋钮
+
+这一节把常用的旋钮列出来。完整的字段出处、原版对照见[配置手册](docs/18-配置手册.md)，改法细节见[玩家可改清单](docs/21-玩家可改清单.md)。
+
+### 数量与节奏
+
+这几个最常用，不用改规则就能调。
+
+| 键 | 默认 | 改它会发生什么 |
+|---|---|---|
+| `qty` | `100` | 数量总开关，百分比。只缩放容量上限。用法见上面「调刷怪数量」 |
+| `period` | `5` | 每几 tick 发起一批刷怪尝试。调小就刷得勤 |
+| `batch` | `6` | 每批发起几个原点。调大是每批试更多 |
+| `maxBatch` | `40` | 自动调节 `batch` 时的上限 |
+| `density` | `0` | 目标生成数每分钟。大于 0 时自动调 `batch`，不用手填 |
+
+### 各类别上限
+
+`cap` 下面七个类别，单位是「每个区块最多几只」。原版值如下，调大就是该类怪更多。
+
+| 类别 | 默认 | 是什么 |
+|---|---|---|
+| `cap.monster` | `70` | 怪物（僵尸、骷髅、苦力怕等） |
+| `cap.creature` | `10` | 动物（牛羊猪鸡等） |
+| `cap.ambient` | `15` | 蝙蝠 |
+| `cap.water_creature` | `5` | 鱿鱼、海豚 |
+| `cap.water_ambient` | `20` | 热带鱼等 |
+| `cap.underground_water_creature` | `5` | 发光鱿鱼 |
+| `cap.axolotls` | `5` | 美西螈 |
+
+改法：
+
+```
+/data merge storage doom.nats:config {cap:{monster:140,creature:20}}
+/function doom.nats:cfg/apply
+```
+
+### 消失与持久化
+
+| 键 | 默认 | 改它会发生什么 |
+|---|---|---|
+| `distance.<类别>` | `128` | 离玩家多远就消失。`water_ambient` 这一类是 `64` |
+| `noDespawnDistance` | `32` | 近于此距离会清零「不动计时」，怪不会因为站太久被清 |
+| `dice` | `0` | 大于 0 打开概率消失层。原版 `checkDespawn` 之外的自选强度 |
+| `persist` | `0` | 改成 `1`，本包生成的怪全部永不消失 |
+
+### 规则判定
+
+| 键 | 默认 | 改它会发生什么 |
+|---|---|---|
+| `light.<维度>` | `7` | 怪物要多暗才刷。取值 0 到 15，调小就更难刷 |
+| `seaLevel.<维度>` | 主世界 `63`、下界 `32`、末地 `0` | 水面窗口。影响水生生物的生成高度 |
+| `playerExclusion` | `24` | 玩家几格内不刷怪 |
+| `creatureGate` | `400` | 动物每几 tick 进一次候选。调小则动物刷得勤 |
+| `difficulty` | `2` | 0 和平 / 1 简单 / 2 普通 / 3 困难。数据包读不到真实难度，要自己声明 |
+| `special` | `-1` | 区域难度系数。`-1` 表示按 `difficulty` 自动 |
+| `peaceful` | `0` | 改成 `1`，怪物整类不刷 |
+
+### 出生点排除
+
+原版会在世界出生点 24 格内禁止刷怪，但数据包读不到出生点坐标，要自己填。默认关闭。
+
+```
+/data merge storage doom.nats:config {spawn24:1,spawnX:0,spawnY:64,spawnZ:0}
+/function doom.nats:cfg/apply
+```
+
+三个坐标都填了才会生效。
+
+### 取点高度带
+
+控制怪生成在什么高度。
+
+| 键 | 默认 | 说明 |
+|---|---|---|
+| `band.mode` | `0` | `0` 自动找地面。`1` 固定带随机。`2` 跟随玩家上下浮动。`3` 均匀随机带，最接近原版 |
+| `band.yMin` `band.yMax` | `60` `70` | 模式 1 和 3 的高度区间 |
+| `band.jitter` | `3` | 模式 2 的浮动半径 |
+
+### 方块判定
+
+决定「哪里算能站」和「哪里能生成空位」。这两个标签可以在地图包里覆盖同名标签来改。
+
+| 标签 | 作用 |
+|---|---|
+| `#doom.nats:standable` | 下方可站立。近似原版的「上表面完整且自身发光小于 14」 |
+| `#doom.nats:spawnable_at` | 可生成空位。近似原版的「非完整碰撞盒、非红石源、非流体」 |
+
+地图成型后可以跑 `node src/tools/propose_tags.mjs` 读区域文件，它会给出该补哪些方块。
+
+### 作者层（在游戏里改，立刻生效）
+
+上面那些要 `/reload` 或者重跑 `cfg/apply`。作者层不用，改完下一拍就生效。
+
+| 函数 | 作用 |
+|---|---|
+| `/function doom.nats:author/show` | 看当前规则现状 |
+| `/function doom.nats:author/reset` | 一键回原版 |
+| `/function doom.nats:mode/auto` | 装载时自动接管原版刷怪 |
+| `/function doom.nats:mode/manual` | 不再自动改 gamerule，交给地图自己管 |
+| `/function doom.nats:mode/off` | 静默清场并把自然生成还给原版 |
+| `/function doom.nats:debug/all` | 全诊断 |
+| `/function doom.nats:debug/env` | 环境快照 |
+| `/function doom.nats:debug/clear` | 清掉本包生成的生物 |
+| `/function doom.nats:spawn/try` | 手动跑一次完整的刷怪尝试 |
+
 ## 校验下载
 
 `dist/SHA256SUMS.txt` 里是当前所有发布物的 sha256。在仓库根目录跑：

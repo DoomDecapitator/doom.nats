@@ -1,4 +1,4 @@
-**doom.nats · Wiki**
+doom.nats · Wiki
 
 - [[Home]]
 - [[安装与升级]]
